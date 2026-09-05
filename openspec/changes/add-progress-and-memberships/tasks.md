@@ -23,10 +23,10 @@
 
 ## 4. Planes y servicios
 
-- [ ] 4.1 CRUD de planes con descripción, precio, periodicidad y qué incluye; verificar que solo `admin` escribe
-- [ ] 4.2 CRUD de servicios adicionales por categoría
-- [ ] 4.3 Vitrina visible para el paciente con planes y servicios activos; verificar en móvil
-- [ ] 4.4 Desactivación de un plan; verificar que desaparece de la vitrina y las membresías existentes siguen funcionando
+- [x] 4.1 CRUD de planes con descripción, precio, periodicidad y qué incluye; verificar que solo `admin` escribe
+- [x] 4.2 CRUD de servicios adicionales por categoría
+- [x] 4.3 Vitrina visible para el paciente con planes y servicios activos; verificar en móvil
+- [x] 4.4 Desactivación de un plan; verificar que desaparece de la vitrina y las membresías existentes siguen funcionando
 
 ## 5. Membresías
 
