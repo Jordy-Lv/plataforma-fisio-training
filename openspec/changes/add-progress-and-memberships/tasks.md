@@ -30,10 +30,10 @@
 
 ## 5. Membresías
 
-- [ ] 5.1 Registro y edición de membresías con fechas, monto y estado; verificar que solo `admin` escribe
-- [ ] 5.2 Vista del paciente con su plan y su fecha de vencimiento; verificar por API que no puede modificarla
-- [ ] 5.3 Vista del profesional con el estado de la membresía de sus pacientes asignados
-- [ ] 5.4 Panel de administración con las membresías próximas a vencer y vencidas
+- [x] 5.1 Registro y edición de membresías con fechas, monto y estado; verificar que solo `admin` escribe
+- [x] 5.2 Vista del paciente con su plan y su fecha de vencimiento; verificar por API que no puede modificarla
+- [x] 5.3 Vista del profesional con el estado de la membresía de sus pacientes asignados
+- [x] 5.4 Panel de administración con las membresías próximas a vencer y vencidas
 
 ## 6. Job de vencimientos
 

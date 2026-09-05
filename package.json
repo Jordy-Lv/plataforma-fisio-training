@@ -36,7 +36,8 @@
     "test:attendance": "node --test scripts/verify-progress-attendance.test.mjs",
     "test:routines": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/helpers/alias-hook.mjs --test scripts/verify-routine-assignment.test.mjs",
     "test:evolution": "node --test scripts/verify-progress-evolution.test.mjs",
-    "test:plans": "node --test scripts/verify-progress-plans.test.mjs"
+    "test:plans": "node --test scripts/verify-progress-plans.test.mjs",
+    "test:memberships": "node --test scripts/verify-progress-memberships.test.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
