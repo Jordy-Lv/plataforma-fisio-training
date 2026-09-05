@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const areas = [
   {
     title: "Tu rutina de hoy",
@@ -35,9 +37,9 @@ export default function Home() {
           </p>
 
           <div className="mt-10 flex flex-wrap items-center gap-4">
-            <span className="inline-flex min-h-11 items-center rounded-full bg-brand px-5 text-sm font-semibold text-brand-foreground">
-              Demo en construcción
-            </span>
+            <Link href="/login" className="inline-flex min-h-11 items-center rounded-full bg-brand px-5 text-sm font-semibold text-brand-foreground focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-4">
+              Iniciar sesión
+            </Link>
             <span className="text-sm leading-6 text-muted-foreground">
               Primera etapa · Aplicación web instalable
             </span>

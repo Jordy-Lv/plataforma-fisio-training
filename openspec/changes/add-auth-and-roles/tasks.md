@@ -14,9 +14,9 @@
 
 ## 3. Pantallas de sesión
 
-- [ ] 3.1 Pantalla de inicio de sesión con validación Zod y mensajes en español; verificar que un correo inexistente y una contraseña mala dan el mismo mensaje
-- [ ] 3.2 Redirección por rol tras iniciar sesión y verificar que un `patient` que navega a `/admin` termina en `/patient`
-- [ ] 3.3 Cierre de sesión y recuperación de contraseña; verificar que llega el correo en el entorno local de Supabase
+- [x] 3.1 Pantalla de inicio de sesión con validación Zod y mensajes en español; verificar que un correo inexistente y una contraseña mala dan el mismo mensaje
+- [x] 3.2 Redirección por rol tras iniciar sesión y verificar que un `patient` que navega a `/admin` termina en `/patient`
+- [x] 3.3 Cierre de sesión y recuperación de contraseña; verificar que llega el correo en el entorno local de Supabase
 - [ ] 3.4 Bloquear el acceso de personas con `is_active = false` y verificar que no se crea sesión
 
 ## 4. Gestión de personas
