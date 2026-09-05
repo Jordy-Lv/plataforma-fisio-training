@@ -1,8 +1,8 @@
 ## 1. Catálogo de ejercicios
 
-- [ ] 1.1 Crear el bucket `exercise-media` en Storage con las políticas de acceso y verificar que una imagen subida se sirve públicamente
-- [ ] 1.2 Escribir `scripts/seed-exercises.ts` que importe free-exercise-db y suba las imágenes; verificar que el catálogo queda poblado
-- [ ] 1.3 Hacer el script idempotente por `external_id` y verificar que ejecutarlo dos veces no duplica ejercicios
+- [x] 1.1 Crear el bucket `exercise-media` en Storage con las políticas de acceso y verificar que una imagen subida se sirve públicamente
+- [x] 1.2 Escribir `scripts/seed-exercises.ts` que importe free-exercise-db y suba las imágenes; verificar que el catálogo queda poblado
+- [x] 1.3 Hacer el script idempotente por `external_id` y verificar que ejecutarlo dos veces no duplica ejercicios
 - [ ] 1.4 Listado de ejercicios con búsqueda y filtros por grupo muscular, equipamiento y entorno; verificar en móvil
 - [ ] 1.5 Alta y edición de ejercicios propios (`is_custom = true`) con carga de imagen; verificar que un paciente no puede crearlos ni editarlos
 - [ ] 1.6 Edición del etiquetado clínico (contraindicaciones) validando contra el vocabulario de `body-parts.ts`; verificar que un valor inválido se rechaza

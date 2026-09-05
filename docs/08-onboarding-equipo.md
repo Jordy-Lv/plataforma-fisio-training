@@ -100,8 +100,9 @@ producción.
 | `npm run db:reset` | Recrea la base local y aplica la semilla de personas |
 | `npm run test:auth` | Prueba Auth y sesión SSR contra Supabase local encendido |
 | `npm run test:rls` | Camino 9: aislamiento de datos entre pacientes, contra la API |
+| `npm run test:storage` | Bucket `exercise-media`: lectura pública y escritura solo del equipo |
 | `npm run db:types` | Regenera `lib/db/types.ts`; se commitea junto a la migración |
-| `npm run seed:exercises` (pendiente) | Importará free-exercise-db a `exercises` + Storage |
+| `npm run seed:exercises` | Importa free-exercise-db a `exercises` y sube las imágenes al bucket `exercise-media`. Necesita red; es idempotente y se puede repetir. Requiere Node ≥ 22.18, que ejecuta TypeScript sin transpilar |
 | `bash scripts/verify.sh` | Corre todas las verificaciones de CI en local |
 
 > **GitHub Actions está pendiente de habilitar en la cuenta.** Los workflows fallan al
