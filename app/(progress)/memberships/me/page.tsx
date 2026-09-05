@@ -28,6 +28,26 @@ export default async function Page() {
           Volver a mi espacio
         </Link>
 
+        {membership &&
+          (membership.status === "expiring_soon" ||
+            membership.status === "expired") && (
+            <div
+              role="status"
+              className="mb-6 rounded-2xl border border-border bg-muted p-4"
+            >
+              <p className="font-semibold">
+                {membership.status === "expired"
+                  ? "Tu membresía está vencida"
+                  : "Tu membresía está por vencer"}
+              </p>
+              <p className="mt-1 leading-7 text-muted-foreground">
+                {membership.status === "expired"
+                  ? `Venció el ${formatDate(membership.expires_on)}. Renuévala en recepción para seguir asistiendo.`
+                  : `Vence el ${formatDate(membership.expires_on)}. Renuévala antes de esa fecha para no interrumpir tus sesiones.`}
+              </p>
+            </div>
+          )}
+
         {!membership ? (
           <div className="rounded-2xl border border-dashed border-border p-8 text-center">
             <p className="font-semibold">Todavía no tienes una membresía</p>

@@ -143,7 +143,7 @@ y **se vuelve a recorrer entero**, no solo el paso que falló.
 | 3 | Snapshot de rutina | ⬜ | | |
 | 4 | Ejecución desde el celular | ⬜ | | |
 | 5 | Alertas | ⬜ | | |
-| 6 | Tamizaje y gráficas | ⬜ | | |
-| 7 | Membresías y vencimientos | ⬜ | | |
+| 6 | Tamizaje y gráficas | ✅ | 2026-09-05 | Verificado contra la API local con `npm run test:screenings` y `npm run test:evolution`: registro del tamizaje por el profesional a cargo, IMC calculado en la base, estado con un solo tamizaje (valor + aviso, sin gráfica), gráfica de evolución con dos puntos y de progresión de carga desde `session_logs`. El no desbordamiento a 375 px está cubierto por la tarea 2.4 del change. Falta el recorrido en teléfono real del día 10. |
+| 7 | Membresías y vencimientos | ✅ | 2026-09-05 | Verificado contra la ruta interna y el RPC con `npm run test:memberships:cron`: 401 sin el secreto compartido, transición a `expiring_soon`/`expired`, generación de avisos y alertas para admin y profesional a cargo, idempotencia de dos ejecuciones seguidas, plazo de aviso configurable, correo en español en Mailpit y aviso visible en la vista del paciente. El disparo manual desde el panel de administración funciona (`components/progress/MembershipReviewButton.tsx`). Falta el recorrido en teléfono real del día 10. |
 | 8 | PWA | ⬜ | | |
 | 9 | **Aislamiento de datos (RLS)** | ⬜ | | |

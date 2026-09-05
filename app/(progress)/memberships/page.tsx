@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Workspace } from "@/components/auth/Workspace";
 import { MembershipForm } from "@/components/progress/MembershipForm";
+import { MembershipNoticeDaysForm } from "@/components/progress/MembershipNoticeDaysForm";
+import { MembershipReviewButton } from "@/components/progress/MembershipReviewButton";
 import { rolePaths } from "@/lib/auth/session";
 import { requireStaff } from "@/lib/progress/access";
 import {
@@ -14,6 +16,7 @@ import {
   formatDueIn,
   membershipStatusLabels,
 } from "@/lib/progress/membership-vocabulary";
+import { getMembershipNoticeDays } from "@/lib/progress/membership-review-actions";
 import { listAllPlans } from "@/lib/progress/plan-queries";
 import {
   billingPeriodLabels,
@@ -84,10 +87,11 @@ function AdminCard({
 }
 
 async function AdminView({ name }: { name?: string | null }) {
-  const [memberships, patients, plans] = await Promise.all([
+  const [memberships, patients, plans, noticeDays] = await Promise.all([
     listMembershipsWithPatient(),
     listPatients(),
     listAllPlans(),
+    getMembershipNoticeDays(),
   ]);
 
   const patientOptions: Option[] = patients.map((patient) => ({
@@ -156,6 +160,20 @@ async function AdminView({ name }: { name?: string | null }) {
           Planes y servicios
         </Link>
       </div>
+
+      <section className="mb-10 grid gap-4 rounded-2xl border border-border bg-surface p-5">
+        <h2 className="text-base font-semibold">Revisión de vencimientos</h2>
+        <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+          Cada día, un proceso automático marca las membresías próximas a vencer
+          y las vencidas, avisa al equipo y envía el correo al paciente. Ahora
+          mismo se avisa con {noticeDays} días de antelación. Puedes lanzar la
+          revisión a mano para la demostración.
+        </p>
+        <div className="grid gap-6 sm:grid-cols-2">
+          <MembershipReviewButton />
+          <MembershipNoticeDaysForm current={noticeDays} />
+        </div>
+      </section>
 
       {memberships.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center">

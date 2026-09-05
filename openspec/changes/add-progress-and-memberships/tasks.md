@@ -37,15 +37,15 @@
 
 ## 6. Job de vencimientos
 
-- [ ] 6.1 Verificar que `pg_cron` se puede habilitar en el proyecto; si no, plantear la alternativa manual antes del día 5
-- [ ] 6.2 Ruta interna protegida por secreto compartido; verificar que sin el secreto la petición se rechaza
-- [ ] 6.3 Lógica de revisión: marcar próximas a vencer y vencidas, y generar los avisos
-- [ ] 6.4 Hacerla idempotente y verificar que dos ejecuciones seguidas no duplican avisos
-- [ ] 6.5 Plazo de aviso configurable; verificar que cambiarlo altera el resultado de la siguiente ejecución
-- [ ] 6.6 Envío de correo de aviso en español; verificar que llega en el entorno local
-- [ ] 6.7 Programar el job diario en `pg_cron` y verificar que se puede disparar a mano para la demostración
+- [x] 6.1 Verificar que `pg_cron` se puede habilitar en el proyecto; si no, plantear la alternativa manual antes del día 5
+- [x] 6.2 Ruta interna protegida por secreto compartido; verificar que sin el secreto la petición se rechaza
+- [x] 6.3 Lógica de revisión: marcar próximas a vencer y vencidas, y generar los avisos
+- [x] 6.4 Hacerla idempotente y verificar que dos ejecuciones seguidas no duplican avisos
+- [x] 6.5 Plazo de aviso configurable; verificar que cambiarlo altera el resultado de la siguiente ejecución
+- [x] 6.6 Envío de correo de aviso en español; verificar que llega en el entorno local
+- [x] 6.7 Programar el job diario en `pg_cron` y verificar que se puede disparar a mano para la demostración
 
 ## 7. Cierre
 
-- [ ] 7.1 Ejecutar los caminos 6 y 7 del plan de verificación y registrar el resultado
-- [ ] 7.2 Preparar los datos de demostración: pacientes con tres o cuatro tamizajes, semanas de sesiones y membresías en distintos estados
+- [x] 7.1 Ejecutar los caminos 6 y 7 del plan de verificación y registrar el resultado
+- [x] 7.2 Preparar los datos de demostración: pacientes con tres o cuatro tamizajes, semanas de sesiones y membresías en distintos estados

@@ -251,6 +251,51 @@ export type Database = {
         }
         Relationships: []
       }
+      membership_notices: {
+        Row: {
+          created_at: string
+          expires_on: string
+          id: string
+          kind: Database["public"]["Enums"]["membership_status"]
+          membership_id: string
+          notified_at: string | null
+          patient_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_on: string
+          id?: string
+          kind: Database["public"]["Enums"]["membership_status"]
+          membership_id: string
+          notified_at?: string | null
+          patient_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_on?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["membership_status"]
+          membership_id?: string
+          notified_at?: string | null
+          patient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membership_notices_membership_id_fkey"
+            columns: ["membership_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "membership_notices_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       memberships: {
         Row: {
           amount: number
@@ -1101,6 +1146,10 @@ export type Database = {
           person_specialty?: Database["public"]["Enums"]["professional_specialty"]
         }
         Returns: string
+      }
+      review_membership_expiry: {
+        Args: { notice_days?: number }
+        Returns: Json
       }
       routine_assignment_context: {
         Args: { target_patient: string }
