@@ -351,6 +351,7 @@ export type Database = {
           goal: Database["public"]["Enums"]["patient_goal"] | null
           level: Database["public"]["Enums"]["fitness_level"] | null
           notes: string | null
+          onboarding_step: number
           profile_id: string
           sex: string | null
         }
@@ -364,6 +365,7 @@ export type Database = {
           goal?: Database["public"]["Enums"]["patient_goal"] | null
           level?: Database["public"]["Enums"]["fitness_level"] | null
           notes?: string | null
+          onboarding_step?: number
           profile_id: string
           sex?: string | null
         }
@@ -377,6 +379,7 @@ export type Database = {
           goal?: Database["public"]["Enums"]["patient_goal"] | null
           level?: Database["public"]["Enums"]["fitness_level"] | null
           notes?: string | null
+          onboarding_step?: number
           profile_id?: string
           sex?: string | null
         }
@@ -385,6 +388,53 @@ export type Database = {
             foreignKeyName: "patient_details_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      person_registrations: {
+        Row: {
+          created_by: string
+          email: string
+          expires_at: string
+          full_name: string
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          specialty:
+            | Database["public"]["Enums"]["professional_specialty"]
+            | null
+          token: string
+        }
+        Insert: {
+          created_by: string
+          email: string
+          expires_at?: string
+          full_name: string
+          phone?: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          specialty?:
+            | Database["public"]["Enums"]["professional_specialty"]
+            | null
+          token?: string
+        }
+        Update: {
+          created_by?: string
+          email?: string
+          expires_at?: string
+          full_name?: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          specialty?:
+            | Database["public"]["Enums"]["professional_specialty"]
+            | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "person_registrations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -461,6 +511,48 @@ export type Database = {
             | null
         }
         Relationships: []
+      }
+      routine_assignment_events: {
+        Row: {
+          created_at: string
+          id: string
+          outcome: string
+          patient_id: string
+          payload: Json
+          routine_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          outcome: string
+          patient_id: string
+          payload: Json
+          routine_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          outcome?: string
+          patient_id?: string
+          payload?: Json
+          routine_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "routine_assignment_events_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "routine_assignment_events_routine_id_fkey"
+            columns: ["routine_id"]
+            isOneToOne: false
+            referencedRelation: "routines"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       routine_days: {
         Row: {
@@ -969,6 +1061,20 @@ export type Database = {
     Functions: {
       can_read_routine: { Args: { target_routine: string }; Returns: boolean }
       can_write_routine: { Args: { target_routine: string }; Returns: boolean }
+      cancel_person_registration: {
+        Args: { registration_token: string }
+        Returns: undefined
+      }
+      commit_routine_assignment: {
+        Args: {
+          assignment_notes?: string
+          excluded_exercises?: string[]
+          expected_context: Json
+          selected_rule?: string
+          target_patient: string
+        }
+        Returns: Json
+      }
       copy_routine_template: {
         Args: { patient_id: string; template_id: string }
         Returns: string
@@ -977,12 +1083,39 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      deactivate_person: {
+        Args: { expected_assignments: number; person_id: string }
+        Returns: undefined
+      }
+      finish_patient_onboarding: {
+        Args: { conditions: Json; patient_id: string }
+        Returns: undefined
+      }
       is_admin: { Args: never; Returns: boolean }
+      prepare_person_registration: {
+        Args: {
+          person_email: string
+          person_name: string
+          person_phone: string
+          person_role: Database["public"]["Enums"]["user_role"]
+          person_specialty?: Database["public"]["Enums"]["professional_specialty"]
+        }
+        Returns: string
+      }
+      routine_assignment_context: {
+        Args: { target_patient: string }
+        Returns: Json
+      }
       treats_patient: { Args: { target: string }; Returns: boolean }
     }
     Enums: {
       alert_severity: "info" | "warning" | "critical"
-      alert_type: "pain" | "skipped" | "membership_expiring" | "low_attendance"
+      alert_type:
+        | "pain"
+        | "skipped"
+        | "membership_expiring"
+        | "low_attendance"
+        | "routine_assignment"
       billing_period: "monthly" | "quarterly" | "semiannual" | "annual"
       condition_severity: "mild" | "moderate" | "severe"
       fitness_level: "beginner" | "intermediate" | "advanced"
@@ -995,7 +1128,7 @@ export type Database = {
         | "rehab"
         | "general_health"
       professional_specialty: "training" | "physio"
-      routine_status: "active" | "completed" | "archived"
+      routine_status: "active" | "completed" | "archived" | "pending_review"
       service_category:
         | "nutrition"
         | "physio"
@@ -1133,7 +1266,13 @@ export const Constants = {
   public: {
     Enums: {
       alert_severity: ["info", "warning", "critical"],
-      alert_type: ["pain", "skipped", "membership_expiring", "low_attendance"],
+      alert_type: [
+        "pain",
+        "skipped",
+        "membership_expiring",
+        "low_attendance",
+        "routine_assignment",
+      ],
       billing_period: ["monthly", "quarterly", "semiannual", "annual"],
       condition_severity: ["mild", "moderate", "severe"],
       fitness_level: ["beginner", "intermediate", "advanced"],
@@ -1147,7 +1286,7 @@ export const Constants = {
         "general_health",
       ],
       professional_specialty: ["training", "physio"],
-      routine_status: ["active", "completed", "archived"],
+      routine_status: ["active", "completed", "archived", "pending_review"],
       service_category: [
         "nutrition",
         "physio",

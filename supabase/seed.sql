@@ -79,3 +79,6 @@ insert into public.patient_details (profile_id, goal, level, environment, equipm
 
 insert into public.patient_conditions (patient_id, body_part, severity, notes) values
   ('00000000-0000-4000-a000-000000000004', 'knee', 'moderate', 'Molestia al bajar escaleras.');
+
+-- Los pacientes de demostración ya tienen sus tres pasos completos.
+update public.patient_details set onboarding_step = 3;

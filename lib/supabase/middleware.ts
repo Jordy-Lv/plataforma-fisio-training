@@ -1,3 +1,4 @@
+import type { Database } from "@/lib/db/types";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseConfig } from "@/lib/supabase/config";
@@ -5,7 +6,7 @@ import { getSupabaseConfig } from "@/lib/supabase/config";
 export async function updateSession(request: NextRequest) {
   const response = NextResponse.next({ request });
   const { url, anonKey } = getSupabaseConfig();
-  const supabase = createServerClient(url, anonKey, {
+  const supabase = createServerClient<Database>(url, anonKey, {
     cookies: {
       getAll() {
         return request.cookies.getAll();
@@ -26,7 +27,7 @@ export async function updateSession(request: NextRequest) {
   if (data?.claims.sub) {
     const { data: profile, error } = await supabase
       .from("profiles")
-      .select("is_active")
+      .select("is_active, role")
       .eq("id", data.claims.sub)
       .maybeSingle();
 
@@ -58,6 +59,37 @@ export async function updateSession(request: NextRequest) {
       response.cookies.getAll().forEach((cookie) => denied.cookies.set(cookie));
       denied.headers.set("Cache-Control", "private, no-store");
       return denied;
+    }
+    const pathname = request.nextUrl.pathname;
+    if (
+      profile.role === "patient" &&
+      ![
+        "/patient/onboarding",
+        "/actualizar-contrasena",
+        "/auth/callback",
+      ].includes(pathname)
+    ) {
+      const { data: details, error: detailsError } = await supabase
+        .from("patient_details")
+        .select("onboarding_step")
+        .eq("profile_id", data.claims.sub)
+        .maybeSingle();
+      if (detailsError)
+        return NextResponse.json(
+          { error: "No se pudo consultar tu avance." },
+          { status: 503, headers: { "Cache-Control": "private, no-store" } },
+        );
+      if (details?.onboarding_step !== 3) {
+        const onboarding = NextResponse.redirect(
+          new URL("/patient/onboarding", request.url),
+          request.method === "GET" ? 307 : 303,
+        );
+        response.cookies
+          .getAll()
+          .forEach((cookie) => onboarding.cookies.set(cookie));
+        onboarding.headers.set("Cache-Control", "private, no-store");
+        return onboarding;
+      }
     }
     response.headers.set("Cache-Control", "private, no-store");
   }

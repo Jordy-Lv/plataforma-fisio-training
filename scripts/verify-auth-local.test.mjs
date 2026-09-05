@@ -112,6 +112,8 @@ test("Autenticación y cookies SSR contra Supabase local", { timeout: 120_000 },
     assert.equal(registered.error, null);
     userId = registered.data.user?.id;
     assert.ok(userId);
+    const profile = await auth.from("patient_details").insert({ profile_id: userId, goal: "general_health", level: "beginner", environment: "home", equipment: ["none"], onboarding_step: 3 });
+    assert.equal(profile.error, null);
     assert.equal((await auth.auth.signOut()).error, null);
     const signedIn = await auth.auth.signInWithPassword({ email, password });
     assert.equal(signedIn.error, null);

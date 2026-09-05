@@ -1,0 +1,28 @@
+export const bodyParts = [
+  "neck",
+  "shoulder",
+  "elbow",
+  "wrist",
+  "upper_back",
+  "lower_back",
+  "hip",
+  "knee",
+  "ankle",
+  "foot",
+  "core",
+  "other",
+] as const;
+export const bodyPartLabels: Record<(typeof bodyParts)[number], string> = {
+  neck: "Cuello",
+  shoulder: "Hombro",
+  elbow: "Codo",
+  wrist: "Muñeca",
+  upper_back: "Espalda alta",
+  lower_back: "Espalda baja",
+  hip: "Cadera",
+  knee: "Rodilla",
+  ankle: "Tobillo",
+  foot: "Pie",
+  core: "Abdomen",
+  other: "Otra zona",
+};

@@ -33,9 +33,22 @@ export async function getActiveProfile() {
   };
 }
 
-export async function requireRole(role: UserRole) {
+export async function requireRole(
+  role: UserRole,
+  options: { allowOnboarding?: boolean } = {},
+) {
   const profile = await getActiveProfile();
   if (!profile) redirect("/login");
   if (profile.role !== role) redirect(rolePaths[profile.role]);
+  if (role === "patient" && !options.allowOnboarding) {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("patient_details")
+      .select("onboarding_step")
+      .eq("profile_id", profile.id)
+      .maybeSingle();
+    if (error) throw new Error("No se pudo consultar el avance de tu perfil.");
+    if (data?.onboarding_step !== 3) redirect("/patient/onboarding");
+  }
   return profile;
 }
