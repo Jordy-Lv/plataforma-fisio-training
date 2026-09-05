@@ -71,6 +71,11 @@ Un commit hace una cosa. Si el mensaje necesita una "y", probablemente son dos c
   `profiles` / `care_assignments`.
 - CI verde es requisito. Nada entra en rojo, ni "porque el fallo no tiene que ver".
 
+> Mientras GitHub Actions no esté habilitado en la cuenta (ver
+> [`docs/08-onboarding-equipo.md`](docs/08-onboarding-equipo.md)), quien abre el PR pega en
+> él la salida de `bash scripts/verify.sh`. La regla no cambia: sin verificaciones en
+> verde, no hay merge.
+
 ### Qué mira quien revisa
 
 1. ¿Hay RLS en las tablas nuevas y las políticas dicen lo que dice

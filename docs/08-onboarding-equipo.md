@@ -82,6 +82,14 @@ producción.
 | `npm run db:types` | Regenera `lib/db/types.ts` desde el esquema |
 | `npm run seed:exercises` | Importa free-exercise-db a `exercises` + Storage |
 | `npx supabase stop` | Apaga los contenedores |
+| `bash scripts/verify.sh` | Corre todas las verificaciones de CI en local |
+
+> **GitHub Actions está pendiente de habilitar en la cuenta.** Los workflows fallan al
+> arrancar (`startup_failure`) incluso con un archivo trivial, lo que apunta a límites de
+> minutos o de gasto en la configuración de facturación, no al proyecto. Hasta que se
+> resuelva, `bash scripts/verify.sh` **es** el control de calidad: córrelo antes de cada
+> PR. El workflow ya está escrito en `.github/workflows/ci.yml` y funcionará sin cambios en
+> cuanto Actions arranque.
 
 ## 6. Verificar que todo quedó bien
 
