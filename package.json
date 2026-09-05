@@ -17,6 +17,7 @@
     "test:auth:screens": "node --test scripts/verify-auth-screens.test.mjs",
     "test:rls": "node --test scripts/verify-rls.test.mjs",
     "test:storage": "node --test scripts/verify-catalog-storage.test.mjs",
+    "test:catalog": "node --test scripts/verify-catalog-list.test.mjs",
     "seed:exercises": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/seed-exercises.ts",
     "db:types": "supabase gen types typescript --local --schema public > lib/db/types.ts"
   },
