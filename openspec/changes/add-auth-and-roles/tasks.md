@@ -1,8 +1,8 @@
 ## 1. Base de autenticación
 
-- [ ] 1.1 Configurar Supabase Auth con correo y contraseña y verificar que `supabase start` local permite registrar e iniciar sesión
-- [ ] 1.2 Implementar `lib/supabase/server.ts` y `lib/supabase/browser.ts` y verificar que una página server-side lee la sesión
-- [ ] 1.3 Implementar el middleware de refresco de sesión y verificar que la sesión sobrevive a recargar la página
+- [x] 1.1 Configurar Supabase Auth con correo y contraseña y verificar que `supabase start` local permite registrar e iniciar sesión
+- [x] 1.2 Implementar `lib/supabase/server.ts` y `lib/supabase/browser.ts` y verificar que una página server-side lee la sesión
+- [x] 1.3 Implementar el middleware de refresco de sesión y verificar que la sesión sobrevive a recargar la página
 - [ ] 1.4 Crear el trigger que inserta en `profiles` al crear un usuario y verificar con `npm run db:reset` que ningún usuario queda sin perfil
 
 ## 2. Autorización

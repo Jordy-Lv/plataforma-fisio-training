@@ -18,13 +18,12 @@ En este orden, unos 25 minutos:
 |---|---|---|
 | Node.js | 22 (ver `.nvmrc`) | `node --version` |
 | npm | 10+ | `npm --version` |
-| Docker Desktop | corriendo | `docker ps` |
-| Supabase CLI | última | `supabase --version` |
+| Docker Desktop o Colima | corriendo | `docker ps` |
+| Supabase CLI | fijada en `package.json` | `npx supabase --version` |
 | OpenSpec CLI | 1.10+ | `openspec --version` |
 
 ```bash
 nvm use                       # toma la versión de .nvmrc
-brew install supabase/tap/supabase
 npm install -g openspec
 ```
 
@@ -37,28 +36,43 @@ en contenedores.
 git clone git@github.com:Jordy-Lv/plataforma-fisio-training.git
 cd plataforma-fisio-training
 npm install
-cp .env.example .env.local
+npm run db:start
+npm run db:env
 ```
 
-Para desarrollo local con Supabase en tu máquina, `supabase start` imprime la URL y la
-`anon key` al terminar: esos son los valores que van en `.env.local`. Las credenciales del
+Para desarrollo local, `npm run db:env` lee la URL y la `anon key` del proyecto local y
+crea `.env.local` sin imprimir claves ni incluir una clave privilegiada. Si el archivo ya
+existe, conserva su contenido. Para configurarlo manualmente, copia `.env.example` y
+consulta `npm run db:status`. Las credenciales del
 proyecto compartido en la nube las reparte el owner técnico — **no se piden por chat
 público ni se commitean**.
 
 ## 3. Levantar
 
 ```bash
-npx supabase start      # Postgres + Auth + Storage locales (tarda la primera vez)
-npm run db:reset        # aplica migraciones y siembra datos de ejemplo
+npm run db:start        # puede repetirse si el entorno ya está encendido
 npm run dev             # http://localhost:3000
 ```
+
+El arranque actual incluye Postgres, Auth, la API y un buzón local en
+`http://127.0.0.1:54324`. Storage, Studio, Realtime, Analytics y Edge Runtime están
+desactivados para reducir consumo. Storage se habilitará al implementar la biblioteca de
+ejercicios; Realtime queda fuera de la demo según el ADR 0006.
+
+Solo en este entorno local el registro con correo no exige confirmación. Esta
+configuración no se ha aplicado a ningún proyecto remoto.
+
+**Estado actual:** la portada y la infraestructura de sesión funcionan; todavía no hay
+migración de negocio, seed de usuarios, RLS ni pantallas de acceso. Las secciones de
+usuarios demo y recorridos de abajo describen el resultado esperado cuando se complete
+la cimentación. El seed está desactivado hasta entonces.
 
 `npm run db:reset` borra y recrea la base local. Es destructivo por diseño y se usa a
 diario; si tienes datos locales que quieres conservar, no lo corras.
 
 ## 4. Usuarios de prueba
 
-Los crea el seed. Contraseña para todos: `demo1234`.
+Pendientes de crear mediante el seed. Contraseña prevista para todos: `demo1234`.
 
 | Correo | Rol |
 |---|---|
@@ -78,10 +92,14 @@ producción.
 | `npm run build` | Build de producción — tiene que pasar antes de cada PR |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint |
-| `npm run db:reset` | Recrea la base local y siembra |
-| `npm run db:types` | Regenera `lib/db/types.ts` desde el esquema |
-| `npm run seed:exercises` | Importa free-exercise-db a `exercises` + Storage |
-| `npx supabase stop` | Apaga los contenedores |
+| `npm run db:start` | Enciende Supabase local |
+| `npm run db:stop` | Apaga los contenedores y conserva los datos |
+| `npm run db:status` | Muestra servicios y credenciales locales; no compartir su salida |
+| `npm run db:env` | Crea `.env.local` si no existe |
+| `npm run db:reset` | Recrea exclusivamente la base local; sin seed por ahora |
+| `npm run test:auth` | Prueba Auth y sesión SSR contra Supabase local encendido |
+| `npm run db:types` (pendiente) | Regenerará `lib/db/types.ts` con la migración inicial |
+| `npm run seed:exercises` (pendiente) | Importará free-exercise-db a `exercises` + Storage |
 | `bash scripts/verify.sh` | Corre todas las verificaciones de CI en local |
 
 > **GitHub Actions está pendiente de habilitar en la cuenta.** Los workflows fallan al
@@ -92,6 +110,13 @@ producción.
 > cuanto Actions arranque.
 
 ## 6. Verificar que todo quedó bien
+
+Para la base actual: ejecuta `npm run test:auth` con Node 22 y Supabase encendido,
+y después `bash scripts/verify.sh`. La prueba crea un usuario desechable y una aplicación
+Next.js temporal que utiliza los clientes y el middleware reales; elimina ambos al
+terminar. No publica rutas de diagnóstico en la aplicación ni usa una clave privilegiada.
+
+Los siguientes recorridos quedan pendientes hasta implementar las pantallas y el seed:
 
 1. `http://localhost:3000` carga sin errores en consola.
 2. Entras con `paciente@demo.local` y ves una rutina asignada.
