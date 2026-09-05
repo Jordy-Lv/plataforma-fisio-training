@@ -1,9 +1,9 @@
 ## 1. Tamizaje
 
-- [ ] 1.1 Formulario de registro de tamizaje para el profesional y el administrador; verificar que un profesional no asignado no puede
-- [ ] 1.2 Columna generada de IMC; verificar que coincide con el cálculo esperado para varios pares de peso y talla
-- [ ] 1.3 Historial de tamizajes de un paciente ordenado por fecha
-- [ ] 1.4 Verificar por API que un paciente no puede crear ni modificar tamizajes
+- [x] 1.1 Formulario de registro de tamizaje para el profesional y el administrador; verificar que un profesional no asignado no puede
+- [x] 1.2 Columna generada de IMC; verificar que coincide con el cálculo esperado para varios pares de peso y talla
+- [x] 1.3 Historial de tamizajes de un paciente ordenado por fecha
+- [x] 1.4 Verificar por API que un paciente no puede crear ni modificar tamizajes
 
 ## 2. Gráficas
 

@@ -31,7 +31,8 @@
     "seed:templates": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/seed-templates.ts",
     "seed:rules": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/seed-rules.ts",
     "db:types": "supabase gen types typescript --local --schema public > lib/db/types.ts",
-    "test:people": "node --test scripts/verify-people-onboarding.test.mjs"
+    "test:people": "node --test scripts/verify-people-onboarding.test.mjs",
+    "test:screenings": "node --test scripts/verify-progress-screenings.test.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
