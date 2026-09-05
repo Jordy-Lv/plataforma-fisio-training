@@ -3,14 +3,14 @@
 - [x] 1.1 Configurar Supabase Auth con correo y contraseña y verificar que `supabase start` local permite registrar e iniciar sesión
 - [x] 1.2 Implementar `lib/supabase/server.ts` y `lib/supabase/browser.ts` y verificar que una página server-side lee la sesión
 - [x] 1.3 Implementar el middleware de refresco de sesión y verificar que la sesión sobrevive a recargar la página
-- [ ] 1.4 Crear el trigger que inserta en `profiles` al crear un usuario y verificar con `npm run db:reset` que ningún usuario queda sin perfil
+- [x] 1.4 Crear el trigger que inserta en `profiles` al crear un usuario y verificar con `npm run db:reset` que ningún usuario queda sin perfil
 
 ## 2. Autorización
 
-- [ ] 2.1 Implementar las funciones `current_role()`, `is_admin()` y `treats_patient()` y verificar cada una con consultas directas en `psql`
-- [ ] 2.2 Escribir las políticas RLS de `profiles`, `patient_details`, `patient_conditions` y `care_assignments` según la matriz de `docs/04-roles-y-permisos.md`
-- [ ] 2.3 Verificar los seis casos del camino 9 del plan de verificación contra la API, no por la interfaz
-- [ ] 2.4 Añadir la restricción `check` de especialidad y verificar que rechaza profesional sin especialidad y paciente con especialidad
+- [x] 2.1 Implementar las funciones `current_role()`, `is_admin()` y `treats_patient()` y verificar cada una con consultas directas en `psql`
+- [x] 2.2 Escribir las políticas RLS de `profiles`, `patient_details`, `patient_conditions` y `care_assignments` según la matriz de `docs/04-roles-y-permisos.md`
+- [x] 2.3 Verificar los seis casos del camino 9 del plan de verificación contra la API, no por la interfaz
+- [x] 2.4 Añadir la restricción `check` de especialidad y verificar que rechaza profesional sin especialidad y paciente con especialidad
 
 ## 3. Pantallas de sesión
 
@@ -38,5 +38,5 @@
 
 ## 6. Cierre
 
-- [ ] 6.1 Ampliar el seed con los cuatro usuarios de prueba de `docs/08-onboarding-equipo.md` y verificar que los cuatro inician sesión
+- [x] 6.1 Ampliar el seed con los cuatro usuarios de prueba de `docs/08-onboarding-equipo.md` y verificar que los cuatro inician sesión
 - [ ] 6.2 Ejecutar el camino 1 completo del plan de verificación y registrar el resultado

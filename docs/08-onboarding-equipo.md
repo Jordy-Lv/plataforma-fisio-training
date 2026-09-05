@@ -62,24 +62,25 @@ ejercicios; Realtime queda fuera de la demo según el ADR 0006.
 Solo en este entorno local el registro con correo no exige confirmación. Esta
 configuración no se ha aplicado a ningún proyecto remoto.
 
-**Estado actual:** la portada y la infraestructura de sesión funcionan; todavía no hay
-migración de negocio, seed de usuarios, RLS ni pantallas de acceso. Las secciones de
-usuarios demo y recorridos de abajo describen el resultado esperado cuando se complete
-la cimentación. El seed está desactivado hasta entonces.
+**Estado actual:** el esquema completo, las funciones de autorización, RLS en las 21
+tablas y la semilla de personas ya están en la base; la infraestructura de sesión y las
+pantallas de acceso funcionan. Queda pendiente el contenido de cada slice: catálogo de
+ejercicios, plantillas, reglas, rutinas y seguimiento.
 
 `npm run db:reset` borra y recrea la base local. Es destructivo por diseño y se usa a
 diario; si tienes datos locales que quieres conservar, no lo corras.
 
 ## 4. Usuarios de prueba
 
-Pendientes de crear mediante el seed. Contraseña prevista para todos: `demo1234`.
+Los crea `npm run db:reset`. Contraseña para todos: `demo1234`.
 
 | Correo | Rol |
 |---|---|
 | `admin@demo.local` | `admin` |
 | `entrenador@demo.local` | `professional` / `training` |
 | `fisio@demo.local` | `professional` / `physio` |
-| `paciente@demo.local` | `patient` (con rutina, sesiones y tamizajes) |
+| `paciente@demo.local` | `patient`, con entrenador y fisioterapeuta asignados |
+| `paciente2@demo.local` | `patient` sin profesional asignado — existe para poder verificar el aislamiento del camino 9 |
 
 Estos usuarios existen **solo en local y en el entorno de demostración**. Nunca en
 producción.
@@ -96,9 +97,10 @@ producción.
 | `npm run db:stop` | Apaga los contenedores y conserva los datos |
 | `npm run db:status` | Muestra servicios y credenciales locales; no compartir su salida |
 | `npm run db:env` | Crea `.env.local` si no existe |
-| `npm run db:reset` | Recrea exclusivamente la base local; sin seed por ahora |
+| `npm run db:reset` | Recrea la base local y aplica la semilla de personas |
 | `npm run test:auth` | Prueba Auth y sesión SSR contra Supabase local encendido |
-| `npm run db:types` (pendiente) | Regenerará `lib/db/types.ts` con la migración inicial |
+| `npm run test:rls` | Camino 9: aislamiento de datos entre pacientes, contra la API |
+| `npm run db:types` | Regenera `lib/db/types.ts`; se commitea junto a la migración |
 | `npm run seed:exercises` (pendiente) | Importará free-exercise-db a `exercises` + Storage |
 | `bash scripts/verify.sh` | Corre todas las verificaciones de CI en local |
 

@@ -13,7 +13,9 @@
     "db:status": "supabase status",
     "db:env": "node scripts/setup-local-env.mjs",
     "db:reset": "supabase db reset --local",
-    "test:auth": "node --test scripts/verify-auth-local.test.mjs"
+    "test:auth": "node --test scripts/verify-auth-local.test.mjs",
+    "test:rls": "node --test scripts/verify-rls.test.mjs",
+    "db:types": "supabase gen types typescript --local --schema public > lib/db/types.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

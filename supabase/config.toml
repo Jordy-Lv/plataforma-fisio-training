@@ -18,7 +18,7 @@ enabled = true
 schema_paths = []
 
 [db.seed]
-enabled = false
+enabled = true
 
 [db.pooler]
 enabled = false
