@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Typecheck, lint y build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Hasta que exista el proyecto Next.js (día 1-2), CI no tiene nada que
+      # verificar y no debe dejar main en rojo.
+      - name: ¿Existe el proyecto?
+        id: proyecto
+        run: |
+          if [ -f package.json ]; then
+            echo "existe=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "existe=false" >> "$GITHUB_OUTPUT"
+            echo "package.json aún no existe: se omite la verificación."
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.proyecto.outputs.existe == 'true'
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Instalar dependencias
+        if: steps.proyecto.outputs.existe == 'true'
+        run: npm ci
+
+      - name: Typecheck
+        if: steps.proyecto.outputs.existe == 'true'
+        run: npm run typecheck
+
+      - name: Lint
+        if: steps.proyecto.outputs.existe == 'true'
+        run: npm run lint
+
+      - name: Build
+        if: steps.proyecto.outputs.existe == 'true'
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://ejemplo.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: clave-de-build
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
+        run: npm run build
+
+  openspec:
+    name: Validar specs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: npm install -g openspec@1
+      - run: openspec validate --all --strict
