@@ -16,13 +16,10 @@
  * Este archivo y el job de pg_cron son los dos únicos lugares del proyecto que
  * pueden usar la clave de servicio.
  */
-import { execFileSync } from "node:child_process";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
+import { entornoLocal } from "./helpers/supabase-admin.ts";
+import type { Equipment } from "../lib/catalog/equipment.ts";
 import type { Database } from "@/lib/db/types";
-
-const raiz = fileURLToPath(new URL("../", import.meta.url));
 
 const FUENTE = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main";
 const BUCKET = "exercise-media";
@@ -51,7 +48,7 @@ type Dificultad = Database["public"]["Enums"]["fitness_level"];
  * `exercises.equipment` con `patient_details.equipment`. Si el vocabulario del
  * registro cambia, este mapa es el único lugar que hay que tocar.
  */
-const EQUIPAMIENTO: Record<string, string> = {
+const EQUIPAMIENTO: Record<string, Equipment> = {
   "body only": "none",
   bands: "bands",
   dumbbell: "dumbbells",
@@ -74,28 +71,6 @@ const DIFICULTAD: Record<string, Dificultad> = {
   intermediate: "intermediate",
   expert: "advanced",
 };
-
-function entornoLocal() {
-  const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const clave = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (url && clave) return { url, clave };
-
-  // Sin variables de entorno se asume el Supabase local, igual que db:env.
-  const estado = JSON.parse(
-    execFileSync(path.join(raiz, "node_modules/.bin/supabase"), ["status", "--output", "json"], {
-      cwd: raiz,
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "pipe"],
-    }),
-  ) as { API_URL?: string; SERVICE_ROLE_KEY?: string };
-
-  if (!estado.API_URL || !estado.SERVICE_ROLE_KEY) {
-    throw new Error(
-      "Define SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY, o enciende Supabase local con npm run db:start.",
-    );
-  }
-  return { url: estado.API_URL, clave: estado.SERVICE_ROLE_KEY };
-}
 
 async function descargar(url: string): Promise<Response> {
   const respuesta = await fetch(url);

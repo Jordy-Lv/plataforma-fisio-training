@@ -2,6 +2,9 @@
   "name": "plataforma-fisio-training",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -18,8 +21,17 @@
     "test:rls": "node --test scripts/verify-rls.test.mjs",
     "test:storage": "node --test scripts/verify-catalog-storage.test.mjs",
     "test:catalog": "node --test scripts/verify-catalog-list.test.mjs",
+    "test:catalog:custom": "node --test scripts/verify-catalog-custom.test.mjs",
+    "test:templates": "node --test scripts/verify-catalog-templates.test.mjs",
+    "test:templates:seed": "node --test scripts/verify-templates-seed.test.mjs",
+    "test:rules:seed": "node --test scripts/verify-rules-seed.test.mjs",
+    "test:rules:panel": "node --test scripts/verify-rules-panel.test.mjs",
+    "test:rules": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/helpers/alias-hook.mjs --test scripts/verify-rules-engine.test.mjs",
     "seed:exercises": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/seed-exercises.ts",
-    "db:types": "supabase gen types typescript --local --schema public > lib/db/types.ts"
+    "seed:templates": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/seed-templates.ts",
+    "seed:rules": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/seed-rules.ts",
+    "db:types": "supabase gen types typescript --local --schema public > lib/db/types.ts",
+    "test:people": "node --test scripts/verify-people-onboarding.test.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

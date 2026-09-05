@@ -14,3 +14,13 @@ export async function requireStaff() {
   if (profile.role === "patient") redirect(rolePaths.patient);
   return profile;
 }
+
+/**
+ * Las plantillas las escribe solo el administrador. El profesional puede
+ * consultarlas —RLS se lo permite— pero no llega a las pantallas de alta.
+ */
+export async function requireAdmin() {
+  const profile = await requireStaff();
+  if (profile.role !== "admin") redirect(rolePaths[profile.role]);
+  return profile;
+}

@@ -61,3 +61,32 @@ export async function listExercises(filters: ExerciseFilters) {
     pages: Math.max(1, Math.ceil((count ?? 0) / pageSize)),
   };
 }
+
+export type ExerciseDetail = Pick<
+  ExerciseRow,
+  | "id"
+  | "name"
+  | "description"
+  | "media_url"
+  | "muscle_groups"
+  | "equipment"
+  | "environments"
+  | "difficulty"
+  | "contraindications"
+  | "is_custom"
+>;
+
+/** La ficha completa. Devuelve `null` si no existe o si RLS no lo deja ver. */
+export async function getExercise(id: string): Promise<ExerciseDetail | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("exercises")
+    .select(
+      "id, name, description, media_url, muscle_groups, equipment, environments, difficulty, contraindications, is_custom",
+    )
+    .eq("id", id)
+    .maybeSingle();
+  if (error)
+    throw new Error(`No se pudo consultar el ejercicio: ${error.message}`);
+  return data;
+}

@@ -75,3 +75,41 @@ export const difficultyLabels: Record<string, string> = {
 export function labelFor(labels: Record<string, string>, value: string) {
   return labels[value] ?? value;
 }
+
+/** Coincide con el enum `professional_specialty`: de qué equipo es la plantilla. */
+export const templateKinds = ["training", "physio"] as const;
+
+export type TemplateKind = (typeof templateKinds)[number];
+
+export const templateKindLabels: Record<TemplateKind, string> = {
+  training: "Entrenamiento",
+  physio: "Fisioterapia",
+};
+
+/**
+ * Coincide con el enum `patient_goal`. Las etiquetas están en tercera persona
+ * porque aquí las lee el equipo, no el paciente: en el registro, el mismo
+ * vocabulario se le presenta en primera persona.
+ */
+export const goals = [
+  "lose_weight",
+  "gain_muscle",
+  "performance",
+  "rehab",
+  "general_health",
+] as const;
+
+export type Goal = (typeof goals)[number];
+
+export const goalLabels: Record<Goal, string> = {
+  lose_weight: "Bajar de peso",
+  gain_muscle: "Ganar músculo",
+  performance: "Rendimiento",
+  rehab: "Rehabilitación",
+  general_health: "Salud general",
+};
+
+/** Coincide con el enum `fitness_level`; sus etiquetas son `difficultyLabels`. */
+export const levels = ["beginner", "intermediate", "advanced"] as const;
+
+export type Level = (typeof levels)[number];

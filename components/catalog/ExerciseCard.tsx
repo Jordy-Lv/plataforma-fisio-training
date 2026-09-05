@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   difficultyLabels,
   environmentLabels,
@@ -35,7 +36,7 @@ export function ExerciseCard({ exercise }: { exercise: ExerciseListItem }) {
   const restantes = exercise.muscle_groups.length - muscles.length;
 
   return (
-    <article className="flex w-full flex-col overflow-hidden rounded-2xl border border-border bg-surface">
+    <article className="relative flex w-full flex-col overflow-hidden rounded-2xl border border-border bg-surface focus-within:border-brand hover:border-brand">
       <div className="aspect-[4/3] bg-muted">
         {exercise.media_url ? (
           // Sin `next/image`: el origen de las imágenes es el bucket de
@@ -57,7 +58,16 @@ export function ExerciseCard({ exercise }: { exercise: ExerciseListItem }) {
 
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div className="flex items-start justify-between gap-2">
-          <h2 className="text-base font-semibold leading-6">{exercise.name}</h2>
+          <h2 className="text-base font-semibold leading-6">
+            {/* El enlace ocupa toda la tarjeta: en el teléfono se toca con el
+                pulgar sin apuntar al título. */}
+            <Link
+              href={`/exercises/${exercise.id}`}
+              className="after:absolute after:inset-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            >
+              {exercise.name}
+            </Link>
+          </h2>
           {exercise.is_custom && <Tag tone="brand">Propio</Tag>}
         </div>
 

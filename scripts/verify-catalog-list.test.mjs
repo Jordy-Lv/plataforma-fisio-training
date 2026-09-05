@@ -109,7 +109,7 @@ function locationOf(result) {
 function cardNames(html) {
   return [
     ...html.matchAll(
-      /<h2 class="text-base font-semibold leading-6">([^<]*)<\/h2>/g,
+      /<h2 class="text-base font-semibold leading-6">.*?<a[^>]*href="\/exercises\/[^"]+"[^>]*>([^<]*)<\/a>/gs,
     ),
   ].map((match) => decode(match[1]));
 }

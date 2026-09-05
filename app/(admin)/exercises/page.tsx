@@ -45,9 +45,17 @@ export default async function Page({
         Busca un ejercicio por su nombre o filtra por lo que el paciente tiene a
         mano.
       </p>
-      <Link href={rolePaths[profile.role]} className={`mb-6 mt-4 ${backLinkClass}`}>
-        Volver a mi panel
-      </Link>
+      <div className="mb-6 mt-4 flex flex-wrap gap-3">
+        <Link href={rolePaths[profile.role]} className={backLinkClass}>
+          Volver a mi panel
+        </Link>
+        <Link
+          href="/exercises/new"
+          className="inline-flex min-h-11 items-center rounded-lg bg-brand px-4 text-sm font-semibold text-brand-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        >
+          Crear ejercicio propio
+        </Link>
+      </div>
 
       <ExerciseFilters filters={filters} />
 
