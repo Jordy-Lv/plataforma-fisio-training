@@ -25,6 +25,13 @@ export const measurementLabels: Record<Measurement, string> = {
   calf_cm: "Pantorrilla",
 };
 
+/**
+ * El negocio opera en Colombia: la fecha de "hoy" y la hora de un registro se
+ * leen en esa zona, no en la del servidor. Sin esto, una asistencia tomada a
+ * las siete de la noche quedaría fechada al día siguiente.
+ */
+const timeZone = "America/Bogota";
+
 const numberFormat = new Intl.NumberFormat("es-CO", {
   maximumFractionDigits: 2,
 });
@@ -49,7 +56,59 @@ export function formatDate(value: string) {
   return dateFormat.format(new Date(`${value}T00:00:00Z`));
 }
 
-/** La fecha de hoy en el formato que espera un `input[type=date]`. */
+const timeFormat = new Intl.DateTimeFormat("es-CO", {
+  hour: "numeric",
+  minute: "2-digit",
+  timeZone,
+});
+
+/**
+ * La hora de un `timestamptz`, o `null` si la columna viene vacía —es lo que
+ * ocurre cuando se registra un día pasado, del que nadie recuerda la hora.
+ */
+export function formatTime(value: string | null | undefined) {
+  return value === null || value === undefined ? null : timeFormat.format(new Date(value));
+}
+
+const shortDateFormat = new Intl.DateTimeFormat("es-CO", {
+  day: "numeric",
+  month: "short",
+  timeZone: "UTC",
+});
+
+/** La fecha como cabe en el eje de una gráfica: "5 sept". */
+export function formatShortDate(value: string) {
+  return shortDateFormat.format(new Date(`${value}T00:00:00Z`));
+}
+
+const monthFormat = new Intl.DateTimeFormat("es-CO", {
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+/** El mes de una fecha `YYYY-MM-DD`, para encabezar un resumen. */
+export function formatMonth(value: string) {
+  return monthFormat.format(new Date(`${value}T00:00:00Z`));
+}
+
+/**
+ * La fecha de hoy en el formato que esperan un `input[type=date]` y una
+ * columna `date`. `en-CA` es el truco estándar para obtener `YYYY-MM-DD`.
+ */
 export function today() {
-  return new Date().toISOString().slice(0, 10);
+  return new Intl.DateTimeFormat("en-CA", { timeZone }).format(new Date());
+}
+
+/** El primer día del mes en curso, para acotar el resumen mensual. */
+export function monthStart() {
+  return `${today().slice(0, 7)}-01`;
+}
+
+/**
+ * "1 vez" y "3 veces": el plural en español no sale de añadir una `s`, así que
+ * el recuento de asistencias se escribe aquí y no en cada pantalla.
+ */
+export function formatTimes(count: number) {
+  return count === 1 ? "1 vez" : `${count} veces`;
 }

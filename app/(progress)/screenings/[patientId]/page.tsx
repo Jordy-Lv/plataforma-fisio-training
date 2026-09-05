@@ -64,6 +64,12 @@ export default async function Page({
         <Link href="/screenings" className={linkClass}>
           Volver al seguimiento
         </Link>
+        <Link href={`/attendance/${patient.id}`} className={linkClass}>
+          Ver su asistencia
+        </Link>
+        <Link href={`/evolution/${patient.id}`} className={linkClass}>
+          Ver su evolución
+        </Link>
       </div>
 
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-start">

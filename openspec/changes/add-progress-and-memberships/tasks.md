@@ -7,19 +7,19 @@
 
 ## 2. Gráficas
 
-- [ ] 2.1 Agregación de datos de evolución en el servidor y gráfica de peso y medidas con Recharts
-- [ ] 2.2 Estado con un solo tamizaje: valor más mensaje explicativo, sin gráfica vacía
-- [ ] 2.3 Estado sin tamizajes con mensaje explicativo
-- [ ] 2.4 Verificar en teléfono de 375 px que la gráfica no desborda horizontalmente
-- [ ] 2.5 Gráfica de progresión de carga por ejercicio a partir de `session_logs`; verificar con datos del seed
-- [ ] 2.6 Estado de progresión con un solo registro
+- [x] 2.1 Agregación de datos de evolución en el servidor y gráfica de peso y medidas con Recharts
+- [x] 2.2 Estado con un solo tamizaje: valor más mensaje explicativo, sin gráfica vacía
+- [x] 2.3 Estado sin tamizajes con mensaje explicativo
+- [x] 2.4 Verificar en teléfono de 375 px que la gráfica no desborda horizontalmente
+- [x] 2.5 Gráfica de progresión de carga por ejercicio a partir de `session_logs`; verificar con datos del seed
+- [x] 2.6 Estado de progresión con un solo registro
 
 ## 3. Asistencia
 
-- [ ] 3.1 Registro de asistencia por el profesional o el administrador; verificar el rechazo del duplicado en la misma fecha
-- [ ] 3.2 Historial de asistencia por paciente y resumen del mes en curso
-- [ ] 3.3 Vista del paciente con sus propias asistencias; verificar por API que no ve las de otro
-- [ ] 3.4 Verificar que un paciente no puede registrar su propia asistencia
+- [x] 3.1 Registro de asistencia por el profesional o el administrador; verificar el rechazo del duplicado en la misma fecha
+- [x] 3.2 Historial de asistencia por paciente y resumen del mes en curso
+- [x] 3.3 Vista del paciente con sus propias asistencias; verificar por API que no ve las de otro
+- [x] 3.4 Verificar que un paciente no puede registrar su propia asistencia
 
 ## 4. Planes y servicios
 
