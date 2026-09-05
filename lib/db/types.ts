@@ -969,6 +969,10 @@ export type Database = {
     Functions: {
       can_read_routine: { Args: { target_routine: string }; Returns: boolean }
       can_write_routine: { Args: { target_routine: string }; Returns: boolean }
+      copy_routine_template: {
+        Args: { patient_id: string; template_id: string }
+        Returns: string
+      }
       current_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]

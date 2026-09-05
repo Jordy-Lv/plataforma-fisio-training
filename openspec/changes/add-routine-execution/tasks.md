@@ -1,11 +1,11 @@
 ## 1. Asignación con snapshot
 
 - [ ] 1.1 Acordar con el slice 2 la firma de `evaluateRules` y dejarla fijada por escrito
-- [ ] 1.2 Implementar la función de Postgres que copia plantilla → rutina en una transacción; verificar que un fallo a medias no deja rutina parcial
+- [x] 1.2 Implementar la función de Postgres que copia plantilla → rutina en una transacción; verificar que un fallo a medias no deja rutina parcial
 - [ ] 1.3 Server action de asignación: evaluar reglas, copiar, aplicar el filtro de contraindicaciones y registrar qué se excluyó
-- [ ] 1.4 Verificar que asignar la misma plantilla a tres pacientes deja `template_items` idéntica
+- [x] 1.4 Verificar que asignar la misma plantilla a tres pacientes deja `template_items` idéntica
 - [ ] 1.5 Manejar el caso sin coincidencia de reglas: sin rutina, con alerta al profesional; verificar el mensaje en la vista del paciente
-- [ ] 1.6 Cerrar la rutina anterior del mismo tipo al asignar una nueva; verificar que el historial de sesiones se conserva
+- [x] 1.6 Cerrar la rutina anterior del mismo tipo al asignar una nueva; verificar que el historial de sesiones se conserva
 
 ## 2. Ajuste por el profesional
 
@@ -13,7 +13,7 @@
 - [ ] 2.2 Editar series, repeticiones, peso objetivo y descanso, marcando el ítem como modificado
 - [ ] 2.3 Eliminar, añadir y sustituir ejercicios desde el catálogo
 - [ ] 2.4 Verificar el camino 3 del plan de verificación: tras ajustar, `template_items` no cambió
-- [ ] 2.5 Verificar por API que un paciente no puede escribir en `routine_items`
+- [x] 2.5 Verificar por API que un paciente no puede escribir en `routine_items`
 
 ## 3. Vista del paciente
 
