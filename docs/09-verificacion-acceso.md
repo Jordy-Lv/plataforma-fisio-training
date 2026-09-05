@@ -1,6 +1,6 @@
 # Verificación de las pantallas de acceso
 
-Fecha: 5 de septiembre de 2026. Change: `add-auth-and-roles`, tareas 3.1–3.3.
+Fecha: 5 de septiembre de 2026. Change: `add-auth-and-roles`, tareas 3.1–3.4.
 
 ## Preparación
 
@@ -29,6 +29,12 @@ en el buzón local Mailpit. No ejecutar un reset de base de datos durante las pr
 - Administrador, profesional y paciente llegan a su panel. Los intentos de entrar
   a otro panel regresan al panel propio. Tras cerrar sesión ya no pueden entrar.
 - Un perfil inactivo no conserva cookies de acceso en la aplicación.
+- Dar de baja un administrador, profesional o paciente con sesión abierta bloquea
+  la siguiente petición, borra las cookies e invalida el token de renovación.
+  Verificado con sesiones vigentes y forzando su renovación.
+- Las peticiones POST de sesiones dadas de baja se rechazan antes de ejecutar acciones.
+- Un enlace de recuperación enviado antes de la baja no permite conservar sesión
+  ni acceder al cambio de contraseña después de ella.
 - Un enlace inválido no permite acceder al formulario de cambio de contraseña.
 - El correo llega a Mailpit; el enlace permite guardar una contraseña nueva;
   las contraseñas diferentes se rechazan; la anterior deja de funcionar y la nueva
@@ -41,10 +47,15 @@ en el buzón local Mailpit. No ejecutar un reset de base de datos durante las pr
 
 ## Límites y continuación
 
-La tarea 3.4 sigue pendiente. La aplicación rechaza perfiles inactivos y cierra la
-sesión recién obtenida, pero esto **no impide la emisión inicial de una sesión por
-Supabase Auth**. Hace falta aplicar y probar el bloqueo en ese servicio, incluyendo
-el acceso directo por API, antes de marcar la tarea completa.
+La tarea 3.4 implementa el bloqueo en login, middleware y callback según la
+aclaración del reparto de trabajo. Las pruebas de pantallas cubren nueve escenarios,
+además de los seis escenarios existentes de sesión SSR.
+
+El bloqueo es de la aplicación Next.js: no cambia el endpoint de autenticación de
+Supabase ni sus políticas. Una llamada directa a Supabase todavía puede emitir un
+token inicialmente. El middleware comprueba `profiles.is_active` antes de servir
+contenido; los callbacks y el login cierran una sesión obtenida si el perfil está
+inactivo. No se usa la clave de servicio ni se modifica la migración inicial.
 
 Los paneles actuales son entradas protegidas con un estado inicial; no implementan
 la gestión de personas, las rutinas ni el onboarding. Están en `app/(auth)/` para

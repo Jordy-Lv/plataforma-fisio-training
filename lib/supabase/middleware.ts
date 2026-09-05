@@ -22,7 +22,45 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getClaims();
+  const { data } = await supabase.auth.getClaims();
+  if (data?.claims.sub) {
+    const { data: profile, error } = await supabase
+      .from("profiles")
+      .select("is_active")
+      .eq("id", data.claims.sub)
+      .maybeSingle();
+
+    if (error) {
+      return NextResponse.json(
+        { error: "No se pudo verificar tu acceso. Inténtalo de nuevo." },
+        { status: 503, headers: { "Cache-Control": "private, no-store" } },
+      );
+    }
+
+    if (!profile?.is_active) {
+      const { error: signOutError } = await supabase.auth.signOut({
+        scope: "local",
+      });
+      if (signOutError) {
+        return NextResponse.json(
+          {
+            error:
+              "Tu acceso está bloqueado. No se pudo cerrar la sesión; inténtalo de nuevo.",
+          },
+          { status: 503, headers: { "Cache-Control": "private, no-store" } },
+        );
+      }
+      const destination = new URL("/login?error=inactive", request.url);
+      const denied = NextResponse.redirect(
+        destination,
+        request.method === "GET" ? 307 : 303,
+      );
+      response.cookies.getAll().forEach((cookie) => denied.cookies.set(cookie));
+      denied.headers.set("Cache-Control", "private, no-store");
+      return denied;
+    }
+    response.headers.set("Cache-Control", "private, no-store");
+  }
 
   const forwarded = NextResponse.next({ request });
   forwarded.headers.forEach((value, name) => response.headers.set(name, value));

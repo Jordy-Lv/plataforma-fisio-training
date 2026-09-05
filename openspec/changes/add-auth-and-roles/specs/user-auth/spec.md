@@ -24,7 +24,25 @@ la sesión activa entre visitas mientras no se cierre explícitamente.
 #### Scenario: Persona dada de baja
 
 - **WHEN** una persona con `is_active = false` intenta iniciar sesión
-- **THEN** el sistema rechaza el acceso y no crea sesión
+- **THEN** el sistema rechaza el acceso a la aplicación y no conserva cookies de sesión;
+  si Supabase emitió una sesión durante el login o el callback, la aplicación cierra
+  esa sesión antes de permitir el acceso
+
+#### Scenario: Baja con sesión abierta
+
+- **WHEN** una persona con sesión iniciada pasa a `is_active = false`
+- **THEN** la siguiente petición a la aplicación comprueba el estado en `profiles`,
+  cierra la sesión y redirige al acceso; esto también aplica si la sesión se renueva
+
+#### Scenario: Recuperación después de una baja
+
+- **WHEN** una persona dada de baja abre un enlace de recuperación válido
+- **THEN** el callback cierra la sesión obtenida y no permite cambiar la contraseña
+
+#### Scenario: No se puede comprobar el estado
+
+- **WHEN** falla la consulta a `profiles` durante una petición autenticada
+- **THEN** la aplicación rechaza temporalmente la petición sin servir contenido protegido
 
 #### Scenario: Sesión persistente en la PWA
 
