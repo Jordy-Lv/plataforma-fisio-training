@@ -37,16 +37,17 @@ export default async function Page({
     <Workspace
       title={patient.full_name ?? "Paciente sin nombre"}
       name={profile.fullName}
+      actions={
+        <>
+          <ButtonLink variant="ghost" href={`/screenings/${patient.id}`}>
+            Sus tamizajes
+          </ButtonLink>
+          <ButtonLink variant="ghost" href={`/attendance/${patient.id}`}>
+            Su asistencia
+          </ButtonLink>
+        </>
+      }
     >
-      <div className="mb-8 -mt-4 flex flex-wrap gap-3">
-        <ButtonLink href={`/screenings/${patient.id}`} >
-          Sus tamizajes
-        </ButtonLink>
-        <ButtonLink href={`/attendance/${patient.id}`} >
-          Su asistencia
-        </ButtonLink>
-      </div>
-
       <div className="grid gap-10">
         <section aria-labelledby="medidas">
           <h2 id="medidas" className="mb-1 text-xl font-semibold">

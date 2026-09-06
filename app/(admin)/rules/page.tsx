@@ -2,12 +2,13 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Workspace } from "@/components/auth/Workspace";
 import { MoveRuleForm } from "@/components/catalog/RuleControls";
-import { rolePaths } from "@/lib/auth/session";
 import { requireStaff } from "@/lib/catalog/access";
 import { describeConditions } from "@/lib/catalog/describe-rule";
 import { listRules } from "@/lib/catalog/rule-queries";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/ButtonLink";
+import { cardVariants } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 export const metadata: Metadata = {
   title: "Reglas de asignación",
@@ -25,37 +26,27 @@ export default async function Page({
   const activas = rules.filter((rule) => rule.is_active);
 
   return (
-    <Workspace title="Reglas de asignación" name={profile.fullName}>
-      <p className="-mt-4 max-w-2xl leading-7 text-muted-foreground">
-        Cuando un paciente termina su registro se evalúan estas reglas de
-        arriba abajo y gana la primera que coincide con su perfil. Si ninguna
-        coincide, no se le asigna nada: queda a la espera de su profesional.
-      </p>
-
-      <div className="mb-6 mt-4 flex flex-wrap gap-3">
-        <ButtonLink href={rolePaths[profile.role]}>
-          Volver a mi panel
-        </ButtonLink>
-        <ButtonLink href="/rules/simulador">
-          Probar con un perfil
-        </ButtonLink>
-        <ButtonLink href="/templates">
-          Plantillas de rutina
-        </ButtonLink>
-        {esAdmin && (
-          <Link
-            href="/rules/new"
-            className="inline-flex min-h-11 items-center rounded-lg bg-brand px-4 text-sm font-semibold text-brand-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-          >
-            Crear regla
-          </Link>
-        )}
-      </div>
-
+    <Workspace
+      title="Reglas de asignación"
+      name={profile.fullName}
+      description="Cuando un paciente termina su registro se evalúan estas reglas de arriba abajo y gana la primera que coincide con su perfil. Si ninguna coincide, no se le asigna nada: queda a la espera de su profesional."
+      actions={
+        <>
+          <ButtonLink variant="ghost" href="/rules/simulador">
+            Probar con un perfil
+          </ButtonLink>
+          {esAdmin && (
+            <ButtonLink variant="default" href="/rules/new">
+              Crear regla
+            </ButtonLink>
+          )}
+        </>
+      }
+    >
       {eliminada && (
         <p
           role="status"
-          className="mb-6 rounded-lg bg-brand-soft p-3 text-sm text-foreground"
+          className="mb-6 rounded-lg bg-brand-soft p-3 text-sm text-brand-soft-foreground"
         >
           Regla eliminada.
         </p>
@@ -64,7 +55,7 @@ export default async function Page({
       {rules.length > 0 && activas.length === 0 && (
         <p
           role="alert"
-          className="mb-6 rounded-lg border border-destructive p-3 text-sm text-destructive"
+          className="mb-6 rounded-lg border border-destructive bg-danger-soft p-3 text-sm text-destructive"
         >
           Ninguna regla está activa: ahora mismo ningún paciente nuevo recibe
           rutina automática.
@@ -72,26 +63,24 @@ export default async function Page({
       )}
 
       {rules.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-          <p className="font-semibold">Aún no hay reglas de asignación</p>
-          <p className="mx-auto mt-2 max-w-md leading-7 text-muted-foreground">
-            {esAdmin
-              ? "Crea la primera indicando a qué perfil se dirige y qué plantilla le corresponde."
-              : "El administrador todavía no ha definido ninguna. Sin reglas, cada rutina se asigna a mano."}
-          </p>
-          {esAdmin && (
-            <ButtonLink href="/rules/new" className="mt-5">
-              Crear la primera regla
-            </ButtonLink>
-          )}
-        </div>
+        <EmptyState
+          title="Aún no hay reglas de asignación"
+          action={
+            esAdmin && (
+              <ButtonLink variant="default" href="/rules/new">
+                Crear la primera regla
+              </ButtonLink>
+            )
+          }
+        >
+          {esAdmin
+            ? "Crea la primera indicando a qué perfil se dirige y qué plantilla le corresponde."
+            : "El administrador todavía no ha definido ninguna. Sin reglas, cada rutina se asigna a mano."}
+        </EmptyState>
       ) : (
         <ol className="grid gap-4">
           {rules.map((rule, indice) => (
-            <li
-              key={rule.id}
-              className="rounded-2xl border border-border bg-surface p-5"
-            >
+            <li key={rule.id} className={cardVariants()}>
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="grid gap-2">
                   <h2 className="text-base font-semibold leading-6">
@@ -104,7 +93,7 @@ export default async function Page({
                   </h2>
                   <div className="flex flex-wrap gap-1.5">
                     <Badge>Prioridad {rule.priority}</Badge>
-                    <Badge variant={rule.is_active ? "brand" : "neutral"}>
+                    <Badge variant={rule.is_active ? "success" : "neutral"}>
                       {rule.is_active ? "Activa" : "Inactiva"}
                     </Badge>
                     <Badge variant={rule.template ? "neutral" : "warning"}>
@@ -134,11 +123,9 @@ export default async function Page({
               {rule.conditions === null ? (
                 <div
                   role="alert"
-                  className="mt-4 rounded-lg border border-destructive p-3 text-sm text-destructive"
+                  className="mt-4 rounded-lg border border-destructive bg-danger-soft p-3 text-sm text-destructive"
                 >
-                  <p className="font-semibold">
-                    Esta regla no se está aplicando
-                  </p>
+                  <p className="font-semibold">Esta regla no se está aplicando</p>
                   <ul className="mt-2 grid gap-1">
                     {rule.issues.map((issue) => (
                       <li key={issue}>{issue}</li>
@@ -172,10 +159,10 @@ export default async function Page({
       )}
 
       {!esAdmin && rules.length > 0 && (
-        <p className="mt-8 rounded-2xl border border-dashed border-border p-6 leading-7 text-muted-foreground">
+        <EmptyState className="mt-8" title="Las reglas son de solo lectura">
           Puedes consultar las reglas para entender por qué un paciente recibió
           la rutina que recibió, pero cambiarlas es cosa del administrador.
-        </p>
+        </EmptyState>
       )}
     </Workspace>
   );

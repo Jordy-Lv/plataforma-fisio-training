@@ -30,22 +30,16 @@ export default async function Page() {
   ]);
 
   return (
-    <Workspace title="Planes y servicios" name={profile.fullName}>
-      <p className="-mt-4 max-w-2xl leading-7 text-muted-foreground">
-        La oferta comercial del negocio. Lo que esté activo se muestra en la
-        vitrina que ve el paciente; desactivar un plan no afecta a las
-        membresías ya registradas con él.
-      </p>
-
-      <div className="mb-8 mt-4 flex flex-wrap gap-3">
-        <ButtonLink href="/admin">
-          Volver a mi panel
-        </ButtonLink>
-        <ButtonLink href="/offer">
+    <Workspace
+      title="Planes y servicios"
+      name={profile.fullName}
+      description="La oferta comercial del negocio. Lo que esté activo se muestra en la vitrina que ve el paciente; desactivar un plan no afecta a las membresías ya registradas con él."
+      actions={
+        <ButtonLink variant="ghost" href="/offer">
           Ver la vitrina
         </ButtonLink>
-      </div>
-
+      }
+    >
       <section className="grid gap-6">
         <h2 className="text-xl font-semibold">Planes de suscripción</h2>
 
@@ -96,6 +90,7 @@ export default async function Page() {
                   <OfferControls
                     kind="plan"
                     id={plan.id}
+                    name={plan.name}
                     isActive={plan.is_active}
                   />
                 </article>
@@ -150,6 +145,7 @@ export default async function Page() {
                   <OfferControls
                     kind="service"
                     id={service.id}
+                    name={service.name}
                     isActive={service.is_active}
                   />
                 </article>

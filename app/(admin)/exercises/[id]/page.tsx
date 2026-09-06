@@ -13,7 +13,9 @@ import {
   labelFor,
   muscleGroupLabels,
 } from "@/lib/catalog/vocabulary";
+import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/ButtonLink";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "cn";
 import { cardVariants } from "@/components/ui/Card";
 
@@ -52,12 +54,7 @@ function Etiquetas({
           <span className="text-sm text-muted-foreground">{vacio}</span>
         ) : (
           valores.map((valor) => (
-            <span
-              key={valor}
-              className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground"
-            >
-              {labelFor(labels, valor)}
-            </span>
+            <Badge key={valor}>{labelFor(labels, valor)}</Badge>
           ))
         )}
       </dd>
@@ -83,22 +80,31 @@ export default async function Page({
   const puedeEditar = profile.role === "admin";
 
   return (
-    <Workspace title={exercise.name} name={profile.fullName}>
-      <ButtonLink href="/exercises" className="-mt-4">
-        Volver al catálogo
-      </ButtonLink>
-
+    <Workspace
+      title={exercise.name}
+      name={profile.fullName}
+      actions={
+        <ButtonLink variant="ghost" href="/exercises">
+          Volver al catálogo
+        </ButtonLink>
+      }
+    >
       {recienCreado && (
         <p
           role="status"
-          className="mt-6 rounded-lg bg-brand-soft p-3 text-sm text-foreground"
+          className="mb-6 rounded-lg bg-brand-soft p-3 text-sm text-brand-soft-foreground"
         >
           Ejercicio creado. Ya se puede usar en las plantillas de rutina.
         </p>
       )}
 
-      <article className="mt-6 grid gap-6 md:grid-cols-[minmax(0,20rem)_1fr]">
-        <div className="aspect-[4/3] overflow-hidden rounded-2xl border border-border bg-muted">
+      <article className="grid gap-6 md:grid-cols-[minmax(0,20rem)_1fr]">
+        <div
+          className={cn(
+            cardVariants({ padding: "none" }),
+            "aspect-[4/3] overflow-hidden bg-muted",
+          )}
+        >
           {exercise.media_url ? (
             // Sin `next/image`: el origen es el bucket de Supabase, cuyo
             // dominio cambia entre local y producción.
@@ -116,11 +122,11 @@ export default async function Page({
         </div>
 
         <div className="grid gap-5">
-          <p className="text-sm font-medium text-brand">
+          <Badge variant={exercise.is_custom ? "brand" : "neutral"}>
             {exercise.is_custom
               ? "Ejercicio propio del negocio"
               : "Ejercicio importado de la biblioteca"}
-          </p>
+          </Badge>
 
           <dl className="grid gap-5">
             <Etiquetas
@@ -197,11 +203,11 @@ export default async function Page({
           </section>
         </>
       ) : (
-        <p className="mt-10 rounded-2xl border border-dashed border-border p-6 leading-7 text-muted-foreground">
+        <EmptyState className="mt-10" title="Esta ficha es de solo lectura">
           Puedes crear ejercicios propios, pero editar el catálogo —incluido el
           etiquetado clínico— es cosa del administrador. Pídeselo si algo de
           esta ficha está mal.
-        </p>
+        </EmptyState>
       )}
     </Workspace>
   );

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { cn } from "cn";
 import { getActiveProfile } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { bodyPartLabels } from "@/lib/catalog/body-parts";
@@ -20,7 +21,12 @@ import {
   ReplaceRoutineItemButton,
   RoutineItemForm,
 } from "@/components/routines/RoutineItems";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/ButtonLink";
+import { cardVariants } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Field, Input } from "@/components/ui/Field";
 
 const statusLabels = {
   active: "Activa",
@@ -29,8 +35,13 @@ const statusLabels = {
   archived: "Archivada",
 };
 
-const fieldClass =
-  "min-h-11 w-full rounded-lg border border-input bg-surface px-3 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring";
+/** El estado de la rutina no es un error del sistema: solo el que pide revisión avisa. */
+const statusVariants = {
+  active: "success",
+  pending_review: "warning",
+  completed: "neutral",
+  archived: "neutral",
+} as const;
 
 /** Cuántos ejercicios se ofrecen al buscar: los que caben sin sepultar el día. */
 const maxResultados = 8;
@@ -110,16 +121,11 @@ export default async function Page({
         className="flex flex-wrap items-end gap-3"
       >
         <input type="hidden" name={campo} value={valor} />
-        <div className="min-w-60 flex-1 space-y-2">
-          <label
-            htmlFor={`q-${valor}`}
-            className="block text-sm font-semibold"
-          >
-            Buscar un ejercicio del catálogo
-          </label>
-          <input
-            className={fieldClass}
-            id={`q-${valor}`}
+        <Field
+          label="Buscar un ejercicio del catálogo"
+          className="min-w-60 flex-1"
+        >
+          <Input
             name="q"
             type="search"
             defaultValue={filtros.q ?? ""}
@@ -128,19 +134,11 @@ export default async function Page({
             spellCheck={false}
             placeholder="Sentadilla, plancha, remo…"
           />
-        </div>
-        <button
-          type="submit"
-          className="inline-flex min-h-11 items-center rounded-lg bg-brand px-4 text-sm font-semibold text-brand-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-        >
-          Buscar
-        </button>
-        <Link
-          href={base}
-          className="inline-flex min-h-11 items-center px-2 text-sm font-medium text-brand underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-ring"
-        >
+        </Field>
+        <Button type="submit">Buscar</Button>
+        <ButtonLink variant="ghost" href={base}>
           Cerrar
-        </Link>
+        </ButtonLink>
       </form>
 
       {resultados.length === 0 ? (
@@ -153,7 +151,10 @@ export default async function Page({
           {resultados.map((ejercicio) => (
             <li
               key={ejercicio.id}
-              className="grid gap-2 rounded-xl border border-border p-3"
+              className={cn(
+                cardVariants({ padding: "none" }),
+                "grid gap-2 rounded-xl p-3",
+              )}
             >
               <p className="text-sm font-medium">{ejercicio.name}</p>
               {accion(ejercicio)}
@@ -168,18 +169,16 @@ export default async function Page({
     <Workspace
       title={patient.full_name ?? "Rutinas del paciente"}
       name={actor.fullName}
+      actions={
+        <ButtonLink variant="ghost" href="/pro/routines">
+          Volver a pacientes
+        </ButtonLink>
+      }
     >
-      <Link
-        href="/pro/routines"
-        className="inline-flex min-h-11 items-center font-medium text-brand"
-      >
-        Volver a pacientes
-      </Link>
-
       {patient.is_active && <AssignmentForm patientId={patientId} />}
 
       {conditions.length > 0 && (
-        <p className="mt-6 rounded-lg bg-muted p-3 text-sm leading-7">
+        <p className="mt-6 rounded-lg bg-warning-soft p-3 text-sm leading-7 text-warning">
           Condiciones activas del paciente:{" "}
           {conditions.map((zona) => labelFor(bodyPartLabels, zona)).join(", ")}.
           El motor ya excluyó lo contraindicado al asignar; si añades un
@@ -188,23 +187,29 @@ export default async function Page({
       )}
 
       {!routines.length && (
-        <p className="my-6 rounded-2xl border border-dashed border-border p-6 leading-7 text-muted-foreground">
-          Aún no hay rutinas. Evalúa el perfil para asignar una propuesta según
-          las reglas del equipo.
-        </p>
+        <EmptyState className="my-6" title="Este paciente aún no tiene rutinas">
+          Evalúa el perfil con el botón de arriba para asignarle una propuesta
+          según las reglas del equipo.
+        </EmptyState>
       )}
 
       <div className="mt-6 grid gap-6">
         {routines.map((routine) => (
           <article
             key={routine.id}
-            className="min-w-0 rounded-2xl border border-border bg-surface p-5 sm:p-6"
+            className={cn(cardVariants({ padding: "lg" }), "min-w-0")}
           >
-            <p className="text-sm font-medium text-brand">
-              {routine.kind === "training" ? "Entrenamiento" : "Rehabilitación"}{" "}
-              · {statusLabels[routine.status]}
-            </p>
-            <h2 className="mt-2 break-words text-2xl font-semibold">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Badge variant="brand">
+                {routine.kind === "training"
+                  ? "Entrenamiento"
+                  : "Rehabilitación"}
+              </Badge>
+              <Badge variant={statusVariants[routine.status]}>
+                {statusLabels[routine.status]}
+              </Badge>
+            </div>
+            <h2 className="mt-3 break-words text-2xl font-semibold">
               {routine.name}
             </h2>
 
@@ -226,7 +231,10 @@ export default async function Page({
 
             <div className="mt-5 grid gap-6">
               {routine.routine_days.map((day) => (
-                <section key={day.id} className="rounded-2xl border border-border p-4 sm:p-5">
+                <section
+                  key={day.id}
+                  className={cn(cardVariants({ padding: "sm" }), "sm:p-5")}
+                >
                   <h3 className="text-lg font-semibold">
                     Día {day.day_number}
                     {day.title ? ` · ${day.title}` : ""}
@@ -244,7 +252,10 @@ export default async function Page({
                         return (
                           <li
                             key={item.id}
-                            className="rounded-xl border border-border p-4"
+                            className={cn(
+                              cardVariants({ padding: "sm" }),
+                              "rounded-xl",
+                            )}
                           >
                             <div className="flex flex-wrap items-start justify-between gap-3">
                               <div className="grid gap-2">
@@ -265,9 +276,9 @@ export default async function Page({
                                     "Ejercicio"
                                   )}
                                   {item.was_modified && (
-                                    <span className="ml-2 inline-flex items-center rounded-full bg-brand-soft px-2.5 py-1 text-xs font-semibold text-brand">
+                                    <Badge variant="brand" className="ml-2">
                                       Ajustado
-                                    </span>
+                                    </Badge>
                                   )}
                                 </p>
                                 {choques.length > 0 && (
@@ -283,6 +294,13 @@ export default async function Page({
                                 )}
                               </div>
 
+                              {/*
+                                El formulario de quitar va antes que el de la
+                                prescripción a propósito:
+                                `scripts/verify-routine-items.test.mjs` toma el
+                                primer formulario del ítem y comprueba que no
+                                arrastra los campos de la prescripción.
+                              */}
                               <RemoveRoutineItemButton
                                 patientId={patientId}
                                 item={item}
@@ -307,10 +325,7 @@ export default async function Page({
                                   />
                                 ))
                               ) : (
-                                <ButtonLink
-                                  href={`${base}?item=${item.id}`}
-                                  
-                                >
+                                <ButtonLink href={`${base}?item=${item.id}`}>
                                   Sustituir por otro ejercicio
                                 </ButtonLink>
                               )}
@@ -332,7 +347,7 @@ export default async function Page({
                         />
                       ))
                     ) : (
-                      <ButtonLink href={`${base}?dia=${day.id}`} >
+                      <ButtonLink href={`${base}?dia=${day.id}`}>
                         Añadir ejercicios a este día
                       </ButtonLink>
                     )}

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { cn } from "cn";
 import { Workspace } from "@/components/auth/Workspace";
-import { rolePaths } from "@/lib/auth/session";
 import { requireStaff } from "@/lib/progress/access";
 import { listPatientsWithMonthAttendance } from "@/lib/progress/attendance-queries";
 import {
@@ -12,7 +12,7 @@ import {
 } from "@/lib/progress/vocabulary";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
-import { ButtonLink } from "@/components/ui/ButtonLink";
+import { cardVariants } from "@/components/ui/Card";
 
 export const metadata: Metadata = {
   title: "Asistencia",
@@ -23,22 +23,11 @@ export default async function Page() {
   const patients = await listPatientsWithMonthAttendance();
 
   return (
-    <Workspace title="Asistencia" name={profile.fullName}>
-      <p className="-mt-4 max-w-2xl leading-7 text-muted-foreground">
-        Quién vino y cuándo. El resumen es del mes en curso —
-        {formatMonth(monthStart())}—; el historial completo está en la ficha de
-        cada paciente.
-      </p>
-
-      <div className="mb-6 mt-4 flex flex-wrap gap-3">
-        <ButtonLink href={rolePaths[profile.role]}>
-          Volver a mi panel
-        </ButtonLink>
-        <ButtonLink href="/screenings">
-          Seguimiento físico
-        </ButtonLink>
-      </div>
-
+    <Workspace
+      title="Asistencia"
+      name={profile.fullName}
+      description={`Quién vino y cuándo. El resumen es del mes en curso —${formatMonth(monthStart())}—; el historial completo está en la ficha de cada paciente.`}
+    >
       {patients.length === 0 ? (
         <EmptyState title="Aún no tienes pacientes que seguir">
           {profile.role === "admin"
@@ -49,7 +38,12 @@ export default async function Page() {
         <ul className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {patients.map((patient) => (
             <li key={patient.id} className="flex">
-              <article className="relative flex w-full flex-col gap-3 rounded-2xl border border-border bg-surface p-5 focus-within:border-brand hover:border-brand">
+              <article
+                className={cn(
+                  cardVariants({ interactive: true }),
+                  "flex w-full flex-col gap-3",
+                )}
+              >
                 <h2 className="text-base font-semibold leading-6">
                   <Link
                     href={`/attendance/${patient.id}`}

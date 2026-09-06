@@ -9,6 +9,7 @@ import { describeConditions } from "@/lib/catalog/describe-rule";
 import { getRule, listTemplateOptions } from "@/lib/catalog/rule-queries";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/ButtonLink";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "cn";
 import { cardVariants } from "@/components/ui/Card";
 
@@ -48,24 +49,28 @@ export default async function Page({
   const criterios = rule.conditions ? describeConditions(rule.conditions) : [];
 
   return (
-    <Workspace title={rule.name} name={profile.fullName}>
-      <ButtonLink href="/rules" className="-mt-4">
-        Volver a las reglas
-      </ButtonLink>
-
+    <Workspace
+      title={rule.name}
+      name={profile.fullName}
+      actions={
+        <ButtonLink variant="ghost" href="/rules">
+          Volver a las reglas
+        </ButtonLink>
+      }
+    >
       {recienCreada && (
         <p
           role="status"
-          className="mt-6 rounded-lg bg-brand-soft p-3 text-sm text-foreground"
+          className="mb-6 rounded-lg bg-brand-soft p-3 text-sm text-brand-soft-foreground"
         >
           Regla creada como inactiva. Pruébala en el simulador y actívala
           cuando haga lo que esperas.
         </p>
       )}
 
-      <div className="mt-6 flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-1.5">
         <Badge>Prioridad {rule.priority}</Badge>
-        <Badge variant={rule.is_active ? "brand" : "neutral"}>
+        <Badge variant={rule.is_active ? "success" : "neutral"}>
           {rule.is_active ? "Activa" : "Inactiva"}
         </Badge>
       </div>
@@ -94,7 +99,7 @@ export default async function Page({
         {rule.conditions === null ? (
           <div
             id="regla-invalida"
-            className="mt-5 rounded-lg border border-destructive p-3 text-sm text-destructive"
+            className="mt-5 rounded-lg border border-destructive bg-danger-soft p-3 text-sm text-destructive"
           >
             <p className="font-semibold">Sus condiciones no son válidas</p>
             <ul className="mt-2 grid gap-1">
@@ -163,10 +168,10 @@ export default async function Page({
           </section>
         </>
       ) : (
-        <p className="mt-10 rounded-2xl border border-dashed border-border p-6 leading-7 text-muted-foreground">
+        <EmptyState className="mt-10" title="Esta regla es de solo lectura">
           Puedes consultar esta regla para entender una asignación, pero
           cambiarla es cosa del administrador.
-        </p>
+        </EmptyState>
       )}
     </Workspace>
   );

@@ -10,7 +10,10 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { inputClass } from "@/components/auth/FormParts";
+import { cn } from "cn";
+import { cardVariants } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Field, Select } from "@/components/ui/Field";
 import type { Series } from "@/lib/progress/evolution";
 import { formatNumber, formatShortDate } from "@/lib/progress/vocabulary";
 
@@ -42,11 +45,7 @@ export function EvolutionChart({
 
   if (!active)
     return (
-      <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-        <p className="mx-auto max-w-md leading-7 text-muted-foreground">
-          {empty}
-        </p>
-      </div>
+      <EmptyState title="Todavía no hay nada que dibujar">{empty}</EmptyState>
     );
 
   const último = active.points[active.points.length - 1];
@@ -54,10 +53,8 @@ export function EvolutionChart({
   return (
     <div className="grid gap-4">
       {series.length > 1 && (
-        <label className="grid gap-2 text-sm font-medium sm:max-w-xs">
-          Qué se dibuja
-          <select
-            className={inputClass}
+        <Field label="Qué se dibuja" className="sm:max-w-xs">
+          <Select
             value={active.key}
             onChange={(event) => setSelected(event.target.value)}
           >
@@ -66,26 +63,32 @@ export function EvolutionChart({
                 {item.label}
               </option>
             ))}
-          </select>
-        </label>
+          </Select>
+        </Field>
       )}
 
       {active.points.length < 2 ? (
-        <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-          <p className="text-2xl font-semibold">
-            {conUnidad(último.value, active.unit)}
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
+        <EmptyState
+          title={
+            <span className="text-2xl">
+              {conUnidad(último.value, active.unit)}
+            </span>
+          }
+        >
+          <p className="text-sm text-muted-foreground">
             {active.label} · {formatShortDate(último.on)}
           </p>
-          <p className="mx-auto mt-3 max-w-md leading-7 text-muted-foreground">
-            {single}
-          </p>
-        </div>
+          <p className="mt-3">{single}</p>
+        </EmptyState>
       ) : (
         // `ResponsiveContainer` mide el ancho que le den: el contenedor no
         // puede tener ancho propio o la gráfica desborda en el teléfono.
-        <div className="w-full overflow-hidden rounded-2xl border border-border bg-surface p-4 pl-0">
+        <div
+          className={cn(
+            cardVariants({ padding: "none" }),
+            "w-full overflow-hidden p-4 pl-0",
+          )}
+        >
           <ResponsiveContainer width="100%" height={260}>
             <LineChart
               data={active.points}
