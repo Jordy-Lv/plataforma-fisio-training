@@ -35,6 +35,7 @@
     "test:people": "node --test scripts/verify-people-onboarding.test.mjs",
     "test:screenings": "node --test scripts/verify-progress-screenings.test.mjs",
     "test:attendance": "node --test scripts/verify-progress-attendance.test.mjs",
+    "test:overview": "node --test scripts/verify-progress-overview.test.mjs",
     "test:routines": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/helpers/alias-hook.mjs --test scripts/verify-routine-assignment.test.mjs",
     "test:routines:snapshot": "node --test scripts/verify-routine-snapshot.test.mjs",
     "test:routines:items": "node --test scripts/verify-routine-items.test.mjs",
