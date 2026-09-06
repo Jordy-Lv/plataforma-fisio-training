@@ -60,8 +60,8 @@ function prepararEscenario() {
       values ('00000000-0000-4000-f000-000000000002', '00000000-0000-4000-b000-000000000002',
               '00000000-0000-4000-c000-000000000002', '${ELENA}', 'completed')
       on conflict (id) do nothing;
-    insert into public.session_logs (session_id, routine_item_id, patient_id, status, pain_level)
-      select '00000000-0000-4000-f000-000000000002', '00000000-0000-4000-d000-000000000002', '${ELENA}', 'done', 8
+    insert into public.session_logs (session_id, routine_item_id, patient_id, status, pain_level, pain_location)
+      select '00000000-0000-4000-f000-000000000002', '00000000-0000-4000-d000-000000000002', '${ELENA}', 'done', 8, 'knee'
       where not exists (select 1 from public.session_logs where patient_id = '${ELENA}');
 
     insert into public.alerts (type, patient_id, recipient_id, severity)
