@@ -18,7 +18,9 @@ export const sessionLogSchema = z.object({
   actualWeight: nullableNumber(9999.99, "El peso", false),
   perceivedEffort: z.preprocess((value) => value === "" || value === undefined ? null : value,
     z.coerce.number().int().min(1, "El esfuerzo debe estar entre 1 y 10.").max(10, "El esfuerzo debe estar entre 1 y 10.").nullable()),
-  painLevel: z.coerce.number().int("El dolor debe ser un número entero.").min(0, "El nivel de dolor debe estar entre 0 y 10.").max(10, "El nivel de dolor debe estar entre 0 y 10."),
+  // Sin escalón marcado, `painLevel` no llega en el FormData: el `error` da un
+  // aviso claro en vez del "expected number, received NaN" de Zod.
+  painLevel: z.coerce.number({ error: "Marca el nivel de dolor; usa 0 si no hubo." }).int("El dolor debe ser un número entero.").min(0, "El nivel de dolor debe estar entre 0 y 10.").max(10, "El nivel de dolor debe estar entre 0 y 10."),
   painLocation: z.preprocess((value) => value === "" || value === undefined ? null : value,
     z.enum(bodyParts, { error: "Selecciona una zona del cuerpo válida." }).nullable()),
   notes: z.string().trim().max(2000, "La observación no puede superar 2000 caracteres."),

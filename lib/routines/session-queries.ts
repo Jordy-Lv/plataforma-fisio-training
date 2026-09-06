@@ -26,7 +26,7 @@ export async function patientSessions(patientId: string) {
 export async function executionExercises(dayId: string) {
   const supabase = await createClient();
   const { data, error } = await supabase.from("routine_items")
-    .select("id, exercise_id, sets, reps, target_weight, rest_seconds, exercises(name, description, media_url)")
+    .select("id, exercise_id, sets, reps, target_weight, rest_seconds, exercises(name, description, media_url, muscle_groups)")
     .eq("routine_day_id", dayId).order("position");
   if (error) throw new Error(`No se pudieron consultar los ejercicios: ${error.message}`);
   return data ?? [];
@@ -35,7 +35,11 @@ export type ExecutionItem = Awaited<ReturnType<typeof executionExercises>>[numbe
 
 export async function replacementExercises() {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("exercises").select("id, name").order("name").limit(1000);
+  // `muscle_groups` viaja para acotar en el cliente el selector de sustitución
+  // a ejercicios afines: en móvil, a mitad de sesión, una lista de ~868
+  // opciones sin filtrar es inusable.
+  const { data, error } = await supabase.from("exercises").select("id, name, muscle_groups").order("name").limit(1000);
   if (error) throw new Error(`No se pudo consultar el catálogo: ${error.message}`);
   return data ?? [];
 }
+export type ReplacementExercise = Awaited<ReturnType<typeof replacementExercises>>[number];
