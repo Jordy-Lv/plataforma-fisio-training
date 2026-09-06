@@ -1123,6 +1123,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      actor_is_active: { Args: never; Returns: boolean }
       can_read_routine: { Args: { target_routine: string }; Returns: boolean }
       can_write_routine: { Args: { target_routine: string }; Returns: boolean }
       cancel_person_registration: {

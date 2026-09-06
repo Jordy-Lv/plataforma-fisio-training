@@ -20,6 +20,7 @@
     "test:auth": "node --test scripts/verify-auth-local.test.mjs",
     "test:auth:screens": "node --test scripts/verify-auth-screens.test.mjs",
     "test:rls": "node --test scripts/verify-rls.test.mjs",
+    "test:actor-active": "node --test scripts/verify-actor-active.test.mjs",
     "test:storage": "node --test scripts/verify-catalog-storage.test.mjs",
     "test:catalog": "node --test scripts/verify-catalog-list.test.mjs",
     "test:catalog:custom": "node --test scripts/verify-catalog-custom.test.mjs",
