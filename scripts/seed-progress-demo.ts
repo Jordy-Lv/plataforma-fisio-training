@@ -1,8 +1,9 @@
 /**
  * Siembra los datos de demostración del slice 4 (seguimiento y membresías):
  * planes y servicios de la vitrina, y dos pacientes de demostración con tres o
- * cuatro tamizajes, varias semanas de sesiones con carga progresiva y membresías
- * en distintos estados. Es lo que pide la tarea 7.2 de
+ * cuatro tamizajes, varias semanas de sesiones con carga progresiva, un mes de
+ * asistencias coherente con la rutina y membresías en distintos estados. Es lo
+ * que pide la tarea 7.2 de
  * `add-progress-and-memberships` y lo que el plan de verificación llama "los
  * datos de demostración del día 10": sin ellos las gráficas de evolución y de
  * progresión de carga quedan vacías en la demo.
@@ -41,6 +42,8 @@ const CARLA = "00000000-0000-4000-a000-000000000003"; // especialidad physio
 
 const DEMO_PASSWORD = "demo1234";
 const ROUTINE_NAME = "Demo · Fuerza general";
+/** Días antes de hoy en que arranca la rutina de demostración. */
+const ROUTINE_START_OFFSET = -42;
 
 /**
  * Hoy en la zona del negocio (`America/Bogota`), en formato `YYYY-MM-DD`. Es la
@@ -491,7 +494,7 @@ async function seedRoutine(
       name: ROUTINE_NAME,
       status: "active",
       assigned_by: BETO,
-      starts_on: isoDay(-42),
+      starts_on: isoDay(ROUTINE_START_OFFSET),
       notes: "Datos de demostración. Rutina de dos días con carga progresiva.",
     })
     .select("id")
@@ -591,6 +594,48 @@ async function seedRoutine(
   return { sessions, logs };
 }
 
+// --- Asistencia ----------------------------------------------------------------
+
+type AttendanceInsert = Database["public"]["Tables"]["attendance"]["Insert"];
+
+/**
+ * Un mes de asistencias al gimnasio, coherente con la rutina de dos días por
+ * semana. Sin esto, el cron `review-low-attendance` marcaría al paciente con
+ * 0/N el primer día que corra (revisa siempre el mes calendario anterior).
+ *
+ * La ventana va desde el primer día del mes calendario anterior —lo que revisa
+ * el cron— hasta hoy, sin bajar del arranque de la rutina, en la zona del
+ * negocio. Se registran dos días fijos por semana (martes y viernes) con una
+ * ausencia de cada cinco: la asistencia real queda en ~78 %, por encima del
+ * umbral del 50 %. `registered_by` es el profesional a cargo.
+ */
+function attendanceRows(patientId: string, registeredBy: string): AttendanceInsert[] {
+  const routineStart = new Date(`${isoDay(ROUTINE_START_OFFSET)}T12:00:00Z`);
+  const prevMonthStart = new Date(`${today()}T12:00:00Z`);
+  prevMonthStart.setUTCDate(1);
+  prevMonthStart.setUTCMonth(prevMonthStart.getUTCMonth() - 1);
+  const from = prevMonthStart < routineStart ? routineStart : prevMonthStart;
+  const to = new Date(`${today()}T12:00:00Z`);
+
+  const rows: AttendanceInsert[] = [];
+  let trainingDay = 0;
+  for (const cursor = new Date(from); cursor <= to; cursor.setUTCDate(cursor.getUTCDate() + 1)) {
+    const weekday = cursor.getUTCDay(); // 0 domingo … 6 sábado
+    if (weekday !== 2 && weekday !== 5) continue; // martes y viernes
+    trainingDay += 1;
+    if (trainingDay % 5 === 0) continue; // una ausencia de cada cinco
+    const day = cursor.toISOString().slice(0, 10);
+    rows.push({
+      patient_id: patientId,
+      attended_on: day,
+      check_in_at: morningOf(day),
+      registered_by: registeredBy,
+      notes: "Datos de demostración.",
+    });
+  }
+  return rows;
+}
+
 // --- Membresías -------------------------------------------------------------------
 
 async function seedMemberships(
@@ -666,6 +711,13 @@ async function main() {
     console.log(
       `✓ routines: "${ROUTINE_NAME}" con ${routine.sessions} sesiones y ${routine.logs} registros`,
     );
+
+    const attendance = attendanceRows(patientId, patient.assignments[0].professional);
+    fail(
+      `No se pudieron crear las asistencias de ${patient.email}`,
+      (await client.from("attendance").insert(attendance)).error,
+    );
+    console.log(`✓ attendance: ${attendance.length} asistencias del último mes`);
 
     await seedMemberships(client, patient, patientId, planId);
     console.log(`✓ memberships: ${patient.memberships.length} membresías en distintos estados`);
