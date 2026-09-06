@@ -1,10 +1,8 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { Workspace } from "@/components/auth/Workspace";
 import { MembershipForm } from "@/components/progress/MembershipForm";
 import { MembershipNoticeDaysForm } from "@/components/progress/MembershipNoticeDaysForm";
 import { MembershipReviewButton } from "@/components/progress/MembershipReviewButton";
-import { rolePaths } from "@/lib/auth/session";
 import { requireStaff } from "@/lib/progress/access";
 import {
   listMembershipsWithPatient,
@@ -145,22 +143,12 @@ async function AdminView({ name }: { name?: string | null }) {
   );
 
   return (
-    <Workspace title="Membresías" name={name}>
-      <p className="-mt-4 max-w-2xl leading-7 text-muted-foreground">
-        El control administrativo de mensualidades: fecha de ingreso, fecha de
-        vencimiento, monto y estado. No procesa pagos.
-      </p>
-
-      <div className="mb-8 mt-4 flex flex-wrap gap-3">
-        <ButtonLink href="/admin">
-          Volver a mi panel
-        </ButtonLink>
-        <ButtonLink href="/plans">
-          Planes y servicios
-        </ButtonLink>
-      </div>
-
-      <section className="mb-10 grid gap-4 rounded-2xl border border-border bg-surface p-5">
+    <Workspace
+      title="Membresías"
+      name={name}
+      description="El control administrativo de mensualidades: fecha de ingreso, fecha de vencimiento, monto y estado. No procesa pagos."
+    >
+      <section className={cn(cardVariants(), "mb-10 grid gap-4")}>
         <h2 className="text-base font-semibold">Revisión de vencimientos</h2>
         <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
           Cada día, un proceso automático marca las membresías próximas a vencer
@@ -202,9 +190,9 @@ async function AdminView({ name }: { name?: string | null }) {
         {plans.length === 0 ? (
           <p className="leading-7 text-muted-foreground">
             Antes de registrar una membresía necesitas al menos un plan.{" "}
-            <Link href="/plans" className="font-medium underline">
+            <ButtonLink variant="ghost" href="/plans">
               Crea uno aquí
-            </Link>
+            </ButtonLink>
             .
           </p>
         ) : (
@@ -221,19 +209,11 @@ async function ProfessionalView({ name }: { name?: string | null }) {
   const patients = await listPatientsWithMembership();
 
   return (
-    <Workspace title="Membresías de mis pacientes" name={name}>
-      <p className="-mt-4 max-w-2xl leading-7 text-muted-foreground">
-        El estado de la mensualidad de cada paciente que tienes a cargo. El
-        control administrativo —altas, fechas y montos— lo lleva el
-        administrador.
-      </p>
-
-      <div className="mb-6 mt-4 flex flex-wrap gap-3">
-        <ButtonLink href={rolePaths.professional}>
-          Volver a mi panel
-        </ButtonLink>
-      </div>
-
+    <Workspace
+      title="Membresías de mis pacientes"
+      name={name}
+      description="El estado de la mensualidad de cada paciente que tienes a cargo. El control administrativo —altas, fechas y montos— lo lleva el administrador."
+    >
       {patients.length === 0 ? (
         <EmptyState title="Aún no tienes pacientes que seguir">
           Aquí verás a los pacientes que tengas asignados. Pídele al

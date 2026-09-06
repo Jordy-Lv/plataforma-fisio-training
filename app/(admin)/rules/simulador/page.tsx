@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Workspace } from "@/components/auth/Workspace";
-import { Choices, Field, inputClass } from "@/components/auth/FormParts";
+import { Choices } from "@/components/auth/FormParts";
+import { Field, Input } from "@/components/ui/Field";
 import { bodyPartLabels } from "@/lib/catalog/body-parts";
 import { equipmentLabels } from "@/lib/catalog/equipment";
 import { requireStaff } from "@/lib/catalog/access";
@@ -19,7 +20,9 @@ import {
   labelFor,
 } from "@/lib/catalog/vocabulary";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/ButtonLink";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "cn";
 import { cardVariants } from "@/components/ui/Card";
 
@@ -53,23 +56,17 @@ export default async function Page({
   const result = simulado ? await simulate(simulado) : null;
 
   return (
-    <Workspace title="Simulador de asignación" name={profile.fullName}>
-      <p className="-mt-4 max-w-2xl leading-7 text-muted-foreground">
-        Un perfil de mentira para ver qué recibiría si se registrara ahora: qué
-        regla ganaría, qué plantilla le tocaría y qué ejercicios se le quitarían
-        por sus condiciones. No crea ningún paciente ni ninguna rutina.
-      </p>
-
-      <div className="mb-6 mt-4 flex flex-wrap gap-3">
-        <ButtonLink href="/rules">
+    <Workspace
+      title="Simulador de asignación"
+      name={profile.fullName}
+      description="Un perfil de mentira para ver qué recibiría si se registrara ahora: qué regla ganaría, qué plantilla le tocaría y qué ejercicios se le quitarían por sus condiciones. No crea ningún paciente ni ninguna rutina."
+      actions={
+        <ButtonLink variant="ghost" href="/rules">
           Volver a las reglas
         </ButtonLink>
-        <ButtonLink href="/templates">
-          Plantillas de rutina
-        </ButtonLink>
-      </div>
-
-      <section className={sectionClass}>
+      }
+    >
+      <section className={cardVariants({ padding: "lg" })}>
         <h2 className="text-xl font-semibold">Perfil del paciente</h2>
         <form method="get" className="mt-6 grid max-w-2xl gap-8">
           <input type="hidden" name="simular" value="1" />
@@ -108,8 +105,7 @@ export default async function Page({
           />
 
           <Field label="Edad (años)">
-            <input
-              className={inputClass}
+            <Input
               name="age"
               type="number"
               inputMode="numeric"
@@ -120,19 +116,16 @@ export default async function Page({
             />
           </Field>
 
-          <button
-            type="submit"
-            className="inline-flex min-h-12 items-center justify-center rounded-lg bg-brand px-4 text-base font-semibold text-brand-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-          >
+          <Button type="submit" size="lg" className="justify-self-start">
             Simular la asignación
-          </button>
+          </Button>
         </form>
       </section>
 
       {parsed && !parsed.success && (
         <p
           role="alert"
-          className="mt-6 rounded-lg border border-destructive p-3 text-sm text-destructive"
+          className="mt-6 rounded-lg border border-destructive bg-danger-soft p-3 text-sm text-destructive"
         >
           {parsed.error.issues[0].message}
         </p>
@@ -143,19 +136,16 @@ export default async function Page({
           <h2 className="text-xl font-semibold">Resultado</h2>
 
           {!result.evaluation.match ? (
-            <div className="mt-4 rounded-lg border border-dashed border-border p-5 leading-7">
-              <p className="font-semibold">Ninguna regla coincide</p>
-              <p className="mt-2 text-muted-foreground">
-                Este paciente se quedaría sin rutina automática: se avisaría a
-                su profesional y su pantalla diría que le están preparando la
-                rutina. No se inventa una plantilla. Si esto no es lo que
-                quieres, revisa las condiciones de las reglas o crea una regla
-                genérica sin criterios como red de seguridad.
-              </p>
-            </div>
+            <EmptyState className="mt-4" title="Ninguna regla coincide">
+              Este paciente se quedaría sin rutina automática: se avisaría a su
+              profesional y su pantalla diría que le están preparando la rutina.
+              No se inventa una plantilla. Si esto no es lo que quieres, revisa
+              las condiciones de las reglas o crea una regla genérica sin
+              criterios como red de seguridad.
+            </EmptyState>
           ) : (
             <>
-              <div className="mt-4 rounded-lg bg-brand-soft p-4">
+              <div className="mt-4 rounded-lg bg-brand-soft p-4 text-brand-soft-foreground">
                 <p className="font-semibold">
                   Gana «{result.evaluation.match.rule.name}» · prioridad{" "}
                   {result.evaluation.match.rule.priority}
@@ -225,7 +215,7 @@ export default async function Page({
               {result.plan.needsReview && (
                 <div
                   role="alert"
-                  className="mt-4 rounded-lg border border-destructive p-3 text-sm text-destructive"
+                  className="mt-4 rounded-lg border border-destructive bg-danger-soft p-3 text-sm text-destructive"
                 >
                   <p className="font-semibold">
                     La rutina no se entregaría tal cual
@@ -249,7 +239,7 @@ export default async function Page({
                 {result.plan.days.map((dia) => (
                   <li
                     key={dia.day_number}
-                    className="rounded-xl border border-border p-4"
+                    className={cn(cardVariants({ padding: "sm" }), "rounded-xl")}
                   >
                     <p className="font-semibold">
                       Día {dia.day_number}

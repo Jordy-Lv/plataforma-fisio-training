@@ -16,6 +16,7 @@ import {
 } from "@/lib/progress/vocabulary";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ButtonLink } from "@/components/ui/ButtonLink";
+import { cardVariants } from "@/components/ui/Card";
 
 export const metadata: Metadata = {
   title: "Asistencia del paciente",
@@ -41,19 +42,20 @@ export default async function Page({
     <Workspace
       title={patient.full_name ?? "Paciente sin nombre"}
       name={profile.fullName}
+      actions={
+        <>
+          <ButtonLink variant="ghost" href="/attendance">
+            Volver a la asistencia
+          </ButtonLink>
+          <ButtonLink href={`/screenings/${patient.id}`}>
+            Ver su seguimiento físico
+          </ButtonLink>
+          <ButtonLink href={`/evolution/${patient.id}`}>
+            Ver su evolución
+          </ButtonLink>
+        </>
+      }
     >
-      <div className="mb-8 -mt-4 flex flex-wrap gap-3">
-        <ButtonLink href="/attendance">
-          Volver a la asistencia
-        </ButtonLink>
-        <ButtonLink href={`/screenings/${patient.id}`}>
-          Ver su seguimiento físico
-        </ButtonLink>
-        <ButtonLink href={`/evolution/${patient.id}`}>
-          Ver su evolución
-        </ButtonLink>
-      </div>
-
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-start">
         <section aria-labelledby="historial">
           <h2 id="historial" className="mb-1 text-xl font-semibold">
@@ -77,7 +79,7 @@ export default async function Page({
                 return (
                   <li
                     key={record.id}
-                    className="rounded-2xl border border-border bg-surface p-5"
+                    className={cardVariants()}
                   >
                     <h3 className="font-semibold">
                       {formatDate(record.attended_on)}
@@ -101,7 +103,7 @@ export default async function Page({
 
         <section
           aria-labelledby="nueva"
-          className="rounded-2xl border border-border bg-surface p-5"
+          className={cardVariants()}
         >
           <h2 id="nueva" className="mb-1 text-xl font-semibold">
             Registrar asistencia

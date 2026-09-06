@@ -12,15 +12,16 @@ export default async function Page() {
   const profile = await requireStaff();
 
   return (
-    <Workspace title="Nuevo ejercicio propio" name={profile.fullName}>
-      <p className="-mt-4 max-w-2xl leading-7 text-muted-foreground">
-        Un ejercicio propio del negocio queda marcado como tal y se usa en las
-        plantillas igual que cualquiera de los importados.
-      </p>
-      <ButtonLink href="/exercises" className="mb-8 mt-4">
-        Volver al catálogo
-      </ButtonLink>
-
+    <Workspace
+      title="Nuevo ejercicio propio"
+      name={profile.fullName}
+      description="Un ejercicio propio del negocio queda marcado como tal y se usa en las plantillas igual que cualquiera de los importados."
+      actions={
+        <ButtonLink variant="ghost" href="/exercises">
+          Volver al catálogo
+        </ButtonLink>
+      }
+    >
       <div className="max-w-2xl">
         <ExerciseForm />
       </div>

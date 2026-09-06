@@ -17,11 +17,7 @@ export function ExercisePagination({
       className="mt-8 flex items-center justify-between gap-3"
     >
       {page > 1 ? (
-        <ButtonLink
-          href={exercisesHref(filters, { page: page - 1 })}
-          
-          rel="prev"
-        >
+        <ButtonLink href={exercisesHref(filters, { page: page - 1 })} rel="prev">
           Anterior
         </ButtonLink>
       ) : (
@@ -33,11 +29,7 @@ export function ExercisePagination({
       </p>
 
       {page < pages ? (
-        <ButtonLink
-          href={exercisesHref(filters, { page: page + 1 })}
-          
-          rel="next"
-        >
+        <ButtonLink href={exercisesHref(filters, { page: page + 1 })} rel="next">
           Siguiente
         </ButtonLink>
       ) : (

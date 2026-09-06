@@ -1,5 +1,5 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
+import { cn } from "cn";
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth/session";
 import { Workspace } from "@/components/auth/Workspace";
@@ -8,6 +8,10 @@ import {
   AssignmentForm,
   DeactivateForm,
 } from "@/components/auth/PeopleForms";
+import { Badge } from "@/components/ui/Badge";
+import { ButtonLink } from "@/components/ui/ButtonLink";
+import { cardVariants } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { specialtyLabels } from "@/lib/auth/people-schemas";
 
 /**
@@ -47,24 +51,24 @@ export async function PeoplePanel({
       title={role === "admin" ? "Personas y equipo" : "Mis pacientes"}
       name={profile.fullName}
       role={role === "admin" ? "admin" : "professional"}
+      description={
+        role === "admin"
+          ? "Gestiona el equipo y el acompañamiento de cada paciente. Las bajas conservan su historial."
+          : "Consulta a las personas que acompañas y actualiza su perfil de entrenamiento."
+      }
     >
       {overview}
-      <div className="grid items-start gap-10 lg:grid-cols-[1fr_320px]">
+      <div className="mt-10 grid items-start gap-10 lg:grid-cols-[1fr_320px]">
         <section>
-          <p className="mb-5 max-w-xl leading-7 text-muted-foreground">
-            {role === "admin"
-              ? "Gestiona el equipo y el acompañamiento de cada paciente. Las bajas conservan su historial."
-              : "Consulta a las personas que acompañas y actualiza su perfil de entrenamiento."}
-          </p>
           {people.length === 0 ? (
-            <p className="rounded-lg bg-muted p-6 leading-7">
-              Aún no tienes pacientes asignados. Crea tu primer paciente para
+            <EmptyState title="Aún no tienes pacientes asignados">
+              Crea tu primer paciente con el formulario de esta pantalla para
               comenzar su acompañamiento.
-            </p>
+            </EmptyState>
           ) : (
-            <ul className="divide-y divide-border border-y border-border">
+            <ul className="grid gap-4">
               {people.map((person) => (
-                <li key={person.id} className="py-5">
+                <li key={person.id} className={cardVariants()}>
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <h2 className="text-lg font-semibold">
@@ -77,11 +81,9 @@ export async function PeoplePanel({
                         {person.phone && ` · ${person.phone}`}
                       </p>
                     </div>
-                    <span
-                      className={`rounded-full px-3 py-1 text-sm ${person.is_active ? "bg-brand-soft text-brand" : "bg-muted text-muted-foreground"}`}
-                    >
+                    <Badge variant={person.is_active ? "success" : "neutral"}>
                       {person.is_active ? "Activo" : "De baja"}
-                    </span>
+                    </Badge>
                   </div>
                   {person.role === "patient" && (
                     <>
@@ -91,12 +93,13 @@ export async function PeoplePanel({
                           .map((a) => specialtyLabels[a.kind])
                           .join(" y ") || "Sin profesional asignado"}
                       </p>
-                      <Link
-                        className="inline-flex min-h-11 items-center text-sm font-semibold text-brand underline underline-offset-4"
+                      <ButtonLink
+                        variant="ghost"
+                        className="mt-3"
                         href={`/people/${person.id}`}
                       >
                         Ver perfil e historial de condiciones
-                      </Link>
+                      </ButtonLink>
                     </>
                   )}
                   {role === "admin" && person.is_active && (
@@ -115,7 +118,7 @@ export async function PeoplePanel({
             </ul>
           )}
         </section>
-        <aside className="grid gap-8 rounded-xl border border-border bg-surface p-5 sm:p-6">
+        <aside className={cn(cardVariants({ padding: "lg" }), "grid gap-8")}>
           <CreatePersonForm isAdmin={role === "admin"} />
           {role === "admin" && (
             <div className="border-t border-border pt-6">

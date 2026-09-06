@@ -1,13 +1,13 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { cn } from "cn";
 import { Workspace } from "@/components/auth/Workspace";
-import { rolePaths } from "@/lib/auth/session";
 import { requireStaff } from "@/lib/progress/access";
 import { listPatientsWithLastScreening } from "@/lib/progress/screening-queries";
 import { formatDate, formatNumber } from "@/lib/progress/vocabulary";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
-import { ButtonLink } from "@/components/ui/ButtonLink";
+import { cardVariants } from "@/components/ui/Card";
 
 export const metadata: Metadata = {
   title: "Seguimiento físico",
@@ -18,21 +18,11 @@ export default async function Page() {
   const patients = await listPatientsWithLastScreening();
 
   return (
-    <Workspace title="Seguimiento físico" name={profile.fullName}>
-      <p className="-mt-4 max-w-2xl leading-7 text-muted-foreground">
-        El tamizaje periódico de cada paciente: peso, talla, IMC y medidas
-        corporales. Sustituye la hoja de cálculo con la que se llevaba antes.
-      </p>
-
-      <div className="mb-6 mt-4 flex flex-wrap gap-3">
-        <ButtonLink href={rolePaths[profile.role]}>
-          Volver a mi panel
-        </ButtonLink>
-        <ButtonLink href="/attendance">
-          Asistencia
-        </ButtonLink>
-      </div>
-
+    <Workspace
+      title="Seguimiento físico"
+      name={profile.fullName}
+      description="El tamizaje periódico de cada paciente: peso, talla, IMC y medidas corporales. Sustituye la hoja de cálculo con la que se llevaba antes."
+    >
       {patients.length === 0 ? (
         <EmptyState title="Aún no tienes pacientes que seguir">
           {profile.role === "admin"
@@ -43,7 +33,12 @@ export default async function Page() {
         <ul className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {patients.map((patient) => (
             <li key={patient.id} className="flex">
-              <article className="relative flex w-full flex-col gap-3 rounded-2xl border border-border bg-surface p-5 focus-within:border-brand hover:border-brand">
+              <article
+                className={cn(
+                  cardVariants({ interactive: true }),
+                  "flex w-full flex-col gap-3",
+                )}
+              >
                 <h2 className="text-base font-semibold leading-6">
                   <Link
                     href={`/screenings/${patient.id}`}
