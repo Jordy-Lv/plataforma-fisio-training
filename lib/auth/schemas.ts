@@ -27,4 +27,6 @@ export const passwordSchema = z
   });
 export const roleSchema = z.enum(["admin", "professional", "patient"]);
 export type UserRole = z.infer<typeof roleSchema>;
-export type AuthState = { error?: string; success?: string };
+// `email` se devuelve tras un fallo de acceso para volver a pintarlo en el
+// formulario: reescribir el correo en cada reintento es una fricción inútil.
+export type AuthState = { error?: string; success?: string; email?: string };

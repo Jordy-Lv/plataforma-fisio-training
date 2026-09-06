@@ -20,10 +20,30 @@ export async function signIn(
   formData: FormData,
 ): Promise<AuthState> {
   const parsed = loginSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  if (!parsed.success)
+    return {
+      error: parsed.error.issues[0].message,
+      email: String(formData.get("email") ?? ""),
+    };
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
-  if (error || !data.user) return { error: invalidCredentials };
+  if (error) {
+    // Un 4xx es "credenciales incorrectas"; un 5xx, un 429 o un fallo de red
+    // es que el servicio no responde —Supabase Free se suspende tras un rato
+    // sin uso— y no hay que hacer creer al usuario que se equivocó.
+    const badCredentials =
+      typeof error.status === "number" &&
+      error.status >= 400 &&
+      error.status < 500 &&
+      error.status !== 429;
+    return {
+      error: badCredentials
+        ? invalidCredentials
+        : "No pudimos conectar con el servicio. Espera un momento e inténtalo de nuevo.",
+      email: parsed.data.email,
+    };
+  }
+  if (!data.user) return { error: invalidCredentials, email: parsed.data.email };
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("role, is_active")
@@ -40,6 +60,7 @@ export async function signIn(
       error: profileError
         ? "No se pudo consultar tu perfil. Inténtalo de nuevo."
         : invalidCredentials,
+      email: parsed.data.email,
     };
   }
   revalidatePath("/", "layout");
