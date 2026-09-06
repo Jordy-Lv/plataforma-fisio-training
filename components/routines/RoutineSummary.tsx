@@ -1,3 +1,4 @@
+import { SessionControls } from "@/components/routines/SessionControls";
 import type { PatientRoutine } from "@/lib/routines/queries";
 
 const statusLabels = { active: "Activa", pending_review: "Pendiente de revisión", completed: "Finalizada", archived: "Archivada" };
@@ -17,6 +18,7 @@ export function RoutineSummary({ routine, staff = false }: { routine: PatientRou
         {routine.routine_days.map((day) => <section key={day.id}>
           <h3 className="font-semibold">Día {day.day_number}{day.title ? ` · ${day.title}` : ""}</h3>
           {!day.routine_items.length && <p className="mt-2 text-muted-foreground">El equipo debe completar este día antes de entregar la rutina.</p>}
+          {!staff && routine.status === "active" && <SessionControls dayId={day.id} />}
           <ol className="mt-3 grid gap-3">
             {day.routine_items.map((item) => <li key={item.id} className="rounded-xl border border-border p-4">
               <p className="break-words font-medium">{item.exercises?.name ?? "Ejercicio"}</p>

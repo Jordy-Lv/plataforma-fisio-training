@@ -190,7 +190,7 @@ test("Asignación transaccional de rutinas por API", { timeout: 120_000 }, async
     const dayId = sql(`select id from public.routine_days where routine_id = '${firstId}' and day_number = 1`);
     const itemId = sql(`select id from public.routine_items where routine_day_id = '${dayId}' and position = 1`);
     const session = await patient.client.from("sessions").insert({
-      routine_id: firstId, routine_day_id: dayId, patient_id: patient.id, status: "completed",
+      routine_id: firstId, routine_day_id: dayId, patient_id: patient.id, status: "in_progress",
     }).select("id").single();
     assert.equal(session.error, null);
     const log = await patient.client.from("session_logs").insert({
@@ -198,6 +198,17 @@ test("Asignación transaccional de rutinas por API", { timeout: 120_000 }, async
       status: "done", actual_sets: 3, actual_reps: 12, actual_weight: 8,
     }).select("id, session_id, routine_item_id, actual_sets, actual_reps, actual_weight").single();
     assert.equal(log.error, null);
+    const remaining = await patient.client.from("routine_items").select("id").eq("routine_day_id", dayId).neq("id", itemId);
+    assert.equal(remaining.error, null);
+    if (remaining.data.length) {
+      const marks = await patient.client.from("session_logs").insert(remaining.data.map((item) => ({
+        session_id: session.data.id, routine_item_id: item.id, patient_id: patient.id,
+        status: "done", actual_sets: 3, actual_reps: 12, pain_level: 0,
+      })));
+      assert.equal(marks.error, null);
+    }
+    const closed = await patient.client.from("sessions").update({ status: "completed" }).eq("id", session.data.id);
+    assert.equal(closed.error, null);
     const replacement = await copy(pro);
     assert.equal(replacement.error, null);
     assert.equal(sql(`select status from public.routines where id = '${firstId}'`), "completed");

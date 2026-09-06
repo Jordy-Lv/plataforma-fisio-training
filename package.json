@@ -36,6 +36,8 @@
     "test:screenings": "node --test scripts/verify-progress-screenings.test.mjs",
     "test:attendance": "node --test scripts/verify-progress-attendance.test.mjs",
     "test:routines": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/helpers/alias-hook.mjs --test scripts/verify-routine-assignment.test.mjs",
+    "test:routines:snapshot": "node --test scripts/verify-routine-snapshot.test.mjs",
+    "test:routines:items": "node --test scripts/verify-routine-items.test.mjs",
     "test:evolution": "node --test scripts/verify-progress-evolution.test.mjs",
     "test:plans": "node --test scripts/verify-progress-plans.test.mjs",
     "test:memberships": "node --test scripts/verify-progress-memberships.test.mjs",
