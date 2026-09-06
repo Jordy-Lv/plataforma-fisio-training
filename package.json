@@ -16,6 +16,7 @@
     "db:status": "supabase status",
     "db:env": "node scripts/setup-local-env.mjs",
     "db:reset": "supabase db reset --local",
+    "db:clean": "node scripts/check-db-clean.mjs",
     "test:auth": "node --test scripts/verify-auth-local.test.mjs",
     "test:auth:screens": "node --test scripts/verify-auth-screens.test.mjs",
     "test:rls": "node --test scripts/verify-rls.test.mjs",

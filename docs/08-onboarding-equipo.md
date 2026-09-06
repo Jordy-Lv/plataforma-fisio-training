@@ -98,35 +98,68 @@ producción.
 | `npm run db:status` | Muestra servicios y credenciales locales; no compartir su salida |
 | `npm run db:env` | Crea `.env.local` si no existe |
 | `npm run db:reset` | Recrea la base local y aplica la semilla de personas |
+| `npm run db:clean` | Comprueba si la base local está limpia (867\|0\|3\|7); con `-- --fix` elimina fixtures huérfanos |
 | `npm run test:auth` | Prueba Auth y sesión SSR contra Supabase local encendido |
 | `npm run test:rls` | Camino 9: aislamiento de datos entre pacientes, contra la API |
 | `npm run test:storage` | Bucket `exercise-media`: lectura pública y escritura solo del equipo |
 | `npm run db:types` | Regenera `lib/db/types.ts`; se commitea junto a la migración |
 | `npm run seed:exercises` | Importa free-exercise-db a `exercises` y sube las imágenes al bucket `exercise-media`. Necesita red; es idempotente y se puede repetir. Requiere Node ≥ 22.18, que ejecuta TypeScript sin transpilar |
-| `bash scripts/verify.sh` | Corre todas las verificaciones de CI en local |
+| `bash scripts/verify.sh` | Control de calidad local. Modo rápido por defecto; con `--full` corre todas las suites funcionales |
 
-> **GitHub Actions está pendiente de habilitar en la cuenta.** Los workflows fallan al
-> arrancar (`startup_failure`) incluso con un archivo trivial, lo que apunta a límites de
-> minutos o de gasto en la configuración de facturación, no al proyecto. Hasta que se
-> resuelva, `bash scripts/verify.sh` **es** el control de calidad: córrelo antes de cada
-> PR. El workflow ya está escrito en `.github/workflows/ci.yml` y funcionará sin cambios en
-> cuanto Actions arranque.
+### Los dos modos de `verify.sh`
+
+`scripts/verify.sh` es el punto de control central de calidad del repositorio. Opera en dos modos según el momento del flujo de trabajo:
+
+1. **Modo rápido (`bash scripts/verify.sh`)**:
+   - **Cuándo usarlo:** Antes de cada commit en local.
+   - **Qué hace:** Ejecuta `openspec validate --all --strict`, `npm run typecheck`, `npm run lint` y `npm run build`. Tarda apenas unos segundos y no requiere base de datos ni servidor en ejecución.
+2. **Modo completo (`bash scripts/verify.sh --full`)**:
+   - **Cuándo usarlo:** Obligatoriamente antes de abrir o fusionar un Pull Request.
+   - **Qué hace:** Ejecuta todo el modo rápido y, tras comprobar los requisitos previos (Supabase local encendido, `npm run dev` activo en el puerto 3000 y base limpia), ejecuta dinámicamente las suites funcionales (`test:*` de `package.json`) contra la aplicación real y valida que la base quede limpia al terminar.
+
+### Detector y saneador de base de datos sucia (`check-db-clean.mjs`)
+
+Las pruebas funcionales crean fixtures temporales (usuarios, ejercicios, rutinas y alertas) y los eliminan en sus bloques de limpieza (`t.after`). Sin embargo, **si una suite se interrumpe a mitad** (por timeout, cancelación con `Ctrl+C` o error imprevisto), la basura permanece en la base de datos local y contamina las comprobaciones de conteo de otras pruebas.
+
+> **Caso real que costó horas de depuración:**
+> Una prueba interrumpida dejó 6 usuarios `sesiones-%@demo.local`, 2 ejercicios de prueba y ~36 alertas. Entre esos usuarios había un ADMIN huérfano. Cuando se ejecutó el job de membresías, generó una alerta por cada admin activo, provocando que `test:memberships:cron` contara 4 alertas en vez de 2 y fallara. A su vez, los 2 ejercicios residuales alteraron el catálogo y `test:catalog` falló. **Ninguno de los dos fallos era un bug de código**, sino contaminación por fixtures no limpiados.
+
+Para diagnosticar y resolver esto:
+
+- **Diagnosticar:** `npm run db:clean` (o `node scripts/check-db-clean.mjs`).
+  - **Salida limpia (código 0):** `✓ Base de datos limpia. Conteos: 867 ejercicios | 0 personalizados | 3 alertas | 7 usuarios oficiales.`
+    - *867 ejercicios:* Semilla base de `scripts/seed-exercises.ts`.
+    - *0 personalizados (`is_custom = true`):* No hay ejercicios residuales creados a mano.
+    - *3 alertas:* Generadas por `scripts/seed-progress-demo.ts` para el paciente demo Marcos Rojas (admin, Beto entrenador y Carla fisio).
+    - *7 usuarios oficiales:* 5 de `supabase/seed.sql` (`admin`, `entrenador`, `fisio`, `paciente`, `paciente2`) y 2 de `scripts/seed-progress-demo.ts` (`laura.perez.demo`, `marcos.rojas.demo`).
+  - **Salida sucia (código 1):** Muestra el desglose de desviaciones y lista con detalle cada usuario, rutina, alerta o ejercicio huérfano detectado.
+- **Limpiar:** `npm run db:clean -- --fix` (o `node scripts/check-db-clean.mjs --fix`).
+  - Elimina los huérfanos en el orden referencial correcto: primero las rutinas del paciente huérfano, luego el usuario de `auth.users` (lo que borra perfiles, asignaciones y alertas en cascada), y finalmente ejercicios personalizados y alertas residuales.
+  - **Seguridad:** Los 7 usuarios oficiales de las semillas están estrictamente protegidos en una lista blanca inviolable; el script nunca los borra e imprime qué va a eliminar antes de proceder.
+
+> **Estado de GitHub Actions en la cuenta:** Los workflows fallan al arrancar en la plataforma de GitHub
+> (`startup_failure`) incluso con un archivo mínimo, lo que apunta a límites de facturación o cuota de la cuenta.
+> El archivo `.github/workflows/ci.yml` incluye el job estático (`verify` y `openspec`) y el job funcional completo
+> (`functional-tests`, con Supabase local, siembra y dev server). Mientras Actions no arranque en GitHub,
+> `bash scripts/verify.sh --full` **es** el control de calidad oficial del equipo y debe correrse en local antes de cada PR.
 
 ## 6. Verificar que todo quedó bien
 
-Para la base actual: ejecuta `npm run test:auth` con Node 22 y Supabase encendido,
-y después `bash scripts/verify.sh`. La prueba crea un usuario desechable y una aplicación
-Next.js temporal que utiliza los clientes y el middleware reales; elimina ambos al
-terminar. No publica rutas de diagnóstico en la aplicación ni usa una clave privilegiada.
+Para validar que tu entorno está completamente operativo:
 
-Los siguientes recorridos quedan pendientes hasta implementar las pantallas y el seed:
+1. Inicia Supabase local (`npm run db:start`) y comprueba que la base esté limpia (`npm run db:clean`).
+2. En una terminal, arranca el servidor de desarrollo (`npm run dev`) en `http://localhost:3000`.
+3. En otra terminal, ejecuta la verificación rápida:
+   ```bash
+   bash scripts/verify.sh
+   ```
+4. Antes de abrir un PR, ejecuta la verificación completa:
+   ```bash
+   bash scripts/verify.sh --full
+   ```
+   Esta orden ejecuta todas las suites funcionales (autenticación, pantallas SSR, RLS, aislamiento de datos, catálogo, plantillas, reglas clínicas, rutinas, ejecución de sesiones, tamizajes, asistencias, membresías y cron) y comprueba que la base de datos termine exactamente en su estado limpio base (867|0|3|7).
 
-1. `http://localhost:3000` carga sin errores en consola.
-2. Entras con `paciente@demo.local` y ves una rutina asignada.
-3. Entras con `fisio@demo.local` y ves a ese paciente en tu lista.
-4. `npm run typecheck` y `npm run lint` pasan limpio.
-
-Si los cuatro funcionan, estás listo.
+Si `scripts/verify.sh --full` termina con «Todo en verde», tu entorno y tus cambios están listos para revisión.
 
 ## 7. Tu primer día de trabajo
 
