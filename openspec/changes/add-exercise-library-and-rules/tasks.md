@@ -41,4 +41,4 @@
 
 ## 6. Cierre
 
-- [ ] 6.1 Ejecutar el camino 2 del plan de verificación, incluido el paso 5 (cambiar la regla cambia la asignación del siguiente paciente)
+- [x] 6.1 Ejecutar el camino 2 del plan de verificación, incluido el paso 5 (cambiar la regla cambia la asignación del siguiente paciente)
