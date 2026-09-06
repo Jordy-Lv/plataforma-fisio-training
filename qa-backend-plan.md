@@ -24,40 +24,36 @@ marcados **ALCANCE** necesitan una decisión de producto antes de tocarlos.
 
 ---
 
-## Decisiones de alcance pendientes (bloquean el batch 4)
+## Decisiones de alcance (resueltas por Yordy, 2026-09-06)
 
-### D1 · BACK-003 — copia directa de plantilla sin motor de reglas
-`copy_routine_template` tiene `grant execute to authenticated` y la puede llamar
-un profesional asignado, saltándose evaluación de reglas, filtro de
-contraindicaciones y el evento de asignación. **Pero** el profesional tiene
-autoridad de ajuste manual (la memoria: «no se bloquea añadir contraindicado,
-solo se advierte»).
-**Pregunta:** ¿la asignación manual directa (sin pasar por reglas) es un flujo
-legítimo? Si **sí** → solo hace falta que ese camino también escriba un
-`routine_assignment_event` (trazabilidad). Si **no** → revocar el `grant` y
-dejar la función como detalle privado de `commit_routine_assignment`.
+### D1 · BACK-003 — **asignación manual directa ES legítima → solo trazabilidad**
+El profesional puede asignar sin pasar por el motor de reglas. Se **conserva** el
+`grant execute` de `copy_routine_template`. Lo único que falta: que ese camino
+manual escriba un `routine_assignment_event` (tipo manual / sin regla) para no
+perder el rastro. No se filtra por contraindicaciones: es decisión clínica del
+profesional, igual que en el editor de rutina.
 
-### D2 · BACK-011 — los servicios no tienen `price`
-La tabla `services` no tiene columna `price`; OpenSpec
-(`plans-and-memberships/spec.md:11-17`) exige descripción y precio. Un insert con
-`price` da `PGRST204`.
-**Pregunta:** ¿el precio de los servicios está en el alcance de la demo? Si **sí**
-→ migración (columna + backfill), Zod, acción, presentación en `/offer` y `/plans`,
-tipos. Si **no** → quitar la mención de OpenSpec o marcarla como fuera de alcance.
+### D2 · BACK-011 — **el precio de servicios ENTRA en la demo**
+Migración: `services.price numeric(12,2) not null` (+ `check >= 0`), backfill de
+las filas existentes, Zod en `plan-schemas.ts` (o el que aplique), acción de
+admin, presentación en `/offer` y `/plans`, tipos regenerados. Revisar
+`seed`/`seed:*` de servicios para que aporten precio.
 
-### D3 · BACK-012 — la alerta `low_attendance` no tiene generador
-El enum, el umbral y la etiqueta de UI existen; no hay función, trigger, cron ni
-modelo de «asistencia esperada» que la produzca. Feature inerte.
-**Pregunta:** ¿`low_attendance` entra en la demo? Si **sí** → definir asistencia
-esperada y momento de evaluación, generador idempotente con zona horaria y
-destinatarios. Si **no** → documentarla como pospuesta.
+### D3 · BACK-012 — **se construye el generador de `low_attendance`**
+Definir «asistencia esperada» del mes (probablemente a partir de
+`routine_days`/frecuencia o un valor configurable), generador idempotente
+—momento a decidir: al cerrar sesión, o en un cron diario—, zona horaria
+`America/Bogota`, destinatarios = profesionales asignados + admin (igual que las
+demás alertas). Umbral: <50 % del mes (contrato). Idempotencia por
+`(patient_id, kind, período)`. Es el mayor esfuerzo del lote.
 
-### D4 · BACK-006 — el profesional no puede editar su ejercicio propio
-`is_custom` no guarda propietario y la RLS de UPDATE es solo-admin; OpenSpec
-(`exercise-library/spec.md:64`) dice que el profesional crea **y edita** los
-suyos. Contradicción spec↔implementación.
-**Pregunta:** ¿resolver a favor de OpenSpec (añadir `created_by`, permitir editar
-al dueño) o de la implementación (OpenSpec se corrige, solo admin edita)?
+### D4 · BACK-006 — **se resuelve a favor de OpenSpec**
+Migración: `exercises.created_by uuid references profiles(id)`, backfill (las
+actuales `is_custom` a su creador si se puede inferir, o a `null`/admin), RLS de
+UPDATE = `created_by = auth.uid()` con actor activo **o** `is_admin()`; cablear
+la ruta de edición de ejercicios para el rol profesional (hoy vive en
+`app/(admin)/exercises/[id]`). Ajustar la prueba heredada que fija el
+comportamiento «solo admin».
 
 ---
 
@@ -86,14 +82,14 @@ al dueño) o de la implementación (OpenSpec se corrige, solo admin edita)?
 | **BACK-005** | Membresías con fechas invertidas, monto negativo, plan inactivo o perfil no-paciente | `check (amount >= 0)`, `check (expires_on >= started_on)`; trigger que valida rol del `patient_id` y `is_active` del `plan_id`. **Verificar antes que el seed demo no viole las constraints** (membresía contra el plan inactivo, offsets de fecha). Migración. | S-M | B |
 | **BACK-007** | Cualquier profesional sobrescribe objetos de otro y escribe fuera de `custom/` | Políticas de `storage.objects` para `exercise-media`: `insert/update/delete` con `(storage.foldername(name))[1] = 'custom'` y `owner = auth.uid()`; otros prefijos reservados a admin. Migración. | S-M | M (subida de imágenes del catálogo) |
 
-### Batch 4 — Tras decisión de alcance (D1-D4)
+### Batch 4 — Alcance confirmado (D1-D4 resueltas)
 
-| ID | Depende de | Trabajo si se acomete |
-|---|---|---|
-| **BACK-003** | D1 | Evento de trazabilidad en el camino manual, o revocar el `grant` y privatizar la función. |
-| **BACK-006** | D4 | Columna `created_by` + backfill + RLS de UPDATE por dueño activo + cablear la ruta de edición para profesionales. |
-| **BACK-011** | D2 | Migración `price` + Zod + acción + presentación + tipos. |
-| **BACK-012** | D3 | Definición de asistencia esperada + generador idempotente + zona horaria + destinatarios + pruebas. |
+| ID | Trabajo | Esfuerzo | Riesgo |
+|---|---|---|---|
+| **BACK-003** | Escribir `routine_assignment_event` (manual, sin regla) en el camino de asignación directa. Se conserva el `grant`. | S | B |
+| **BACK-011** | Migración `services.price` + `check >= 0` + backfill; Zod; acción admin; mostrar en `/offer` y `/plans`; tipos; revisar seeds de servicios. | M | B-M |
+| **BACK-006** | Migración `exercises.created_by` + backfill; RLS de UPDATE por dueño activo o admin; cablear edición para profesionales; ajustar prueba heredada. | M | M |
+| **BACK-012** | Definir asistencia esperada del mes; generador idempotente (momento por decidir: al cerrar sesión / cron diario); zona horaria; destinatarios = profesionales asignados + admin; umbral <50 %; idempotencia `(patient_id, kind, período)`. | A | M |
 
 ### Pospuestos (sospechas, medir antes)
 
@@ -104,10 +100,18 @@ al dueño) o de la implementación (OpenSpec se corrige, solo admin edita)?
 
 ---
 
-## Orden de ejecución propuesto
+## Orden de ejecución
 
-1. **Batch 2** primero (rápido, sin migración, sin RLS): BACK-009, BACK-010, BACK-008.
-2. **Batch 1** (P0): BACK-001, luego BACK-002. Cada uno su migración + `db:reset` + regen de tipos + `test:rls` + `test:*` afectadas, en ventana coordinada de la base local.
-3. **Batch 3**: BACK-004, BACK-005, BACK-007.
-4. Responder D1-D4 → **Batch 4**.
-5. Pospuestos solo si hay tiempo y evidencia.
+1. **Batch 2** (sin migración, sin RLS, verificable ya con typecheck/lint/build):
+   BACK-009, BACK-010, BACK-008.
+2. **Batch 1** (P0, con migración): BACK-001, luego BACK-002.
+3. **Batch 3** (integridad, migraciones): BACK-004, BACK-005, BACK-007.
+4. **Batch 4** (alcance confirmado): BACK-003 (rápido), BACK-011, BACK-006, BACK-012.
+5. Pospuestos: BACK-013, BACK-014 (medir antes).
+
+**Bloqueo operativo:** los batches 1, 3 y 4 llevan migración y necesitan
+`npm run db:reset` + regen de `lib/db/types.ts` + `test:rls`/`test:*` en verde.
+La Supabase local compartida (54321/54322) la usan otras sesiones y `db:reset`
+borra su estado. Opciones: (a) ventana coordinada para resetear la compartida, o
+(b) levantar una instancia Supabase aislada propia para desarrollar y validar las
+migraciones antes de integrarlas. El batch 2 no tiene este bloqueo.
