@@ -18,11 +18,25 @@ function measure(min: number, max: number, error: string) {
   );
 }
 
-const bodyMeasure = measure(
+/**
+ * Igual que `measure`, pero un campo vacío es válido. El `.optional()` va
+ * DENTRO del `preprocess`: `blank` ya convirtió la cadena vacía del formulario
+ * en `undefined` cuando se comprueba. Con el `.optional()` por fuera nunca se
+ * activaba —el navegador envía `""`, no `undefined`— y el rango fallaba sobre
+ * un `NaN`, así que los campos marcados "· opcional" eran obligatorios de facto.
+ */
+function optionalMeasure(min: number, max: number, error: string) {
+  return z.preprocess(
+    blank,
+    z.coerce.number({ error }).min(min, error).max(max, error).optional(),
+  );
+}
+
+const bodyMeasure = optionalMeasure(
   10,
   250,
   "Cada medida corporal debe estar entre 10 y 250 cm.",
-).optional();
+);
 
 /** Las mismas claves de `lib/progress/vocabulary.ts`, dentro de `measurements`. */
 const measurementsSchema = z.object({
@@ -51,11 +65,11 @@ export const createScreeningSchema = z.object({
   takenOn,
   weightKg: measure(20, 300, "El peso debe estar entre 20 y 300 kg."),
   heightCm: measure(100, 250, "La talla debe estar entre 100 y 250 cm."),
-  bodyFatPct: measure(
+  bodyFatPct: optionalMeasure(
     1,
     70,
     "El porcentaje de grasa debe estar entre 1 y 70.",
-  ).optional(),
+  ),
   measurements: measurementsSchema,
   notes: z
     .string()
