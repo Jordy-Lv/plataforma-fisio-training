@@ -884,12 +884,16 @@ export type Database = {
           actual_sets: number | null
           actual_weight: number | null
           created_at: string
+          exercise_id: string | null
           id: string
           notes: string | null
           pain_level: number | null
           pain_location: string | null
           patient_id: string
           perceived_effort: number | null
+          prescribed_reps: number | null
+          prescribed_sets: number | null
+          prescribed_weight: number | null
           replaced_by_exercise_id: string | null
           routine_item_id: string
           session_id: string
@@ -900,12 +904,16 @@ export type Database = {
           actual_sets?: number | null
           actual_weight?: number | null
           created_at?: string
+          exercise_id?: string | null
           id?: string
           notes?: string | null
           pain_level?: number | null
           pain_location?: string | null
           patient_id: string
           perceived_effort?: number | null
+          prescribed_reps?: number | null
+          prescribed_sets?: number | null
+          prescribed_weight?: number | null
           replaced_by_exercise_id?: string | null
           routine_item_id: string
           session_id: string
@@ -916,18 +924,29 @@ export type Database = {
           actual_sets?: number | null
           actual_weight?: number | null
           created_at?: string
+          exercise_id?: string | null
           id?: string
           notes?: string | null
           pain_level?: number | null
           pain_location?: string | null
           patient_id?: string
           perceived_effort?: number | null
+          prescribed_reps?: number | null
+          prescribed_sets?: number | null
+          prescribed_weight?: number | null
           replaced_by_exercise_id?: string | null
           routine_item_id?: string
           session_id?: string
           status?: Database["public"]["Enums"]["log_status"]
         }
         Relationships: [
+          {
+            foreignKeyName: "session_logs_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "session_logs_patient_id_fkey"
             columns: ["patient_id"]
@@ -1155,6 +1174,7 @@ export type Database = {
         Args: { target_patient: string }
         Returns: Json
       }
+      start_routine_session: { Args: { target_day: string }; Returns: string }
       treats_patient: { Args: { target: string }; Returns: boolean }
     }
     Enums: {
