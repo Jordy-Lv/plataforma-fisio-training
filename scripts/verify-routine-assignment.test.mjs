@@ -160,15 +160,50 @@ test("Motor conectado a asignación, aislamiento y vistas", { timeout: 180000 },
     assert.ok(!html.includes('Pendiente de revisión'));
     assert.equal(templateContents(), original);
   });
+  await t.test("BACK-002 · el servidor recalcula el ganador y no acepta la regla del cliente", async () => {
+    const decoyRule = randomUUID();
+    // Regla activa, plantilla activa, criterios que coinciden con el paciente,
+    // pero con peor prioridad: no es la ganadora determinista.
+    sql(`insert into public.assignment_rules(id, name, priority, conditions, template_id)
+      values ('${decoyRule}', 'Regla señuelo BACK-002', 999999,
+        '{"goal":["performance"],"level":["advanced"],"environment":["gym"],"equipment_all_of":["barbell"]}',
+        '${secondTemplateId}')`);
+    try {
+      const snapshot = await context();
+      const before = sql(`select count(*) from public.routines where patient_id='${patient.id}'`);
+      // Enviar otra regla activa en lugar de la ganadora: rechazado.
+      const forgedRule = await pro.api.rpc('commit_routine_assignment', {
+        target_patient: patient.id, expected_context: snapshot, selected_rule: decoyRule,
+      });
+      assert.equal(forgedRule.error?.code, '22023');
+      // Declarar `no_match` (regla nula) habiendo una ganadora: rechazado.
+      const forgedNull = await pro.api.rpc('commit_routine_assignment', {
+        target_patient: patient.id, expected_context: snapshot,
+      });
+      assert.equal(forgedNull.error?.code, '22023');
+      assert.equal(sql(`select count(*) from public.routines where patient_id='${patient.id}'`), before);
+    } finally {
+      sql(`delete from public.assignment_rules where id = '${decoyRule}'`);
+    }
+  });
   await t.test("Sin coincidencia se registra aviso y el paciente ve un estado explicativo", async () => {
-    const snapshot = await context(admin, emptyPatient);
-    const result = await admin.api.rpc('commit_routine_assignment', { target_patient: emptyPatient.id, expected_context: snapshot });
-    assert.equal(result.error, null);
-    assert.equal(result.data.outcome, 'no_match');
-    assert.equal(sql(`select count(*) from public.routines where patient_id='${emptyPatient.id}'`), '0');
-    const web = httpClient();
-    await web.submit('/login', { email: emptyPatient.email, password });
-    assert.match((await web.request('/routine')).html, /Tu profesional está preparando tu rutina/);
+    // El servidor recalcula el ganador (BACK-002): para que el resultado sea
+    // realmente `no_match` no puede quedar ninguna regla activa —ni la de
+    // prueba ni las del seed compartido—. Se desactivan y se restauran.
+    const active = sql(`select coalesce(string_agg(id::text, ','), '') from public.assignment_rules where is_active`);
+    sql(`update public.assignment_rules set is_active = false where is_active`);
+    try {
+      const snapshot = await context(admin, emptyPatient);
+      const result = await admin.api.rpc('commit_routine_assignment', { target_patient: emptyPatient.id, expected_context: snapshot });
+      assert.equal(result.error, null);
+      assert.equal(result.data.outcome, 'no_match');
+      assert.equal(sql(`select count(*) from public.routines where patient_id='${emptyPatient.id}'`), '0');
+      const web = httpClient();
+      await web.submit('/login', { email: emptyPatient.email, password });
+      assert.match((await web.request('/routine')).html, /Tu profesional está preparando tu rutina/);
+    } finally {
+      if (active) sql(`update public.assignment_rules set is_active = true where id in ('${active.split(',').join("','")}')`);
+    }
   });
   await t.test("Un fallo al copiar revierte el cierre de la rutina y los avisos", async () => {
     sql(`insert into public.template_days(template_id,day_number) values ('${secondTemplateId}',2)`);

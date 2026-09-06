@@ -64,7 +64,7 @@ comportamiento «solo admin».
 | ID | Qué | Cómo | Esfuerzo | Riesgo |
 |---|---|---|---|---|
 | **BACK-001** | Un JWT emitido antes de una baja conserva acceso directo a PostgREST/Storage | `current_role()` y `treats_patient()` pasan a exigir `is_active`; las políticas con `id = auth.uid()` llano (self de `profiles`/`patient_details`) añaden término `is_active`; revisar políticas de `storage.objects`. Migración nueva. Decidir aparte si además se revocan sesiones al desactivar (necesita admin API, hoy prohibida fuera de cron/seed). | M | M-A (RLS de todas las tablas de personas) |
-| **BACK-002** | `commit_routine_assignment` acepta la regla que elige el cliente (o `null`) sin recalcular la ganadora | Recalcular la primera regla compatible por prioridad dentro de la transacción y rechazar si `selected_rule` / `no_match` no coinciden. Depende de si la evaluación de reglas existe en SQL o solo en `lib/catalog/evaluate-rules.ts` (si es solo TS, hay que portar el «primera coincidencia por prioridad»). Migración a la función. | M-A | M |
+| **BACK-002** ✅ | `commit_routine_assignment` acepta la regla que elige el cliente (o `null`) sin recalcular la ganadora | HECHO. Portada la parte decisoria del motor a SQL (`assignment_rule_matches` + `resolve_assignment_winner`); la RPC recalcula el ganador en la transacción y rechaza con `22023` si `selected_rule` / `no_match` no coinciden. Migración `20260906233000_routines_qa_rule_winner_recompute.sql` + regresión. | M-A | M |
 
 ### Batch 2 — TS contenido, sin migración (ganancias rápidas)
 
@@ -111,9 +111,23 @@ comportamiento «solo admin».
      `test:actor-active` (falla sin la migración, pasa con ella). `db:reset`
      limpio, tipos regenerados, las 25 suites `test:*` en verde con la base
      resembrada.
-   - **BACK-002** — ⬜ pendiente. Recalcular la regla ganadora dentro de
-     `commit_routine_assignment`. Antes hay que ver si la evaluación de reglas
-     existe en SQL o solo en `lib/catalog/evaluate-rules.ts`.
+   - **BACK-002** — ✅ HECHO. Migración
+     `20260906233000_routines_qa_rule_winner_recompute.sql`. La evaluación del
+     ganador vivía solo en `lib/catalog/evaluate-rules.ts`; se portó la parte
+     decisoria a SQL (`assignment_rule_matches` + `resolve_assignment_winner`) y
+     `commit_routine_assignment` la recalcula dentro de la transacción sobre el
+     contexto ya verificado: si `selected_rule` (o el nulo que declara
+     `no_match`) no es el ganador determinista, lanza `22023`. Regresión nueva
+     en `verify-routine-assignment.test.mjs` («el servidor recalcula el ganador
+     y no acepta la regla del cliente»); el caso «Sin coincidencia» ahora
+     desactiva todas las reglas para que el `no_match` sea real. `db:reset`
+     limpio, tipos regenerados, base resembrada, suites en verde
+     (`test:rls/actor-active/routines*/rules*/templates*/catalog*` = 156
+     pruebas), typecheck/lint/build/test:design OK. Límite conocido: no se
+     replica la validación estricta del vocabulario cerrado de `equipment` y de
+     las zonas del cuerpo (los `z.enum` de `rules-schema.ts`); el panel no puede
+     producir reglas con valores fuera de vocabulario y el objetivo de BACK-002
+     queda cubierto.
 3. **Batch 3** (integridad, migraciones): BACK-004, BACK-005, BACK-007. ⬜
 4. **Batch 4** (alcance confirmado): BACK-003 (rápido), BACK-011, BACK-006,
    BACK-012. ⬜

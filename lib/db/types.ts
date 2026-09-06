@@ -1124,6 +1124,10 @@ export type Database = {
     }
     Functions: {
       actor_is_active: { Args: never; Returns: boolean }
+      assignment_rule_matches: {
+        Args: { conditions: Json; profile: Json }
+        Returns: boolean
+      }
       can_read_routine: { Args: { target_routine: string }; Returns: boolean }
       can_write_routine: { Args: { target_routine: string }; Returns: boolean }
       cancel_person_registration: {
@@ -1167,6 +1171,7 @@ export type Database = {
         }
         Returns: string
       }
+      resolve_assignment_winner: { Args: { context: Json }; Returns: string }
       review_membership_expiry: {
         Args: { notice_days?: number }
         Returns: Json
