@@ -37,6 +37,9 @@ export const emptyFile = (value: unknown) =>
 
 const mediaFile = z
   .instanceof(File, { error: "Elige una imagen o un GIF del movimiento." })
+  .refine((file) => file.size > 0, {
+    message: "El archivo de imagen está vacío.",
+  })
   .refine((file) => file.size <= maxMediaBytes, {
     message: "La imagen no puede pesar más de 5 MB.",
   })

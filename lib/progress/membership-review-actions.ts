@@ -1,22 +1,16 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { getActiveProfile } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import type { ReviewResult } from "@/lib/progress/membership-review";
+import { noticeDaysSchema } from "@/lib/progress/membership-schemas";
 
 /** Lo que devuelve el disparo manual de la revisión. */
 export type ReviewActionState = { error?: string; summary?: string };
 
 /** La clave de `alert_settings` que fija el plazo de aviso de vencimiento. */
 const NOTICE_DAYS_KEY = "membership_expiring_days";
-
-const noticeDaysSchema = z.coerce
-  .number({ error: "Indica el plazo de aviso en días." })
-  .int("El plazo de aviso se cuenta en días enteros.")
-  .min(1, "El plazo de aviso debe ser de al menos un día.")
-  .max(90, "Un plazo mayor de 90 días no tiene sentido para un aviso.");
 
 /**
  * Dispara la revisión de vencimientos desde el panel de administración. No hace
@@ -85,6 +79,11 @@ function describeReview(data: ReviewResult): string {
     partes.push(`${data.emailed} correos enviados, ${data.emailErrors.length} con error.`);
   } else if (data.emailed > 0) {
     partes.push(`${data.emailed} correos enviados.`);
+  }
+  if (data.unmarked.length > 0) {
+    partes.push(
+      `${data.unmarked.length} aviso(s) enviados pero sin registrar: revísalos a mano.`,
+    );
   }
 
   return partes.join(" ");
