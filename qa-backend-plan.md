@@ -74,13 +74,13 @@ comportamiento «solo admin».
 | **BACK-010** | El cron da 500 con `noticeDays` inválido (-1, decimal, entero máx.) y acepta `0` pese a que el panel exige 1..90 | `app/api/cron/memberships/route.ts` (~L37-57): validar `noticeDays` con un Zod entero 1..90 compartido con el panel y devolver 400. | S | B |
 | **BACK-008** | El bucket acepta archivo de 0 bytes y bytes arbitrarios con MIME `image/*` declarado | `lib/catalog/exercise-actions.ts`: validar firma (magic bytes) y rechazar vacío antes de subir. Storage no valida contenido por sí mismo. | S | B |
 
-### Batch 3 — Integridad de datos (migraciones)
+### Batch 3 — Integridad de datos (migraciones) ✅ HECHO
 
 | ID | Qué | Cómo | Esfuerzo | Riesgo |
 |---|---|---|---|---|
-| **BACK-004** | `screenings.taken_by` / `attendance.registered_by` / `check_in_at` se pueden falsificar por API directa | Trigger `before insert` que fija la autoría a `auth.uid()`; `revoke update` de esas columnas. Confirmar en la spec si el admin registra en nombre de otro (camino explícito aparte). | S-M | B-M |
-| **BACK-005** | Membresías con fechas invertidas, monto negativo, plan inactivo o perfil no-paciente | `check (amount >= 0)`, `check (expires_on >= started_on)`; trigger que valida rol del `patient_id` y `is_active` del `plan_id`. **Verificar antes que el seed demo no viole las constraints** (membresía contra el plan inactivo, offsets de fecha). Migración. | S-M | B |
-| **BACK-007** | Cualquier profesional sobrescribe objetos de otro y escribe fuera de `custom/` | Políticas de `storage.objects` para `exercise-media`: `insert/update/delete` con `(storage.foldername(name))[1] = 'custom'` y `owner = auth.uid()`; otros prefijos reservados a admin. Migración. | S-M | M (subida de imágenes del catálogo) |
+| **BACK-004** ✅ | `screenings.taken_by` / `attendance.registered_by` se podían falsificar por API directa | HECHO. Migración `20260906234000_progress_qa_authorship_triggers.sql`: trigger `before insert or update` en `screenings` y `attendance` que fija la autoría a `coalesce(auth.uid(), <valor>)` en el alta (el seed/cron corren con `service_role` y conservan el valor explícito) y la deja inmutable en edición (`old`). No se tocó `check_in_at` (es dato operativo del registro, no autoría). Regresión en `verify-progress-screenings` y `verify-progress-attendance`. | S-M | B-M |
+| **BACK-005** ✅ | Membresías con fechas invertidas, monto negativo, plan inactivo o perfil no-paciente | HECHO. Migración `20260906234100_progress_qa_membership_constraints.sql`: `check (amount >= 0)`, `check (expires_on >= started_on)` y trigger `security definer` que exige `patient_id` con rol `patient` y `plan_id` activo. El trigger solo revalida las FK en edición si esa columna concreta cambia, para que las transiciones de estado del cron (`active`→`expired`) nunca lo disparen. Seeds y fixtures existentes verificados: ninguno viola las constraints. Regresión nueva (5 casos) en `verify-progress-memberships`. | S-M | B |
+| **BACK-007** ✅ | Cualquier profesional sobrescribe objetos de otro y escribe fuera de `custom/` | HECHO. Migración `20260906234200_catalog_qa_storage_ownership.sql`: se rehacen las políticas de `storage.objects` para `exercise-media`. El admin gestiona todo el bucket sin restricción de prefijo; el profesional solo `insert/update/delete` de objetos propios (`owner = auth.uid()`) y solo bajo `custom/` (`(storage.foldername(name))[1] = 'custom'`). El borrado propio en `custom/` pasa a estar permitido (antes era solo admin): habilita que `discardMedia` limpie las subidas huérfanas del profesional. `service_role` (seed de imágenes) sigue sin pasar por RLS. `verify-catalog-storage` reescrito al nuevo contrato; `verify-catalog:custom` (flujo real de alta/edición con imagen) sigue en verde. | S-M | M (subida de imágenes del catálogo) |
 
 ### Batch 4 — Alcance confirmado (D1-D4 resueltas)
 
@@ -128,7 +128,21 @@ comportamiento «solo admin».
      las zonas del cuerpo (los `z.enum` de `rules-schema.ts`); el panel no puede
      producir reglas con valores fuera de vocabulario y el objetivo de BACK-002
      queda cubierto.
-3. **Batch 3** (integridad, migraciones): BACK-004, BACK-005, BACK-007. ⬜
+3. **Batch 3** (integridad, migraciones) — ✅ HECHO. Migraciones
+   `20260906234000_progress_qa_authorship_triggers.sql` (BACK-004),
+   `20260906234100_progress_qa_membership_constraints.sql` (BACK-005) y
+   `20260906234200_catalog_qa_storage_ownership.sql` (BACK-007). `db:reset`
+   limpio con las 12 migraciones; `lib/db/types.ts` sin cambios (solo triggers y
+   constraints, ninguna columna nueva). Base resembrada
+   (`seed:exercises`/`templates`/`rules`/`progress-demo` sin error, lo que ya
+   confirma que las constraints de BACK-005 no chocan con el seed demo).
+   Suites en verde: `test:storage` 9/9, `test:screenings` 8/8,
+   `test:attendance` 8/8, `test:memberships` 11/11, más regresión sin fallos
+   (`rls`, `actor-active`, `catalog`, `catalog:custom`, `plans`, `overview`,
+   `memberships:cron`, `routines*`, `rules*`, `templates`, `evolution`,
+   `design`). `typecheck` y `lint` limpios (queda un warning previo ajeno en
+   `verify-auth-screens.test.mjs`). `npm run build` pendiente de una ventana con
+   `next dev` apagado (no se tocó código de app, solo SQL y scripts `.mjs`).
 4. **Batch 4** (alcance confirmado): BACK-003 (rápido), BACK-011, BACK-006,
    BACK-012. ⬜
 5. Pospuestos: BACK-013, BACK-014 (medir antes).

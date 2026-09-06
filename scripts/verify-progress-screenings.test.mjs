@@ -134,6 +134,44 @@ test("Tamizaje: registro, IMC y aislamiento", { timeout: 180_000 }, async (t) =>
     );
   });
 
+  await t.test("La autoría del tamizaje no se puede falsificar (BACK-004)", async () => {
+    const client = await apiAs("professional");
+    const alta = await client
+      .from("screenings")
+      .insert({
+        patient_id: diego,
+        taken_on: "2026-04-01",
+        weight_kg: 77,
+        height_cm: 176,
+        // Beto atiende a Diego, pero intenta atribuir el tamizaje al admin.
+        taken_by: "00000000-0000-4000-a000-000000000001",
+        notes: `Autoría falsa ${marca}`,
+      })
+      .select("id, taken_by")
+      .single();
+    assert.equal(alta.error, null, "El alta válida debe pasar");
+    assert.equal(
+      alta.data.taken_by,
+      "00000000-0000-4000-a000-000000000002",
+      "El trigger fija la autoría al actor real, no a lo que llega en el payload",
+    );
+
+    const edicion = await client
+      .from("screenings")
+      .update({ taken_by: "00000000-0000-4000-a000-000000000001" })
+      .eq("id", alta.data.id)
+      .select("taken_by")
+      .single();
+    assert.equal(
+      edicion.data.taken_by,
+      "00000000-0000-4000-a000-000000000002",
+      "La autoría es inmutable en edición",
+    );
+
+    // Fuera del historial que comprueban los siguientes subtests.
+    sql(`delete from public.screenings where id = '${alta.data.id}'::uuid`);
+  });
+
   await t.test("El historial va del tamizaje más reciente al más antiguo", async () => {
     insertar(diego, "2025-11-02", 82, 176);
     insertar(diego, "2026-06-10", 76.2, 176);

@@ -123,6 +123,41 @@ test("Asistencia: registro, duplicado y aislamiento", { timeout: 180_000 }, asyn
     assert.equal(fila, `${hoy}|${beto}|true`, "Falta la fecha, la hora o el autor");
   });
 
+  await t.test("La autoría de la asistencia no se puede falsificar (BACK-004)", async () => {
+    const client = await apiAs("professional");
+    const alta = await client
+      .from("attendance")
+      .insert({
+        patient_id: diego,
+        attended_on: `${mes}-14`,
+        // Beto atiende a Diego, pero intenta atribuir el registro al admin.
+        registered_by: "00000000-0000-4000-a000-000000000001",
+        notes: `Autoría falsa ${marca}`,
+      })
+      .select("id, registered_by")
+      .single();
+    assert.equal(alta.error, null, "El alta válida debe pasar");
+    assert.equal(
+      alta.data.registered_by,
+      beto,
+      "El trigger fija la autoría al actor real, no a lo que llega en el payload",
+    );
+
+    const edicion = await client
+      .from("attendance")
+      .update({ registered_by: "00000000-0000-4000-a000-000000000001" })
+      .eq("id", alta.data.id)
+      .select("registered_by")
+      .single();
+    assert.equal(
+      edicion.data.registered_by,
+      beto,
+      "La autoría es inmutable en edición",
+    );
+
+    sql(`delete from public.attendance where id = '${alta.data.id}'::uuid`);
+  });
+
   await t.test("La misma fecha no se registra dos veces", async () => {
     const client = await screenAs("professional");
     const { html } = await client.submit(
