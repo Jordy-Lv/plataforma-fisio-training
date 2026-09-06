@@ -100,13 +100,23 @@ comportamiento «solo admin».
 
 ---
 
-## Orden de ejecución
+## Orden de ejecución y progreso
 
-1. **Batch 2** (sin migración, sin RLS, verificable ya con typecheck/lint/build):
-   BACK-009, BACK-010, BACK-008.
-2. **Batch 1** (P0, con migración): BACK-001, luego BACK-002.
-3. **Batch 3** (integridad, migraciones): BACK-004, BACK-005, BACK-007.
-4. **Batch 4** (alcance confirmado): BACK-003 (rápido), BACK-011, BACK-006, BACK-012.
+1. **Batch 2** — ✅ HECHO (`5b9b326`). BACK-009, BACK-010, BACK-008. TS puro;
+   typecheck/lint/build en verde. Pendiente re-correr `test:memberships:cron`
+   y `test:catalog` contra la base (hecho abajo, en verde).
+2. **Batch 1** (P0, con migración):
+   - **BACK-001** — ✅ HECHO (`e7ab22e`). Migración
+     `20260906230000_qa_actor_active_access.sql` + regresión
+     `test:actor-active` (falla sin la migración, pasa con ella). `db:reset`
+     limpio, tipos regenerados, las 25 suites `test:*` en verde con la base
+     resembrada.
+   - **BACK-002** — ⬜ pendiente. Recalcular la regla ganadora dentro de
+     `commit_routine_assignment`. Antes hay que ver si la evaluación de reglas
+     existe en SQL o solo en `lib/catalog/evaluate-rules.ts`.
+3. **Batch 3** (integridad, migraciones): BACK-004, BACK-005, BACK-007. ⬜
+4. **Batch 4** (alcance confirmado): BACK-003 (rápido), BACK-011, BACK-006,
+   BACK-012. ⬜
 5. Pospuestos: BACK-013, BACK-014 (medir antes).
 
 **Bloqueo operativo:** los batches 1, 3 y 4 llevan migración y necesitan
