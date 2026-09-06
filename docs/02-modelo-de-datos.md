@@ -223,9 +223,19 @@ Una ejecución de un día de rutina.
 | `pain_location` | `text` | Mismo vocabulario que `patient_conditions.body_part` |
 | `notes` | `text` | "Este ejercicio hoy me generó dolor en la rodilla" |
 | `replaced_by_exercise_id` | `uuid` FK | Cuando el entrenador presencial sustituyó el ejercicio |
+| `exercise_id` | `uuid` FK | Ejercicio prescrito al primer registro; lo deriva la base y no cambia al ajustar la rutina |
+| `prescribed_sets` / `prescribed_reps` | `smallint` | Series y repeticiones prescritas al primer registro |
+| `prescribed_weight` | `numeric(6,2)` | Peso prescrito al primer registro, separado de `actual_weight` |
 
 Índice sobre `(patient_id, created_at desc)`: es la consulta que corre la detección de
 dolor persistente.
+
+Cada sesión tiene un único registro por ítem. Los registros cerrados son inmutables
+para el paciente; las comprobaciones en PostgreSQL impiden mezclar paciente, sesión,
+día e ítem ajenos. La referencia al ítem no borra registros en cascada: retirar un
+ítem con historial necesita una retirada lógica o una nueva versión de rutina.
+El cierre evalúa las alertas en la misma transacción. Los umbrales siguen en
+`alert_settings`; cada destinatario conserva su propia copia y estado de lectura.
 
 ---
 

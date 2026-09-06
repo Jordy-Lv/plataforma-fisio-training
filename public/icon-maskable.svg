@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Entrenamiento y fisioterapia">
+  <!-- Variante maskable: fondo a sangre y la marca dentro de la zona segura central (~60%). -->
+  <!-- Colores tomados de los tokens de marca de app/globals.css: brand #146c5b y brand-foreground #ffffff. -->
+  <rect width="512" height="512" fill="#146c5b"/>
+  <g transform="translate(256 256) scale(0.7) translate(-256 -248)">
+    <path d="M64 292 H168 L206 292 L242 176 L300 372 L334 248 L372 248 L448 156"
+          fill="none" stroke="#ffffff" stroke-width="42"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

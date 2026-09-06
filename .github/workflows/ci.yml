@@ -65,3 +65,89 @@ jobs:
           node-version-file: .nvmrc
       - run: npm install -g openspec@1
       - run: openspec validate --all --strict
+
+  functional-tests:
+    name: Pruebas funcionales (Supabase local + HTTP)
+    runs-on: ubuntu-latest
+    # Se ejecuta de forma independiente a verify y openspec para no bloquearlos.
+    # continue-on-error evita dejar todo el pipeline en rojo mientras se estabiliza la cuota en GitHub Actions.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ¿Existe el proyecto?
+        id: proyecto
+        run: |
+          if [ -f package.json ]; then
+            echo "existe=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "existe=false" >> "$GITHUB_OUTPUT"
+            echo "package.json aún no existe: se omiten las pruebas funcionales."
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.proyecto.outputs.existe == 'true'
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Instalar dependencias
+        if: steps.proyecto.outputs.existe == 'true'
+        run: npm ci
+
+      # La CLI de Supabase ya está fijada en package.json (devDependencies).
+      # En Ubuntu runners de GitHub Actions, Docker ya viene instalado y activo.
+      - name: Iniciar Supabase local
+        if: steps.proyecto.outputs.existe == 'true'
+        run: npx supabase start
+
+      # Configura .env.local a partir de la instancia local iniciada
+      - name: Configurar variables locales (.env.local)
+        if: steps.proyecto.outputs.existe == 'true'
+        run: npm run db:env
+
+      # Siembra del catálogo, plantillas, reglas y datos de demostración
+      - name: Sembrar datos iniciales
+        if: steps.proyecto.outputs.existe == 'true'
+        run: |
+          npm run seed:exercises
+          npm run seed:templates
+          npm run seed:rules
+          npm run seed:progress-demo
+
+      # Comprueba que el estado base de la base esté limpio (867|0|3|7)
+      - name: Comprobar base de datos limpia
+        if: steps.proyecto.outputs.existe == 'true'
+        run: npm run db:clean
+
+      # Arranca el servidor Next.js y espera a que responda en el puerto 3000
+      - name: Arrancar Next.js en segundo plano
+        if: steps.proyecto.outputs.existe == 'true'
+        env:
+          # Variables de entorno requeridas para el entorno funcional local:
+          # CRON_SECRET: secreto para invocar la ruta /api/cron/memberships
+          CRON_SECRET: local-dev-cron-secret
+          # SMTP_URL: servidor de correo local de Supabase/Inbucket
+          SMTP_URL: smtp://127.0.0.1:54325
+          FISIO_TEST_APP_URL: http://localhost:3000
+        run: |
+          npm run dev &
+          echo "Esperando que el servidor dev responda en http://localhost:3000..."
+          for i in $(seq 1 30); do
+            if curl -sf -o /dev/null http://localhost:3000; then
+              echo "Servidor dev listo."
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "El servidor dev no respondió a tiempo."
+          exit 1
+
+      # Ejecuta todas las suites funcionales y valida que la base quede limpia al terminar
+      - name: Ejecutar verificación completa
+        if: steps.proyecto.outputs.existe == 'true'
+        env:
+          CRON_SECRET: local-dev-cron-secret
+          SMTP_URL: smtp://127.0.0.1:54325
+          FISIO_TEST_APP_URL: http://localhost:3000
+        run: bash scripts/verify.sh --full

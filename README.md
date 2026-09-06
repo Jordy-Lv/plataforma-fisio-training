@@ -55,15 +55,21 @@ y en los ADR correspondientes.
 
 ## Arranque rápido
 
-Requisitos: Node 22 (ver `.nvmrc`), Docker (para Supabase local) y la CLI de Supabase.
+Requisitos: Node 22 (ver `.nvmrc`) y Docker corriendo. La CLI de Supabase se instala
+con las dependencias del proyecto.
 
 ```bash
 npm install
-cp .env.example .env.local   # pedir los valores al owner técnico
-npx supabase start           # levanta Postgres + Auth locales
-npm run db:reset             # aplica migraciones y siembra datos de ejemplo
+npm run db:start             # levanta Postgres, Auth, API y correo locales
+npm run db:env               # crea .env.local; conserva el archivo si ya existe
 npm run dev
 ```
+
+La base web y la infraestructura de sesión están implementadas. El esquema de negocio,
+las políticas RLS, los usuarios demo y las pantallas de acceso siguen pendientes.
+`npm run test:auth` verifica registro, login, lectura de sesión en servidor, recarga,
+renovación de cookies y rechazo de credenciales manipuladas contra Supabase local.
+`npm run db:stop` detiene los servicios y conserva la base local.
 
 El detalle completo, incluidos los problemas típicos, está en
 [`docs/08-onboarding-equipo.md`](docs/08-onboarding-equipo.md).

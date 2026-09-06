@@ -1,0 +1,189 @@
+import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
+import { writeFileSync } from "node:fs";
+import { test } from "node:test";
+import { createClient } from "@supabase/supabase-js";
+import { status, sql as rawSql, httpClient } from "./helpers/auth-http.mjs";
+import { prepareAssignment } from "../lib/routines/assignment.ts";
+
+const sql = (query) => rawSql(query).trim().split("\n")[0];
+const password = "Rutinas-prueba-1234";
+const client = () => createClient(status.API_URL, status.ANON_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
+
+test("Motor conectado a asignación, aislamiento y vistas", { timeout: 180000 }, async (t) => {
+  const users = [];
+  const templateId = randomUUID(), secondTemplateId = randomUUID(), ruleId = randomUUID();
+  const safeId = randomUUID(), excludedId = randomUUID();
+  t.after(async () => {
+    if (process.env.FISIO_KEEP_ROUTINE_FIXTURES === "1") {
+      writeFileSync("/tmp/fisio-routine-fixtures.json", JSON.stringify({ users: users.map(({ id, email, role }) => ({ id, email, role })), templateId, secondTemplateId, ruleId, safeId, excludedId }));
+      return;
+    }
+    sql(`delete from public.alerts where patient_id in (${users.map((u) => `'${u.id}'`).join(",")});
+      delete from public.routines where source_template_id in ('${templateId}', '${secondTemplateId}');
+      delete from public.assignment_rules where id = '${ruleId}';
+      delete from public.routine_templates where id in ('${templateId}', '${secondTemplateId}');
+      delete from public.exercises where id in ('${safeId}', '${excludedId}');`);
+    for (const user of users) { await user.api.auth.signOut(); sql(`delete from auth.users where id = '${user.id}'`); }
+  });
+  async function person(role, specialty = null) {
+    const api = client(), email = `rutinas-${randomUUID()}@demo.local`;
+    const { data, error } = await api.auth.signUp({ email, password });
+    assert.equal(error, null);
+    const user = { api, email, id: data.user.id, role };
+    users.push(user);
+    sql(`update public.profiles set role = '${role}', specialty = ${specialty ? `'${specialty}'` : 'null'}, full_name = 'Prueba de rutinas ${role}' where id = '${user.id}'`);
+    if (role === "patient") sql(`insert into public.patient_details(profile_id, goal, level, environment, equipment, onboarding_step)
+      values ('${user.id}', 'performance', 'advanced', 'gym', '{barbell}', 3)`);
+    return user;
+  }
+  const admin = await person("admin");
+  const pro = await person("professional", "training");
+  const physio = await person("professional", "physio");
+  const outsider = await person("professional", "training");
+  const patient = await person("patient");
+  const emptyPatient = await person("patient");
+  sql(`insert into public.care_assignments(patient_id, professional_id, kind) values
+    ('${patient.id}', '${pro.id}', 'training'), ('${patient.id}', '${physio.id}', 'physio');
+    insert into public.patient_conditions(patient_id, body_part) values ('${patient.id}', 'knee');
+    insert into public.exercises(id, name, contraindications, is_custom) values
+      ('${safeId}', 'Movimiento permitido de prueba', '{}', true),
+      ('${excludedId}', 'Movimiento excluido de prueba', '{knee}', true);
+    insert into public.routine_templates(id, name, kind) values
+      ('${templateId}', 'Rutina de prueba A', 'training'), ('${secondTemplateId}', 'Rutina de prueba B', 'physio');
+    insert into public.template_days(template_id, day_number, title) values
+      ('${templateId}', 1, 'Sesión completa'), ('${secondTemplateId}', 1, 'Rehabilitación');
+    insert into public.template_items(template_day_id, exercise_id, position, sets, reps, rest_seconds)
+      select id, '${safeId}', position, 3, 12, 60 from public.template_days cross join generate_series(1,3) position
+      where template_id in ('${templateId}', '${secondTemplateId}');
+    insert into public.template_items(template_day_id, exercise_id, position, sets, reps)
+      select id, '${excludedId}', 4, 3, 10 from public.template_days where template_id = '${templateId}';
+    insert into public.assignment_rules(id, name, priority, conditions, template_id)
+      values ('${ruleId}', 'Regla temporal de rutinas', -1000000,
+        '{"goal":["performance"],"level":["advanced"],"environment":["gym"],"equipment_all_of":["barbell"]}', '${templateId}');`);
+  async function context(actor = pro, target = patient) {
+    const result = await actor.api.rpc("routine_assignment_context", { target_patient: target.id });
+    assert.equal(result.error, null);
+    return result.data;
+  }
+  function commit(actor, target, snapshot, changes = {}) {
+    const decision = prepareAssignment(snapshot);
+    return actor.api.rpc("commit_routine_assignment", {
+      target_patient: target.id, expected_context: snapshot,
+      ...(decision.selectedRule ? { selected_rule: decision.selectedRule } : {}),
+      excluded_exercises: decision.excludedExercises, assignment_notes: decision.notes, ...changes,
+    });
+  }
+  const templateContents = () => sql(`select jsonb_agg(to_jsonb(i) order by i.id)
+    from public.template_items i join public.template_days d on d.id = i.template_day_id where d.template_id = '${templateId}'`);
+  const original = templateContents();
+  let firstId, pendingId;
+
+  await t.test("La decisión usa el motor y rechaza un perfil inválido o plantilla inactiva", async () => {
+    const snapshot = await context();
+    const decision = prepareAssignment(snapshot);
+    assert.equal(decision.selectedRule, ruleId);
+    assert.deepEqual(decision.excludedExercises, [excludedId]);
+    assert.match(decision.notes, /rodilla/i);
+    assert.equal(prepareAssignment({ ...snapshot, rules: [] }).selectedRule, undefined);
+    assert.throws(() => prepareAssignment({ ...snapshot, profile: { ...snapshot.profile, conditions: ['inventada'] } }), /inválidos/);
+    assert.throws(() => prepareAssignment({ ...snapshot, templates: snapshot.templates.map((v) => ({ ...v, is_active: false })) }), /inactiva/);
+  });
+  await t.test("La acción HTTP asigna, filtra y conserva la plantilla", async () => {
+    const web = httpClient();
+    await web.submit('/login', { email: pro.email, password });
+    const result = await web.submit(`/pro/routines/${patient.id}`, {}, 'name="patientId"');
+    assert.match(result.html, /Rutina asignada\. El paciente ya puede consultarla/);
+    firstId = sql(`select id from public.routines where patient_id = '${patient.id}' and status = 'active'`);
+    assert.match(firstId, /^[a-f0-9-]{36}$/);
+    assert.equal(sql(`select count(*) from public.routine_items i join public.routine_days d on d.id=i.routine_day_id where d.routine_id='${firstId}'`), '3');
+    assert.equal(sql(`select assigned_by is null from public.routines where id='${firstId}'`), 't');
+    assert.equal(templateContents(), original);
+    const alert = await physio.api.from('alerts').select('payload').eq('patient_id', patient.id);
+    assert.equal(alert.error, null);
+    assert.equal(alert.data.length, 1);
+    assert.equal(alert.data[0].payload.outcome, 'assigned');
+    for (const user of [pro, admin]) assert.equal((await user.api.from('alerts').select('id').eq('patient_id', patient.id)).data.length >= 1, true);
+  });
+  await t.test("Un cambio posterior del perfil o de la regla obliga a reevaluar", async () => {
+    const stale = await context();
+    sql(`update public.assignment_rules set name='Regla temporal actualizada' where id='${ruleId}'`);
+    assert.equal((await commit(pro, patient, stale)).error?.code, '22023');
+    const staleProfile = await context();
+    sql(`update public.patient_details set birth_date='1990-01-01' where profile_id='${patient.id}'`);
+    assert.equal((await commit(pro, patient, staleProfile)).error?.code, '22023');
+    assert.equal(sql(`select count(*) from public.routines where patient_id='${patient.id}'`), '1');
+  });
+  await t.test("Ni el paciente, el profesional ajeno ni el anónimo pueden invocar la asignación", async () => {
+    const snapshot = await context();
+    for (const actor of [patient, outsider, { api: client() }]) {
+      assert.equal((await actor.api.rpc('routine_assignment_context', { target_patient: patient.id })).error?.code, '42501');
+      assert.equal((await commit(actor, patient, snapshot)).error?.code, '42501');
+    }
+    const forged = await commit(pro, patient, snapshot, { excluded_exercises: [] });
+    assert.equal(forged.error?.code, '22023');
+    const web = httpClient();
+    await web.submit('/login', { email: outsider.email, password });
+    const result = await web.request(`/pro/routines/${patient.id}`);
+    assert.match(result.html, /404|could not be found/);
+    assert.ok(!result.html.includes('name="patientId"'));
+  });
+  await t.test("Un día vacío se reserva al equipo, conserva la activa y avisa a ambos profesionales", async () => {
+    sql(`update public.exercises set contraindications='{knee}' where id='${safeId}'`);
+    const result = await commit(pro, patient, await context());
+    assert.equal(result.error, null);
+    assert.equal(result.data.outcome, 'pending_review');
+    pendingId = result.data.routine_id;
+    assert.equal(sql(`select status from public.routines where id='${firstId}'`), 'active');
+    assert.equal(sql(`select count(*) from public.routine_items i join public.routine_days d on d.id=i.routine_day_id where d.routine_id='${pendingId}'`), '0');
+    assert.deepEqual((await patient.api.from('routines').select('id').eq('id', pendingId)).data, []);
+    assert.deepEqual((await patient.api.from('routine_days').select('id').eq('routine_id', pendingId)).data, []);
+    assert.deepEqual((await patient.api.from('alerts').select('id').eq('patient_id', patient.id)).data, []);
+    assert.deepEqual((await outsider.api.from('alerts').select('id').eq('patient_id', patient.id)).data, []);
+    const alert = await physio.api.from('alerts').select('payload').eq('patient_id', patient.id).order('created_at', { ascending: false }).limit(1);
+    assert.equal(alert.data[0].payload.outcome, 'pending_review');
+    sql(`update public.exercises set contraindications='{}' where id='${safeId}'`);
+  });
+  await t.test("Cambiar la regla asigna otra plantilla y conserva ambas especialidades", async () => {
+    sql(`update public.assignment_rules set template_id='${secondTemplateId}' where id='${ruleId}'`);
+    const result = await commit(pro, patient, await context());
+    assert.equal(result.error, null);
+    assert.equal(result.data.outcome, 'assigned');
+    assert.equal(sql(`select count(*) from public.routines where patient_id='${patient.id}' and status='active'`), '2');
+    const web = httpClient();
+    await web.submit('/login', { email: patient.email, password });
+    const { html } = await web.request('/routine');
+    assert.match(html, /Rutina de prueba A/);
+    assert.match(html, /Rutina de prueba B/);
+    assert.ok(!html.includes('Pendiente de revisión'));
+    assert.equal(templateContents(), original);
+  });
+  await t.test("Sin coincidencia se registra aviso y el paciente ve un estado explicativo", async () => {
+    const snapshot = await context(admin, emptyPatient);
+    const result = await admin.api.rpc('commit_routine_assignment', { target_patient: emptyPatient.id, expected_context: snapshot });
+    assert.equal(result.error, null);
+    assert.equal(result.data.outcome, 'no_match');
+    assert.equal(sql(`select count(*) from public.routines where patient_id='${emptyPatient.id}'`), '0');
+    const web = httpClient();
+    await web.submit('/login', { email: emptyPatient.email, password });
+    assert.match((await web.request('/routine')).html, /Tu profesional está preparando tu rutina/);
+  });
+  await t.test("Un fallo al copiar revierte el cierre de la rutina y los avisos", async () => {
+    sql(`insert into public.template_days(template_id,day_number) values ('${secondTemplateId}',2)`);
+    const snapshot = await context();
+    const before = sql(`select count(*) from public.routines where patient_id='${patient.id}'`);
+    const result = await pro.api.rpc('commit_routine_assignment', { target_patient: patient.id, expected_context: snapshot, selected_rule: ruleId });
+    assert.equal(result.error?.code, '22023');
+    assert.equal(sql(`select count(*) from public.routines where patient_id='${patient.id}'`), before);
+    assert.equal(sql(`select count(*) from public.routines where patient_id='${patient.id}' and status='active'`), '2');
+    sql(`delete from public.template_days where template_id='${secondTemplateId}' and day_number=2`);
+  });
+  await t.test("Dos asignaciones simultáneas conservan una sola rutina activa por tipo", async () => {
+    const snapshot = await context();
+    const results = await Promise.all([commit(pro, patient, snapshot), commit(admin, patient, snapshot)]);
+    for (const result of results) assert.equal(result.error, null);
+    assert.equal(sql(`select count(*) from public.routines where patient_id='${patient.id}' and status='active' and kind='physio'`), '1');
+  });
+});
