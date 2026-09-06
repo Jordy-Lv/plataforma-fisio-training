@@ -16,3 +16,4 @@ Un ADR aceptado no se edita: se supera con uno nuevo que lo referencia.
 | [0005](0005-biblioteca-de-ejercicios.md) | free-exercise-db auto-hospedada | Aceptada |
 | [0006](0006-sin-realtime-en-demo.md) | Sin tiempo real en la Etapa 1 | Aceptada |
 | [0007](0007-tres-roles-mas-especialidad.md) | Tres roles con especialidad, no cuatro roles | Aceptada |
+| [0008](0008-formularios-dentro-de-dialogos.md) | Qué formularios pueden vivir dentro de un diálogo | Propuesta |
