@@ -20,7 +20,7 @@ const bucket = "exercise-media";
 const customPrefix = "custom/";
 
 const sinPermiso =
-  "No tienes permiso para editar el catálogo. Pídeselo al administrador.";
+  "No tienes permiso para editar este ejercicio. Solo puede hacerlo quien lo creó o el administrador.";
 
 /**
  * El catálogo lo escribe el equipo. La pantalla ya lo impide y RLS es la

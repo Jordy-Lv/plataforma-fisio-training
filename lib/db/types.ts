@@ -210,6 +210,7 @@ export type Database = {
         Row: {
           contraindications: string[]
           created_at: string
+          created_by: string | null
           description: string | null
           difficulty: Database["public"]["Enums"]["fitness_level"] | null
           environments: string[]
@@ -224,6 +225,7 @@ export type Database = {
         Insert: {
           contraindications?: string[]
           created_at?: string
+          created_by?: string | null
           description?: string | null
           difficulty?: Database["public"]["Enums"]["fitness_level"] | null
           environments?: string[]
@@ -238,6 +240,7 @@ export type Database = {
         Update: {
           contraindications?: string[]
           created_at?: string
+          created_by?: string | null
           description?: string | null
           difficulty?: Database["public"]["Enums"]["fitness_level"] | null
           environments?: string[]
@@ -249,7 +252,15 @@ export type Database = {
           muscle_groups?: string[]
           name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "exercises_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       membership_notices: {
         Row: {
