@@ -64,6 +64,19 @@ export function ServiceForm({ service }: { service?: Service }) {
         </select>
       </Field>
 
+      <Field label="Precio (COP)">
+        <input
+          className={inputClass}
+          name="price"
+          type="number"
+          inputMode="numeric"
+          step={1000}
+          min={0}
+          defaultValue={service?.price ?? ""}
+          required
+        />
+      </Field>
+
       <Field label="Descripción · opcional">
         <textarea
           className={`${inputClass} min-h-20`}

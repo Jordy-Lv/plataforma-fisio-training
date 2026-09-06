@@ -870,6 +870,7 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
+          price: number
         }
         Insert: {
           category: Database["public"]["Enums"]["service_category"]
@@ -878,6 +879,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
+          price?: number
         }
         Update: {
           category?: Database["public"]["Enums"]["service_category"]
@@ -886,6 +888,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          price?: number
         }
         Relationships: []
       }

@@ -116,6 +116,48 @@ test("Planes y servicios: vitrina y control", { timeout: 180_000 }, async (t) =>
     assert.notEqual(alta.error, null, "RLS debe rechazar el alta del profesional");
   });
 
+  await t.test(
+    "BACK-011 · el servicio lleva precio y la base rechaza uno negativo",
+    async () => {
+      const admin = await apiAs("admin");
+      const negativo = await admin
+        .from("services")
+        .insert({
+          name: `Precio inválido ${marca}`,
+          category: "workshop",
+          price: -1,
+        })
+        .select("id");
+      assert.notEqual(
+        negativo.error,
+        null,
+        "La constraint debe rechazar un precio negativo",
+      );
+
+      const valido = await admin
+        .from("services")
+        .insert({
+          name: `Servicio con precio ${marca}`,
+          category: "physio",
+          price: 47000,
+        })
+        .select("id")
+        .single();
+      assert.equal(valido.error, null);
+
+      const client = await screenAs("patient");
+      const texto = textOf((await client.request("/offer")).html);
+      assert.ok(
+        texto.includes(`Servicio con precio ${marca}`),
+        "El servicio activo aparece en la vitrina",
+      );
+      assert.ok(
+        texto.includes("47.000"),
+        "La vitrina muestra el precio del servicio con separador de miles",
+      );
+    },
+  );
+
   await t.test("La vitrina muestra lo activo y esconde lo inactivo", async () => {
     // Un plan activo y otro inactivo, ambos de esta ejecución.
     sql(

@@ -98,7 +98,12 @@ export default async function Page() {
                             key={service.id}
                             className={cardVariants()}
                           >
-                            <p className="font-semibold">{service.name}</p>
+                            <div className="flex items-baseline justify-between gap-3">
+                              <p className="font-semibold">{service.name}</p>
+                              <p className="shrink-0 font-semibold">
+                                {formatCurrency(service.price)}
+                              </p>
+                            </div>
                             {service.description && (
                               <p className="mt-1 text-sm leading-6 text-muted-foreground">
                                 {service.description}
