@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { requireRole } from "@/lib/auth/session";
+import { getActiveProfile, requireRole } from "@/lib/auth/session";
 import {
   goalSchema,
   environmentSchema,
@@ -19,7 +19,12 @@ export async function saveOnboardingStep(
   _previous: AuthState,
   form: FormData,
 ): Promise<AuthState> {
-  const profile = await requireRole("patient", { allowOnboarding: true });
+  let profile;
+  try {
+    profile = await requireRole("patient", { allowOnboarding: true });
+  } catch {
+    return { error: "No pudimos verificar tu sesión. Vuelve a intentarlo." };
+  }
   const supabase = await createClient();
   const step = z.enum(["1", "2", "3"]).safeParse(form.get("step"));
   if (!step.success) return { error: "Selecciona un paso válido." };
@@ -95,6 +100,13 @@ export async function updatePatientProfile(
       equipment: form.getAll("equipment"),
     });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
+  try {
+    if (!(await getActiveProfile())) {
+      return { error: "No pudimos verificar tu sesión. Vuelve a intentarlo." };
+    }
+  } catch {
+    return { error: "No pudimos verificar tu sesión. Vuelve a intentarlo." };
+  }
   const { patientId, ...values } = parsed.data;
   const supabase = await createClient();
   const { error } = await supabase
@@ -132,6 +144,13 @@ export async function saveCondition(
       is_active: form.get("is_active") === "on",
     });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
+  try {
+    if (!(await getActiveProfile())) {
+      return { error: "No pudimos verificar tu sesión. Vuelve a intentarlo." };
+    }
+  } catch {
+    return { error: "No pudimos verificar tu sesión. Vuelve a intentarlo." };
+  }
   const { patientId, conditionId, ...values } = parsed.data;
   const supabase = await createClient();
   const result = conditionId

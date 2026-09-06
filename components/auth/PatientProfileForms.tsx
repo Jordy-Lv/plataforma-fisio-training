@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { usePreservedForm } from "@/lib/auth/use-preserved-form";
 import { useFormValidation } from "@/lib/auth/use-form-validation";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,13 +29,19 @@ import type { Database } from "@/lib/db/types";
 type Details = Database["public"]["Tables"]["patient_details"]["Row"];
 type Condition = Database["public"]["Tables"]["patient_conditions"]["Row"];
 export function PatientProfileForm({ details }: { details: Details }) {
+  const formRef = usePreservedForm();
   const [state, action, pending] = useActionState(updatePatientProfile, {});
   const validation = useFormValidation(patientProfileSchema, (form) => ({
     ...Object.fromEntries(form),
     equipment: form.getAll("equipment"),
   }));
   return (
-    <form onSubmit={validation.onSubmit} action={action} className="grid gap-6">
+    <form
+      ref={formRef}
+      onSubmit={validation.onSubmit}
+      action={action}
+      className="grid gap-6"
+    >
       <input type="hidden" name="patientId" value={details.profile_id} />
       <Choices
         name="goal"
@@ -77,10 +84,16 @@ export function ConditionForm({
   patientId: string;
   condition?: Condition;
 }) {
+  const formRef = usePreservedForm();
   const [state, action, pending] = useActionState(saveCondition, {});
   const validation = useFormValidation(conditionSchema);
   return (
-    <form onSubmit={validation.onSubmit} action={action} className="grid gap-4">
+    <form
+      ref={formRef}
+      onSubmit={validation.onSubmit}
+      action={action}
+      className="grid gap-4"
+    >
       <input type="hidden" name="patientId" value={patientId} />
       <input type="hidden" name="conditionId" value={condition?.id ?? ""} />
       <Field label="Parte del cuerpo">

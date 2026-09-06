@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { usePreservedForm } from "@/lib/auth/use-preserved-form";
 import { useFormValidation } from "@/lib/auth/use-form-validation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ export function OnboardingForm({
   step: number;
   details: Details | null;
 }) {
+  const formRef = usePreservedForm();
   const [state, action, pending] = useActionState(saveOnboardingStep, {});
   const [conditions, setConditions] = useState<Condition[]>([]);
   const validation = useFormValidation(
@@ -50,7 +52,12 @@ export function OnboardingForm({
     );
   }
   return (
-    <form onSubmit={validation.onSubmit} action={action} className="grid gap-7">
+    <form
+      ref={formRef}
+      onSubmit={validation.onSubmit}
+      action={action}
+      className="grid gap-7"
+    >
       <input type="hidden" name="step" value={step} />
       {step === 1 && (
         <>
