@@ -161,6 +161,44 @@ export type Database = {
           },
         ]
       }
+      attendance_notices: {
+        Row: {
+          attended: number
+          created_at: string
+          expected: number
+          id: string
+          patient_id: string
+          pct: number
+          period_month: string
+        }
+        Insert: {
+          attended: number
+          created_at?: string
+          expected: number
+          id?: string
+          patient_id: string
+          pct: number
+          period_month: string
+        }
+        Update: {
+          attended?: number
+          created_at?: string
+          expected?: number
+          id?: string
+          patient_id?: string
+          pct?: number
+          period_month?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_notices_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       care_assignments: {
         Row: {
           created_at: string
@@ -1190,6 +1228,7 @@ export type Database = {
         Returns: undefined
       }
       resolve_assignment_winner: { Args: { context: Json }; Returns: string }
+      review_low_attendance: { Args: { target_month?: string }; Returns: Json }
       review_membership_expiry: {
         Args: { notice_days?: number }
         Returns: Json
