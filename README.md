@@ -35,6 +35,8 @@ vistazo, quién está cumpliendo, quién reportó dolor o quién dejó de asisti
 - [`docs/06-cronograma-y-slices.md`](docs/06-cronograma-y-slices.md) — las dos semanas, los 4 slices y quién es dueño de qué.
 - [`docs/07-plan-de-verificacion.md`](docs/07-plan-de-verificacion.md) — los 9 caminos que deben pasar antes de mostrar la demo.
 - [`docs/08-onboarding-equipo.md`](docs/08-onboarding-equipo.md) — levantar el proyecto en local, paso a paso.
+- [`docs/09-verificacion-acceso.md`](docs/09-verificacion-acceso.md) — cómo se comprueba el acceso de cada rol contra la base local.
+- [`docs/10-sistema-de-diseno.md`](docs/10-sistema-de-diseno.md) — tokens, componentes y reglas al pintar una pantalla.
 - [`docs/adr/`](docs/adr/) — decisiones de arquitectura con su justificación y sus alternativas descartadas.
 
 ## Stack

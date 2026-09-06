@@ -156,6 +156,9 @@ Los mensajes de error que ve el usuario van en español y son accionables:
 
 ## 9. UI
 
+El sistema de diseño —tokens, componentes compartidos y las reglas al pintar una
+pantalla— está en [`docs/10-sistema-de-diseno.md`](docs/10-sistema-de-diseno.md).
+
 - Componentes de shadcn/ui antes que componentes propios; componentes propios antes que
   una dependencia nueva. **Agregar una dependencia requiere justificación en el PR.**
 - Los colores salen de tokens CSS en `app/globals.css`. **Nunca escribas un color literal**
@@ -178,11 +181,12 @@ Nunca tragues un error en silencio. Si no puedes manejarlo, propágalo.
 ```bash
 npm run typecheck   # tsc --noEmit
 npm run lint
+npm run test:design # auditoría del sistema de diseño (ver docs/10-sistema-de-diseno.md)
 npm run build
 npm run db:reset    # si tocaste migraciones
 ```
 
-Los cuatro tienen que pasar. CI los repite y bloquea el merge si fallan.
+Los cinco tienen que pasar. CI los repite y bloquea el merge si fallan.
 
 ## 12. Para agentes de IA — límites
 

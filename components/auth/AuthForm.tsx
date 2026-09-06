@@ -3,6 +3,8 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/Field";
+import { Notice } from "@/components/ui/Notice";
 import {
   signIn,
   requestPasswordReset,
@@ -29,9 +31,13 @@ const modes = {
     label: "Guardar contraseña",
   },
 };
-const inputClass =
-  "min-h-12 w-full rounded-lg border border-input bg-surface px-3 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60";
 
+/*
+  Los campos conservan `label` y `id` explícitos en vez de usar el `Field` que
+  envuelve al control: aquí cada campo apunta con `aria-describedby` al error o
+  a la ayuda, y eso exige ids propios. Del sistema de diseño salen el campo
+  (`Input`), el botón y los avisos.
+*/
 export function AuthForm({ mode }: { mode: Mode }) {
   const config = modes[mode];
   const [state, action, pending] = useActionState<AuthState, FormData>(
@@ -60,8 +66,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
           <label htmlFor="email" className="block text-sm font-semibold">
             Correo electrónico
           </label>
-          <input
-            className={inputClass}
+          <Input
             id="email"
             name="email"
             type="email"
@@ -71,6 +76,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
             maxLength={254}
             required
             disabled={pending}
+            aria-invalid={error ? true : undefined}
             aria-describedby={error ? "auth-error" : undefined}
           />
         </div>
@@ -80,8 +86,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
           <label htmlFor="password" className="block text-sm font-semibold">
             {mode === "password" ? "Nueva contraseña" : "Contraseña"}
           </label>
-          <input
-            className={inputClass}
+          <Input
             id="password"
             name="password"
             type="password"
@@ -91,6 +96,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
             maxLength={256}
             required
             disabled={pending}
+            aria-invalid={error ? true : undefined}
             aria-describedby={
               error
                 ? "auth-error"
@@ -100,7 +106,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
             }
           />
           {mode === "password" && (
-            <p id="password-help" className="text-sm text-muted-foreground">
+            <p id="password-help" className="text-sm leading-6 text-muted-foreground">
               Usa al menos 8 caracteres.
             </p>
           )}
@@ -114,8 +120,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
           >
             Repite la contraseña
           </label>
-          <input
-            className={inputClass}
+          <Input
             id="confirmPassword"
             name="confirmPassword"
             type="password"
@@ -123,50 +128,40 @@ export function AuthForm({ mode }: { mode: Mode }) {
             maxLength={256}
             required
             disabled={pending}
+            aria-invalid={error ? true : undefined}
             aria-describedby={error ? "auth-error" : undefined}
           />
         </div>
       )}
       {error && (
-        <p
-          id="auth-error"
-          role="alert"
-          className="text-sm leading-6 text-destructive"
-        >
+        <Notice id="auth-error" tone="danger" role="alert">
           {error}
-        </p>
+        </Notice>
       )}
       {state.success && !validationError && (
-        <p
-          role="status"
-          className="rounded-lg bg-brand-soft p-4 text-sm leading-6"
-        >
-          {state.success}
-        </p>
+        <Notice tone="success">{state.success}</Notice>
       )}
-      <Button
-        type="submit"
-        disabled={pending}
-        className="min-h-12 w-full text-base"
-      >
+      <Button type="submit" size="lg" disabled={pending} className="w-full">
         {pending ? "Espera un momento…" : config.label}
       </Button>
-      <Link
-        className="flex min-h-11 items-center justify-center text-sm font-medium text-brand underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-ring"
-        href={mode === "login" ? "/recuperar" : "/login"}
-      >
-        {mode === "login"
-          ? "Olvidé mi contraseña"
-          : "Volver al inicio de sesión"}
-      </Link>
-      {mode === "password" && (
+      <div className="grid gap-1">
         <Link
-          className="flex min-h-11 items-center justify-center text-sm text-brand underline underline-offset-4"
-          href="/recuperar"
+          className="flex min-h-11 items-center justify-center rounded-lg text-sm font-medium text-brand underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          href={mode === "login" ? "/recuperar" : "/login"}
         >
-          Solicitar otro enlace
+          {mode === "login"
+            ? "Olvidé mi contraseña"
+            : "Volver al inicio de sesión"}
         </Link>
-      )}
+        {mode === "password" && (
+          <Link
+            className="flex min-h-11 items-center justify-center rounded-lg text-sm text-brand underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            href="/recuperar"
+          >
+            Solicitar otro enlace
+          </Link>
+        )}
+      </div>
     </form>
   );
 }

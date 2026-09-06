@@ -6,10 +6,10 @@ export default async function PasswordPage() {
   if (!(await getActiveProfile())) redirect("/recuperar?error=session");
   return (
     <>
-      <h1 className="text-4xl font-semibold tracking-tight">
+      <h1 className="text-3xl font-semibold tracking-tight">
         Elige tu contraseña
       </h1>
-      <p className="mb-8 mt-3 leading-7 text-muted-foreground">
+      <p className="mb-6 mt-3 leading-7 text-muted-foreground">
         Guárdala en un lugar seguro. La usarás la próxima vez que entres.
       </p>
       <AuthForm mode="password" />

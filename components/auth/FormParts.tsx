@@ -1,4 +1,5 @@
 import type { AuthState } from "@/lib/auth/schemas";
+import { Notice } from "@/components/ui/Notice";
 
 /*
   `Field` y `inputClass` viven ahora en `components/ui/Field.tsx`, con el resto
@@ -12,21 +13,11 @@ export function FormMessage({ state }: { state: AuthState }) {
   return (
     <div aria-live="polite">
       {state.error && (
-        <p
-          role="alert"
-          className="rounded-lg border border-destructive p-3 text-sm text-destructive"
-        >
+        <Notice tone="danger" role="alert">
           {state.error}
-        </p>
+        </Notice>
       )}
-      {state.success && (
-        <p
-          role="status"
-          className="rounded-lg bg-brand-soft p-3 text-sm text-foreground"
-        >
-          {state.success}
-        </p>
-      )}
+      {state.success && <Notice tone="success">{state.success}</Notice>}
     </div>
   );
 }
