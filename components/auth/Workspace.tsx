@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { signOut } from "@/lib/auth/actions";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 export function Workspace({
   title,
@@ -20,11 +21,14 @@ export function Workspace({
         >
           Entrenamiento y fisioterapia
         </Link>
-        <form action={signOut}>
-          <Button className="min-h-11" variant="outline" type="submit">
-            Cerrar sesión
-          </Button>
-        </form>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <form action={signOut}>
+            <Button className="min-h-11" variant="outline" type="submit">
+              Cerrar sesión
+            </Button>
+          </form>
+        </div>
       </header>
       {name && (
         <p className="mb-2 text-sm text-muted-foreground">Hola, {name}</p>

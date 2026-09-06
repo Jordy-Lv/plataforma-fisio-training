@@ -4,45 +4,163 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+  Paleta clara completa. El bloque `.dark` de más abajo redefine SOLO los tokens
+  que cambian; nunca duplica esta lista.
+
+  Sobre los dos bordes: WCAG 1.4.11 exige 3:1 para el límite de un control, pero
+  no para un divisor decorativo. Por eso `--border` (tarjetas, separadores) y
+  `--border-strong` (campos, casillas, controles) son tokens distintos. Subir un
+  único token a 3:1 pondría líneas oscuras alrededor de cada tarjeta.
+*/
 :root {
   --background: #f7f9f8;
   --foreground: #17211e;
   --surface: #ffffff;
   --muted: #edf2f0;
-  --muted-foreground: #5a6a65;
-  --border: #dbe3df;
+  --muted-foreground: #54655f;
+
+  --border: #d7e0dc;
+  --border-strong: #78908a;
+
   --brand: #146c5b;
   --brand-foreground: #ffffff;
   --brand-soft: #dcefe9;
+  --brand-soft-foreground: #0f4d40;
+
+  /* Estados. Cada uno lleva su relleno (`--x`), el texto que va encima de ese
+     relleno (`--x-foreground`) y un fondo suave (`--x-soft`) sobre el que el
+     propio `--x` sirve de texto con al menos 5,4:1. */
+  --success: #0d6b4d;
+  --success-foreground: #ffffff;
+  --success-soft: #dcf2e8;
+  --warning: #8a5300;
+  --warning-foreground: #ffffff;
+  --warning-soft: #fbeed5;
+  --danger: #b0261c;
+  --danger-foreground: #ffffff;
+  --danger-soft: #fbe3e0;
+  --info: #0f5a7a;
+  --info-foreground: #ffffff;
+  --info-soft: #dceef6;
+
+  /* Escala de dolor 0-10, el dato clínico central del producto. Varía en tono y
+     en luminosidad a la vez, así que sigue leyéndose con daltonismo rojo-verde. */
+  --pain-none: #0d6b4d;
+  --pain-none-soft: #dcf2e8;
+  --pain-low: #5b6b12;
+  --pain-low-soft: #eef3d4;
+  --pain-mid: #8a5300;
+  --pain-mid-soft: #fbeed5;
+  --pain-high: #a1421a;
+  --pain-high-soft: #fae5da;
+  --pain-severe: #b0261c;
+  --pain-severe-soft: #fbe3e0;
+
+  /* Estados de negocio, derivados de los semánticos: cambiar un semántico los
+     arrastra a todos y no hay que volver a decidir el color aquí. */
+  --membership-active: var(--success);
+  --membership-active-soft: var(--success-soft);
+  --membership-expiring: var(--warning);
+  --membership-expiring-soft: var(--warning-soft);
+  --membership-expired: var(--danger);
+  --membership-expired-soft: var(--danger-soft);
+  --membership-cancelled: var(--muted-foreground);
+  --membership-cancelled-soft: var(--muted);
+  --alert-info: var(--info);
+  --alert-info-soft: var(--info-soft);
+  --alert-warning: var(--warning);
+  --alert-warning-soft: var(--warning-soft);
+  --alert-critical: var(--danger);
+  --alert-critical-soft: var(--danger-soft);
+
+  /* Series de gráfica. La 1 es el verde de marca para que `EvolutionChart` no
+     cambie de aspecto; las otras cuatro se separan entre sí en tono y en
+     luminosidad. Las consume `components/progress/EvolutionChart.tsx`. */
+  --chart-1: #146c5b;
+  --chart-2: #1d7fa8;
+  --chart-3: #a1670a;
+  --chart-4: #7a4fa3;
+  --chart-5: #a63d54;
+
+  /* Tres elevaciones: tarjeta, panel y diálogo. */
+  --elevation-low: 0 1px 2px rgb(23 33 30 / 6%), 0 4px 12px rgb(23 33 30 / 5%);
   --panel-shadow: 0 24px 60px rgb(27 63 54 / 12%);
-  --font-app: "Avenir Next", Avenir, "Segoe UI", sans-serif;
-  --card: #ffffff;
-  --card-foreground: #17211e;
-  --popover: #ffffff;
-  --popover-foreground: #17211e;
-  --primary: #146c5b;
-  --primary-foreground: #ffffff;
+  --elevation-high: 0 12px 28px rgb(23 33 30 / 14%), 0 32px 72px rgb(23 33 30 / 16%);
+
+  --font-app: var(--font-figtree), "Avenir Next", Avenir, "Segoe UI", sans-serif;
+
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface);
+  --popover-foreground: var(--foreground);
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-foreground);
   --secondary: #e5f0ec;
   --secondary-foreground: #184c42;
-  --accent: #dcefe9;
-  --accent-foreground: #184c42;
-  --destructive: oklch(0.577 0.245 27.325);
-  --input: #cbd8d3;
-  --ring: #146c5b;
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --accent: var(--brand-soft);
+  --accent-foreground: var(--brand-soft-foreground);
+  --destructive: var(--danger);
+  --input: var(--border-strong);
+  --ring: var(--brand);
   --radius: 0.625rem;
-  --sidebar: #ffffff;
-  --sidebar-foreground: #17211e;
-  --sidebar-primary: #146c5b;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #dcefe9;
-  --sidebar-accent-foreground: #184c42;
-  --sidebar-border: #dbe3df;
-  --sidebar-ring: #146c5b;
+}
+
+/*
+  Modo oscuro. El verde de marca sube a #4db6a0 (7,46:1 sobre el fondo, AAA);
+  el #146c5b de la paleta clara sería ilegible aquí.
+*/
+.dark {
+  --background: #0d1614;
+  --foreground: #e6efec;
+  --surface: #152220;
+  --muted: #1d2c29;
+  --muted-foreground: #9aada7;
+
+  --border: #2b3a36;
+  --border-strong: #5d746d;
+
+  --brand: #4db6a0;
+  --brand-foreground: #06231d;
+  --brand-soft: #12332c;
+  --brand-soft-foreground: #7fd0bc;
+
+  --success: #4fc08a;
+  --success-foreground: #06231a;
+  --success-soft: #102c22;
+  --warning: #e0a83c;
+  --warning-foreground: #241a05;
+  --warning-soft: #2e2411;
+  --danger: #f08279;
+  --danger-foreground: #2b0d0a;
+  --danger-soft: #331715;
+  --info: #5cb4d8;
+  --info-foreground: #05202b;
+  --info-soft: #0f2733;
+
+  --pain-none: #4fc08a;
+  --pain-none-soft: #102c22;
+  --pain-low: #b9c95c;
+  --pain-low-soft: #242a10;
+  --pain-mid: #e0a83c;
+  --pain-mid-soft: #2e2411;
+  --pain-high: #ef9060;
+  --pain-high-soft: #331d12;
+  --pain-severe: #f08279;
+  --pain-severe-soft: #331715;
+
+  --chart-1: #4db6a0;
+  --chart-2: #5cb4d8;
+  --chart-3: #d9a441;
+  --chart-4: #b394e0;
+  --chart-5: #e58596;
+
+  --elevation-low: 0 1px 2px rgb(0 0 0 / 40%), 0 4px 12px rgb(0 0 0 / 30%);
+  --panel-shadow: 0 24px 60px rgb(0 0 0 / 45%);
+  --elevation-high: 0 12px 28px rgb(0 0 0 / 50%), 0 32px 72px rgb(0 0 0 / 55%);
+
+  --secondary: #1d2c29;
+  --secondary-foreground: #cfe3dd;
 }
 
 @theme inline {
@@ -50,40 +168,63 @@
   --color-surface: var(--surface);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
   --color-brand-soft: var(--brand-soft);
+  --color-brand-soft-foreground: var(--brand-soft-foreground);
+
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-soft: var(--info-soft);
+
+  --color-pain-none: var(--pain-none);
+  --color-pain-none-soft: var(--pain-none-soft);
+  --color-pain-low: var(--pain-low);
+  --color-pain-low-soft: var(--pain-low-soft);
+  --color-pain-mid: var(--pain-mid);
+  --color-pain-mid-soft: var(--pain-mid-soft);
+  --color-pain-high: var(--pain-high);
+  --color-pain-high-soft: var(--pain-high-soft);
+  --color-pain-severe: var(--pain-severe);
+  --color-pain-severe-soft: var(--pain-severe-soft);
+
+  --shadow-low: var(--elevation-low);
   --shadow-panel: var(--panel-shadow);
+  --shadow-high: var(--elevation-high);
+
   --font-sans: var(--font-app);
   --font-heading: var(--font-app);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
+
   --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent-foreground: var(--accent-foreground);
   --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary-foreground: var(--secondary-foreground);
   --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
+  --color-primary-foreground: var(--primary-foreground);
   --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
+  --color-popover-foreground: var(--popover-foreground);
   --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -99,6 +240,11 @@
 
 html {
   background: var(--background);
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
 }
 
 body {
@@ -109,41 +255,7 @@ body {
 
 ::selection {
   background: var(--brand-soft);
-  color: var(--foreground);
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  color: var(--brand-soft-foreground);
 }
 
 @layer base {
