@@ -1171,6 +1171,10 @@ export type Database = {
         }
         Returns: string
       }
+      record_manual_routine_assignment: {
+        Args: { target_routine: string }
+        Returns: undefined
+      }
       resolve_assignment_winner: { Args: { context: Json }; Returns: string }
       review_membership_expiry: {
         Args: { notice_days?: number }

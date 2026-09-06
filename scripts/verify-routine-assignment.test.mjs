@@ -221,4 +221,49 @@ test("Motor conectado a asignación, aislamiento y vistas", { timeout: 180000 },
     for (const result of results) assert.equal(result.error, null);
     assert.equal(sql(`select count(*) from public.routines where patient_id='${patient.id}' and status='active' and kind='physio'`), '1');
   });
+  await t.test("BACK-003 · la copia directa por RPC deja un evento de asignación manual", async () => {
+    // El camino manual: el profesional llama `copy_routine_template` sin pasar
+    // por `commit_routine_assignment`. Es legítimo (D1), pero antes no dejaba
+    // ningún `routine_assignment_event` y se perdía la traza.
+    const before = Number(sql(`select count(*) from public.routine_assignment_events where patient_id='${patient.id}'`));
+    const copy = await pro.api.rpc("copy_routine_template", { patient_id: patient.id, template_id: templateId });
+    assert.equal(copy.error, null);
+    const routineId = copy.data;
+    assert.match(routineId, /^[a-f0-9-]{36}$/);
+
+    const events = await pro.api.from("routine_assignment_events")
+      .select("outcome, payload, routine_id").eq("routine_id", routineId);
+    assert.equal(events.error, null);
+    assert.equal(events.data.length, 1, "la copia directa deja exactamente un evento");
+    assert.equal(events.data[0].outcome, "assigned");
+    assert.equal(events.data[0].payload.source, "manual");
+    assert.equal(events.data[0].payload.template_id, templateId);
+    assert.equal(
+      Number(sql(`select count(*) from public.routine_assignment_events where patient_id='${patient.id}'`)),
+      before + 1,
+    );
+    // El evento generó su aviso para el equipo, igual que el camino con reglas.
+    const alert = await physio.api.from("alerts").select("payload")
+      .eq("patient_id", patient.id).eq("type", "routine_assignment")
+      .order("created_at", { ascending: false }).limit(1);
+    assert.equal(alert.error, null);
+    assert.equal(alert.data[0].payload.routine_id, routineId);
+    assert.equal(alert.data[0].payload.outcome, "assigned");
+
+    // Segunda llamada directa: rutina nueva, evento nuevo. No se acumulan en la
+    // misma rutina (idempotencia del registrador).
+    const again = await pro.api.rpc("copy_routine_template", { patient_id: patient.id, template_id: templateId });
+    assert.equal(again.error, null);
+    assert.notEqual(again.data, routineId);
+    assert.equal(
+      Number(sql(`select count(*) from public.routine_assignment_events where routine_id='${routineId}'`)),
+      1,
+    );
+
+    // El paciente no puede leer el registro de decisiones.
+    assert.deepEqual(
+      (await patient.api.from("routine_assignment_events").select("id").eq("routine_id", routineId)).data,
+      [],
+    );
+  });
 });
