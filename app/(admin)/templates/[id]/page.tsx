@@ -31,17 +31,15 @@ import {
   labelFor,
   templateKindLabels,
 } from "@/lib/catalog/vocabulary";
+import { Badge } from "@/components/ui/Badge";
+import { ButtonLink } from "@/components/ui/ButtonLink";
+import { cn } from "cn";
+import { cardVariants } from "@/components/ui/Card";
 
 const uuid =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const backLinkClass =
-  "inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring";
-
-const sectionClass = "mt-10 rounded-2xl border border-border bg-surface p-5 sm:p-6";
-
-const tagClass =
-  "inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground";
+const sectionClass = cn(cardVariants({ padding: "lg" }), "mt-10");
 
 const fieldClass =
   "min-h-11 w-full rounded-lg border border-input bg-surface px-3 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -132,7 +130,7 @@ export default async function Page({
 
   return (
     <Workspace title={template.name} name={profile.fullName}>
-      <Link href="/templates" className={`-mt-4 ${backLinkClass}`}>
+      <Link href="/templates" className="-mt-4">
         Volver a las plantillas
       </Link>
 
@@ -146,18 +144,10 @@ export default async function Page({
       )}
 
       <div className="mt-6 flex flex-wrap gap-1.5">
-        <span className={tagClass}>
-          {labelFor(templateKindLabels, template.kind)}
-        </span>
-        <span
-          className={
-            template.is_active
-              ? "inline-flex items-center rounded-full bg-brand-soft px-2.5 py-1 text-xs font-semibold text-brand"
-              : tagClass
-          }
-        >
+        <Badge>{labelFor(templateKindLabels, template.kind)}</Badge>
+        <Badge variant={template.is_active ? "brand" : "neutral"}>
           {template.is_active ? "Activa" : "Borrador"}
-        </span>
+        </Badge>
       </div>
 
       <dl className="mt-5 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[auto_1fr_auto_1fr]">
@@ -414,12 +404,11 @@ export default async function Page({
                         )}
                       </>
                     ) : (
-                      <Link
+                      <ButtonLink
                         href={`/templates/${template.id}?dia=${dia.id}`}
-                        className={backLinkClass}
                       >
                         Añadir ejercicios a este día
-                      </Link>
+                      </ButtonLink>
                     )}
                   </div>
                 )}

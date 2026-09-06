@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Workspace } from "@/components/auth/Workspace";
@@ -7,13 +6,11 @@ import { requireStaff } from "@/lib/progress/access";
 import { buildScreeningSeries } from "@/lib/progress/evolution";
 import { getLoadProgression } from "@/lib/progress/progression-queries";
 import { getPatientScreenings } from "@/lib/progress/screening-queries";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 
 export const metadata: Metadata = {
   title: "Evolución del paciente",
 };
-
-const linkClass =
-  "inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring";
 
 export default async function Page({
   params,
@@ -42,12 +39,12 @@ export default async function Page({
       name={profile.fullName}
     >
       <div className="mb-8 -mt-4 flex flex-wrap gap-3">
-        <Link href={`/screenings/${patient.id}`} className={linkClass}>
+        <ButtonLink href={`/screenings/${patient.id}`} >
           Sus tamizajes
-        </Link>
-        <Link href={`/attendance/${patient.id}`} className={linkClass}>
+        </ButtonLink>
+        <ButtonLink href={`/attendance/${patient.id}`} >
           Su asistencia
-        </Link>
+        </ButtonLink>
       </div>
 
       <div className="grid gap-10">

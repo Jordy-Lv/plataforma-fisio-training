@@ -5,16 +5,13 @@ import { rolePaths } from "@/lib/auth/session";
 import { requireStaff } from "@/lib/progress/access";
 import { listPatientsWithLastScreening } from "@/lib/progress/screening-queries";
 import { formatDate, formatNumber } from "@/lib/progress/vocabulary";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Badge } from "@/components/ui/Badge";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 
 export const metadata: Metadata = {
   title: "Seguimiento físico",
 };
-
-const linkClass =
-  "inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring";
-
-const tagClass =
-  "inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground";
 
 export default async function Page() {
   const profile = await requireStaff();
@@ -28,23 +25,20 @@ export default async function Page() {
       </p>
 
       <div className="mb-6 mt-4 flex flex-wrap gap-3">
-        <Link href={rolePaths[profile.role]} className={linkClass}>
+        <ButtonLink href={rolePaths[profile.role]}>
           Volver a mi panel
-        </Link>
-        <Link href="/attendance" className={linkClass}>
+        </ButtonLink>
+        <ButtonLink href="/attendance">
           Asistencia
-        </Link>
+        </ButtonLink>
       </div>
 
       {patients.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-          <p className="font-semibold">Aún no tienes pacientes que seguir</p>
-          <p className="mx-auto mt-2 max-w-md leading-7 text-muted-foreground">
-            {profile.role === "admin"
-              ? "Cuando se registre el primer paciente aparecerá aquí para tomarle su tamizaje inicial."
-              : "Aquí verás a los pacientes que tengas asignados. Pídele al administrador que te asigne alguno."}
-          </p>
-        </div>
+        <EmptyState title="Aún no tienes pacientes que seguir">
+          {profile.role === "admin"
+            ? "Cuando se registre el primer paciente aparecerá aquí para tomarle su tamizaje inicial."
+            : "Aquí verás a los pacientes que tengas asignados. Pídele al administrador que te asigne alguno."}
+        </EmptyState>
       ) : (
         <ul className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {patients.map((patient) => (
@@ -61,9 +55,9 @@ export default async function Page() {
 
                 {patient.last ? (
                   <>
-                    <span className={tagClass}>
+                    <Badge variant="info">
                       Último tamizaje: {formatDate(patient.last.taken_on)}
-                    </span>
+                    </Badge>
                     <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
                       <dt className="text-muted-foreground">Peso</dt>
                       <dd>{formatNumber(patient.last.weight_kg)} kg</dd>

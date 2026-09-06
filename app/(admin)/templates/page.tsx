@@ -11,16 +11,12 @@ import {
   labelFor,
   templateKindLabels,
 } from "@/lib/catalog/vocabulary";
+import { Badge } from "@/components/ui/Badge";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 
 export const metadata: Metadata = {
   title: "Plantillas de rutina",
 };
-
-const backLinkClass =
-  "inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring";
-
-const tagClass =
-  "inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground";
 
 /** Un criterio sin valor no restringe: la plantilla sirve para cualquier perfil. */
 const cualquiera = "Cualquiera";
@@ -43,15 +39,15 @@ export default async function Page({
       </p>
 
       <div className="mb-6 mt-4 flex flex-wrap gap-3">
-        <Link href={rolePaths[profile.role]} className={backLinkClass}>
+        <ButtonLink href={rolePaths[profile.role]}>
           Volver a mi panel
-        </Link>
-        <Link href="/exercises" className={backLinkClass}>
+        </ButtonLink>
+        <ButtonLink href="/exercises">
           Catálogo de ejercicios
-        </Link>
-        <Link href="/rules" className={backLinkClass}>
+        </ButtonLink>
+        <ButtonLink href="/rules">
           Reglas de asignación
-        </Link>
+        </ButtonLink>
         {esAdmin && (
           <Link
             href="/templates/new"
@@ -80,7 +76,7 @@ export default async function Page({
               : "El administrador todavía no ha creado ninguna. Sin plantillas, el motor de reglas no tiene qué asignar."}
           </p>
           {esAdmin && (
-            <Link href="/templates/new" className={`mt-5 ${backLinkClass}`}>
+            <Link href="/templates/new" className="mt-5">
               Crear la primera plantilla
             </Link>
           )}
@@ -99,30 +95,28 @@ export default async function Page({
                       {template.name}
                     </Link>
                   </h2>
-                  <span
-                    className={
-                      template.is_active
-                        ? "inline-flex items-center rounded-full bg-brand-soft px-2.5 py-1 text-xs font-semibold text-brand"
-                        : tagClass
-                    }
-                  >
+                  <Badge variant={template.is_active ? "brand" : "neutral"}>
                     {template.is_active ? "Activa" : "Borrador"}
-                  </span>
+                  </Badge>
                 </div>
 
                 <div className="flex flex-wrap gap-1.5">
-                  <span className={tagClass}>
-                    {labelFor(templateKindLabels, template.kind)}
-                  </span>
-                  <span className={tagClass}>
+                  <Badge>{labelFor(templateKindLabels, template.kind)}</Badge>
+                  <Badge
+                    variant={
+                      template.days === template.days_per_week
+                        ? "neutral"
+                        : "warning"
+                    }
+                  >
                     {template.days} de {template.days_per_week}{" "}
                     {template.days_per_week === 1 ? "día" : "días"} definidos
-                  </span>
-                  <span className={tagClass}>
+                  </Badge>
+                  <Badge>
                     {template.items === 1
                       ? "1 ejercicio"
                       : `${template.items} ejercicios`}
-                  </span>
+                  </Badge>
                 </div>
 
                 <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">

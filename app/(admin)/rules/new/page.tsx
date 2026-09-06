@@ -1,16 +1,13 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { Workspace } from "@/components/auth/Workspace";
 import { RuleForm } from "@/components/catalog/RuleForm";
 import { requireAdmin } from "@/lib/catalog/access";
 import { listTemplateOptions } from "@/lib/catalog/rule-queries";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 
 export const metadata: Metadata = {
   title: "Nueva regla de asignación",
 };
-
-const backLinkClass =
-  "inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring";
 
 export default async function Page() {
   const profile = await requireAdmin();
@@ -22,9 +19,9 @@ export default async function Page() {
         La regla nace inactiva. Pruébala en el simulador con un perfil de
         ejemplo y actívala cuando haga lo que esperas.
       </p>
-      <Link href="/rules" className={`mb-8 mt-4 ${backLinkClass}`}>
+      <ButtonLink href="/rules" className="mb-8 mt-4">
         Volver a las reglas
-      </Link>
+      </ButtonLink>
 
       {templates.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border p-8">
@@ -33,9 +30,9 @@ export default async function Page() {
             Una regla decide qué plantilla se asigna, así que no puede crearse
             sin ninguna. Crea la plantilla y vuelve aquí.
           </p>
-          <Link href="/templates/new" className={`mt-5 ${backLinkClass}`}>
+          <ButtonLink href="/templates/new" className="mt-5">
             Crear una plantilla
-          </Link>
+          </ButtonLink>
         </div>
       ) : (
         <div className="max-w-2xl">

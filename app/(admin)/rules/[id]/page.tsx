@@ -7,18 +7,15 @@ import { DeleteRuleForm, RuleForm } from "@/components/catalog/RuleForm";
 import { requireStaff } from "@/lib/catalog/access";
 import { describeConditions } from "@/lib/catalog/describe-rule";
 import { getRule, listTemplateOptions } from "@/lib/catalog/rule-queries";
+import { Badge } from "@/components/ui/Badge";
+import { ButtonLink } from "@/components/ui/ButtonLink";
+import { cn } from "cn";
+import { cardVariants } from "@/components/ui/Card";
 
 const uuid =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const backLinkClass =
-  "inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring";
-
-const sectionClass =
-  "mt-10 rounded-2xl border border-border bg-surface p-5 sm:p-6";
-
-const tagClass =
-  "inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground";
+const sectionClass = cn(cardVariants({ padding: "lg" }), "mt-10");
 
 export async function generateMetadata({
   params,
@@ -52,9 +49,9 @@ export default async function Page({
 
   return (
     <Workspace title={rule.name} name={profile.fullName}>
-      <Link href="/rules" className={`-mt-4 ${backLinkClass}`}>
+      <ButtonLink href="/rules" className="-mt-4">
         Volver a las reglas
-      </Link>
+      </ButtonLink>
 
       {recienCreada && (
         <p
@@ -67,16 +64,10 @@ export default async function Page({
       )}
 
       <div className="mt-6 flex flex-wrap gap-1.5">
-        <span className={tagClass}>Prioridad {rule.priority}</span>
-        <span
-          className={
-            rule.is_active
-              ? "inline-flex items-center rounded-full bg-brand-soft px-2.5 py-1 text-xs font-semibold text-brand"
-              : tagClass
-          }
-        >
+        <Badge>Prioridad {rule.priority}</Badge>
+        <Badge variant={rule.is_active ? "brand" : "neutral"}>
           {rule.is_active ? "Activa" : "Inactiva"}
-        </span>
+        </Badge>
       </div>
 
       <section className={sectionClass}>
@@ -144,9 +135,9 @@ export default async function Page({
           </div>
         )}
 
-        <Link href="/rules/simulador" className={`mt-6 ${backLinkClass}`}>
+        <ButtonLink href="/rules/simulador" className="mt-6">
           Probar con un perfil
-        </Link>
+        </ButtonLink>
       </section>
 
       {puedeEditar ? (

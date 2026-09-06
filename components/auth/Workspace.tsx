@@ -1,42 +1,47 @@
-import Link from "next/link";
-import { signOut } from "@/lib/auth/actions";
-import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import type { ReactNode } from "react";
 
-export function Workspace({
+import { AppShell } from "@/components/shell/AppShell";
+import { getActiveProfile } from "@/lib/auth/session";
+import type { UserRole } from "@/lib/auth/schemas";
+
+/**
+ * Envoltorio de pantalla. Desde la fase 2 no dibuja nada por su cuenta: monta
+ * `AppShell`, que es quien tiene la navegación. Se conserva porque lo importan
+ * treinta pantallas y su API no cambia.
+ *
+ * `role` es opcional para no reescribir esas treinta llamadas de golpe. Cuando
+ * no llega, el shell lo consulta: `getActiveProfile` está memoizado por
+ * petición, así que no cuesta una segunda lectura. En pantallas nuevas, pásalo.
+ */
+export async function Workspace({
   title,
   name,
+  role,
+  description,
+  actions,
+  withNav,
   children,
 }: {
   title: string;
   name?: string | null;
-  children: React.ReactNode;
+  role?: UserRole;
+  description?: ReactNode;
+  actions?: ReactNode;
+  withNav?: boolean;
+  children: ReactNode;
 }) {
+  const profile = role ? null : await getActiveProfile();
+
   return (
-    <main className="mx-auto min-h-svh max-w-6xl px-5 py-5 sm:px-10 sm:py-8">
-      <header className="mb-10 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-5">
-        <Link
-          href="/"
-          className="flex min-h-11 items-center text-sm font-semibold text-brand"
-        >
-          Entrenamiento y fisioterapia
-        </Link>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <form action={signOut}>
-            <Button className="min-h-11" variant="outline" type="submit">
-              Cerrar sesión
-            </Button>
-          </form>
-        </div>
-      </header>
-      {name && (
-        <p className="mb-2 text-sm text-muted-foreground">Hola, {name}</p>
-      )}
-      <h1 className="mb-8 text-3xl font-semibold tracking-tight sm:text-4xl">
-        {title}
-      </h1>
+    <AppShell
+      role={role ?? profile?.role ?? "patient"}
+      name={name ?? profile?.fullName}
+      title={title}
+      description={description}
+      actions={actions}
+      withNav={withNav}
+    >
       {children}
-    </main>
+    </AppShell>
   );
 }

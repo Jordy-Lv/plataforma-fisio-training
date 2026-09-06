@@ -12,6 +12,7 @@ import {
   formatCurrency,
   serviceCategoryLabels,
 } from "@/lib/progress/plan-vocabulary";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 export const metadata: Metadata = {
   title: "Planes y servicios",
@@ -37,13 +38,10 @@ export default async function Page() {
         </Link>
 
         {empty ? (
-          <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-            <p className="font-semibold">Todavía no hay oferta publicada</p>
-            <p className="mx-auto mt-2 max-w-md leading-7 text-muted-foreground">
-              Cuando el administrador active los planes y servicios, los verás
-              aquí con su descripción y su precio.
-            </p>
-          </div>
+          <EmptyState title="Todavía no hay oferta publicada">
+            Cuando el administrador active los planes y servicios, los verás
+            aquí con su descripción y su precio.
+          </EmptyState>
         ) : (
           <>
             {plans.length > 0 && (

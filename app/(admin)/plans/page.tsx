@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { Workspace } from "@/components/auth/Workspace";
 import { OfferControls } from "@/components/progress/OfferControls";
@@ -11,19 +10,17 @@ import {
   formatCurrency,
   serviceCategoryLabels,
 } from "@/lib/progress/plan-vocabulary";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Badge } from "@/components/ui/Badge";
+import { ButtonLink } from "@/components/ui/ButtonLink";
+import { cn } from "cn";
+import { cardVariants } from "@/components/ui/Card";
 
 export const metadata: Metadata = {
   title: "Planes y servicios",
 };
 
-const backLinkClass =
-  "inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring";
-
-const tagClass =
-  "inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground";
-
-const cardClass =
-  "grid gap-4 rounded-2xl border border-border bg-surface p-5";
+const cardClass = cn(cardVariants(), "grid gap-4");
 
 export default async function Page() {
   const profile = await requireAdmin();
@@ -41,25 +38,22 @@ export default async function Page() {
       </p>
 
       <div className="mb-8 mt-4 flex flex-wrap gap-3">
-        <Link href="/admin" className={backLinkClass}>
+        <ButtonLink href="/admin">
           Volver a mi panel
-        </Link>
-        <Link href="/offer" className={backLinkClass}>
+        </ButtonLink>
+        <ButtonLink href="/offer">
           Ver la vitrina
-        </Link>
+        </ButtonLink>
       </div>
 
       <section className="grid gap-6">
         <h2 className="text-xl font-semibold">Planes de suscripción</h2>
 
         {plans.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-            <p className="font-semibold">Todavía no hay planes</p>
-            <p className="mx-auto mt-2 max-w-md leading-7 text-muted-foreground">
-              Crea el primer plan con el formulario de abajo. Aparecerá en la
-              vitrina en cuanto esté activo.
-            </p>
-          </div>
+          <EmptyState title="Todavía no hay planes">
+            Crea el primer plan con el formulario de abajo. Aparecerá en la
+            vitrina en cuanto esté activo.
+          </EmptyState>
         ) : (
           <ul className="grid gap-4 lg:grid-cols-2">
             {plans.map((plan) => (
@@ -69,9 +63,9 @@ export default async function Page() {
                     <h3 className="text-base font-semibold leading-6">
                       {plan.name}
                     </h3>
-                    <span className={tagClass}>
+                    <Badge variant={plan.is_active ? "success" : "neutral"}>
                       {plan.is_active ? "Activo" : "Inactivo"}
-                    </span>
+                    </Badge>
                   </div>
                   <p className="text-sm">
                     <strong className="font-semibold">
@@ -120,13 +114,10 @@ export default async function Page() {
         <h2 className="text-xl font-semibold">Servicios adicionales</h2>
 
         {services.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-            <p className="font-semibold">Todavía no hay servicios</p>
-            <p className="mx-auto mt-2 max-w-md leading-7 text-muted-foreground">
-              Nutrición, fisioterapia, artes marciales o talleres. Crea el
-              primero con el formulario de abajo.
-            </p>
-          </div>
+          <EmptyState title="Todavía no hay servicios">
+            Nutrición, fisioterapia, artes marciales o talleres. Crea el
+            primero con el formulario de abajo.
+          </EmptyState>
         ) : (
           <ul className="grid gap-4 lg:grid-cols-2">
             {services.map((service) => (
@@ -136,9 +127,9 @@ export default async function Page() {
                     <h3 className="text-base font-semibold leading-6">
                       {service.name}
                     </h3>
-                    <span className={tagClass}>
+                    <Badge variant={service.is_active ? "success" : "neutral"}>
                       {service.is_active ? "Activo" : "Inactivo"}
-                    </span>
+                    </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {serviceCategoryLabels[service.category]}

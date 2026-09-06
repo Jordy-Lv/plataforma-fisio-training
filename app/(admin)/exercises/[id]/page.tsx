@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Workspace } from "@/components/auth/Workspace";
@@ -14,14 +13,14 @@ import {
   labelFor,
   muscleGroupLabels,
 } from "@/lib/catalog/vocabulary";
+import { ButtonLink } from "@/components/ui/ButtonLink";
+import { cn } from "cn";
+import { cardVariants } from "@/components/ui/Card";
 
 const uuid =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const backLinkClass =
-  "inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring";
-
-const sectionClass = "mt-10 rounded-2xl border border-border bg-surface p-5 sm:p-6";
+const sectionClass = cn(cardVariants({ padding: "lg" }), "mt-10");
 
 export async function generateMetadata({
   params,
@@ -85,9 +84,9 @@ export default async function Page({
 
   return (
     <Workspace title={exercise.name} name={profile.fullName}>
-      <Link href="/exercises" className={`-mt-4 ${backLinkClass}`}>
+      <ButtonLink href="/exercises" className="-mt-4">
         Volver al catálogo
-      </Link>
+      </ButtonLink>
 
       {recienCreado && (
         <p

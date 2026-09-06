@@ -23,18 +23,17 @@ import {
   formatCurrency,
 } from "@/lib/progress/plan-vocabulary";
 import { formatDate } from "@/lib/progress/vocabulary";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Badge, membershipBadgeVariant } from "@/components/ui/Badge";
+import { ButtonLink } from "@/components/ui/ButtonLink";
+import { cn } from "cn";
+import { cardVariants } from "@/components/ui/Card";
 
 export const metadata: Metadata = {
   title: "Membresías",
 };
 
-const linkClass =
-  "inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring";
-
-const tagClass =
-  "inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground";
-
-const cardClass = "grid gap-3 rounded-2xl border border-border bg-surface p-5";
+const cardClass = cn(cardVariants(), "grid gap-3");
 
 type Option = { id: string; label: string };
 
@@ -53,9 +52,9 @@ function AdminCard({
         <h3 className="text-base font-semibold leading-6">
           {membership.patient_name ?? "Paciente sin nombre"}
         </h3>
-        <span className={tagClass}>
+        <Badge variant={membershipBadgeVariant(membership.status)}>
           {membershipStatusLabels[membership.status]}
-        </span>
+        </Badge>
       </div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
         <dt className="text-muted-foreground">Plan</dt>
@@ -153,12 +152,12 @@ async function AdminView({ name }: { name?: string | null }) {
       </p>
 
       <div className="mb-8 mt-4 flex flex-wrap gap-3">
-        <Link href="/admin" className={linkClass}>
+        <ButtonLink href="/admin">
           Volver a mi panel
-        </Link>
-        <Link href="/plans" className={linkClass}>
+        </ButtonLink>
+        <ButtonLink href="/plans">
           Planes y servicios
-        </Link>
+        </ButtonLink>
       </div>
 
       <section className="mb-10 grid gap-4 rounded-2xl border border-border bg-surface p-5">
@@ -176,13 +175,10 @@ async function AdminView({ name }: { name?: string | null }) {
       </section>
 
       {memberships.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-          <p className="font-semibold">Todavía no hay membresías registradas</p>
-          <p className="mx-auto mt-2 max-w-md leading-7 text-muted-foreground">
-            Registra la primera con el formulario de abajo. Necesitas un plan y
-            un paciente dado de alta.
-          </p>
-        </div>
+        <EmptyState title="Todavía no hay membresías registradas">
+          Registra la primera con el formulario de abajo. Necesitas un plan y
+          un paciente dado de alta.
+        </EmptyState>
       ) : (
         <div className="grid gap-10">
           <Group
@@ -233,19 +229,16 @@ async function ProfessionalView({ name }: { name?: string | null }) {
       </p>
 
       <div className="mb-6 mt-4 flex flex-wrap gap-3">
-        <Link href={rolePaths.professional} className={linkClass}>
+        <ButtonLink href={rolePaths.professional}>
           Volver a mi panel
-        </Link>
+        </ButtonLink>
       </div>
 
       {patients.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-          <p className="font-semibold">Aún no tienes pacientes que seguir</p>
-          <p className="mx-auto mt-2 max-w-md leading-7 text-muted-foreground">
-            Aquí verás a los pacientes que tengas asignados. Pídele al
-            administrador que te asigne alguno.
-          </p>
-        </div>
+        <EmptyState title="Aún no tienes pacientes que seguir">
+          Aquí verás a los pacientes que tengas asignados. Pídele al
+          administrador que te asigne alguno.
+        </EmptyState>
       ) : (
         <ul className="grid gap-4 lg:grid-cols-2">
           {patients.map((patient) => (
@@ -254,11 +247,17 @@ async function ProfessionalView({ name }: { name?: string | null }) {
                 <h2 className="text-base font-semibold leading-6">
                   {patient.full_name ?? "Paciente sin nombre"}
                 </h2>
-                <span className={tagClass}>
+                <Badge
+                  variant={
+                    patient.status
+                      ? membershipBadgeVariant(patient.status)
+                      : "neutral"
+                  }
+                >
                   {patient.status
                     ? membershipStatusLabels[patient.status]
                     : "Sin membresía"}
-                </span>
+                </Badge>
               </div>
               {patient.status ? (
                 <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">

@@ -18,19 +18,16 @@ import {
   goalLabels,
   labelFor,
 } from "@/lib/catalog/vocabulary";
+import { Badge } from "@/components/ui/Badge";
+import { ButtonLink } from "@/components/ui/ButtonLink";
+import { cn } from "cn";
+import { cardVariants } from "@/components/ui/Card";
 
 export const metadata: Metadata = {
   title: "Simulador de asignación",
 };
 
-const backLinkClass =
-  "inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring";
-
-const sectionClass =
-  "mt-10 rounded-2xl border border-border bg-surface p-5 sm:p-6";
-
-const tagClass =
-  "inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground";
+const sectionClass = cn(cardVariants({ padding: "lg" }), "mt-10");
 
 /** Por qué una regla no ganó, en una línea. */
 const motivos: Record<string, string> = {
@@ -64,12 +61,12 @@ export default async function Page({
       </p>
 
       <div className="mb-6 mt-4 flex flex-wrap gap-3">
-        <Link href="/rules" className={backLinkClass}>
+        <ButtonLink href="/rules">
           Volver a las reglas
-        </Link>
-        <Link href="/templates" className={backLinkClass}>
+        </ButtonLink>
+        <ButtonLink href="/templates">
           Plantillas de rutina
-        </Link>
+        </ButtonLink>
       </div>
 
       <section className={sectionClass}>
@@ -291,7 +288,7 @@ export default async function Page({
                 const fallidos = failedChecks(evaluacion);
                 return (
                   <li key={evaluacion.rule.id} className="leading-7">
-                    <span className={tagClass}>{evaluacion.rule.priority}</span>{" "}
+                    <Badge>{evaluacion.rule.priority}</Badge>{" "}
                     <Link
                       href={`/rules/${evaluacion.rule.id}`}
                       className="underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-ring"

@@ -20,6 +20,7 @@ import {
   ReplaceRoutineItemButton,
   RoutineItemForm,
 } from "@/components/routines/RoutineItems";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 
 const statusLabels = {
   active: "Activa",
@@ -27,9 +28,6 @@ const statusLabels = {
   completed: "Finalizada",
   archived: "Archivada",
 };
-
-const linkClass =
-  "inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring";
 
 const fieldClass =
   "min-h-11 w-full rounded-lg border border-input bg-surface px-3 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -309,12 +307,12 @@ export default async function Page({
                                   />
                                 ))
                               ) : (
-                                <Link
+                                <ButtonLink
                                   href={`${base}?item=${item.id}`}
-                                  className={linkClass}
+                                  
                                 >
                                   Sustituir por otro ejercicio
-                                </Link>
+                                </ButtonLink>
                               )}
                             </div>
                           </li>
@@ -334,9 +332,9 @@ export default async function Page({
                         />
                       ))
                     ) : (
-                      <Link href={`${base}?dia=${day.id}`} className={linkClass}>
+                      <ButtonLink href={`${base}?dia=${day.id}`} >
                         Añadir ejercicios a este día
-                      </Link>
+                      </ButtonLink>
                     )}
                   </div>
                 </section>

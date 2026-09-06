@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Workspace } from "@/components/auth/Workspace";
@@ -15,13 +14,12 @@ import {
   formatTimes,
   monthStart,
 } from "@/lib/progress/vocabulary";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 
 export const metadata: Metadata = {
   title: "Asistencia del paciente",
 };
-
-const linkClass =
-  "inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring";
 
 export default async function Page({
   params,
@@ -45,15 +43,15 @@ export default async function Page({
       name={profile.fullName}
     >
       <div className="mb-8 -mt-4 flex flex-wrap gap-3">
-        <Link href="/attendance" className={linkClass}>
+        <ButtonLink href="/attendance">
           Volver a la asistencia
-        </Link>
-        <Link href={`/screenings/${patient.id}`} className={linkClass}>
+        </ButtonLink>
+        <ButtonLink href={`/screenings/${patient.id}`}>
           Ver su seguimiento físico
-        </Link>
-        <Link href={`/evolution/${patient.id}`} className={linkClass}>
+        </ButtonLink>
+        <ButtonLink href={`/evolution/${patient.id}`}>
           Ver su evolución
-        </Link>
+        </ButtonLink>
       </div>
 
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-start">
@@ -68,15 +66,10 @@ export default async function Page({
           </p>
 
           {attendance.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-              <p className="font-semibold">
-                Este paciente no tiene asistencias registradas
-              </p>
-              <p className="mx-auto mt-2 max-w-md leading-7 text-muted-foreground">
-                Registra la primera con el formulario de esta página, el día que
-                venga.
-              </p>
-            </div>
+            <EmptyState title="Este paciente no tiene asistencias registradas">
+              Registra la primera con el formulario de esta página, el día que
+              venga.
+            </EmptyState>
           ) : (
             <ul className="grid gap-3">
               {attendance.map((record) => {

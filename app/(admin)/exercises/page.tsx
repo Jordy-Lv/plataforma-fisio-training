@@ -12,6 +12,7 @@ import {
   exercisesHref,
   hasActiveFilters,
 } from "@/lib/catalog/schemas";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 
 export const metadata: Metadata = {
   title: "Catálogo de ejercicios",
@@ -24,9 +25,6 @@ const sinFiltros = {
   environment: undefined,
   page: 1,
 };
-
-const backLinkClass =
-  "inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring";
 
 export default async function Page({
   searchParams,
@@ -46,9 +44,9 @@ export default async function Page({
         mano.
       </p>
       <div className="mb-6 mt-4 flex flex-wrap gap-3">
-        <Link href={rolePaths[profile.role]} className={backLinkClass}>
+        <ButtonLink href={rolePaths[profile.role]}>
           Volver a mi panel
-        </Link>
+        </ButtonLink>
         <Link
           href="/exercises/new"
           className="inline-flex min-h-11 items-center rounded-lg bg-brand px-4 text-sm font-semibold text-brand-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
@@ -76,7 +74,7 @@ export default async function Page({
                 Prueba con menos filtros o busca solo por el nombre del
                 movimiento.
               </p>
-              <Link href={exercisesHref(sinFiltros)} className={`mt-5 ${backLinkClass}`}>
+              <Link href={exercisesHref(sinFiltros)} className="mt-5">
                 Ver todo el catálogo
               </Link>
             </>
@@ -85,7 +83,7 @@ export default async function Page({
               <p className="font-semibold">Esta página ya no tiene ejercicios</p>
               <Link
                 href={exercisesHref(filters, { page: 1 })}
-                className={`mt-5 ${backLinkClass}`}
+                className="mt-5"
               >
                 Volver a la primera página
               </Link>

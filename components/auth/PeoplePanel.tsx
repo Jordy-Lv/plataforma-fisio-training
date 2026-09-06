@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth/session";
 import { Workspace } from "@/components/auth/Workspace";
@@ -9,10 +10,18 @@ import {
 } from "@/components/auth/PeopleForms";
 import { specialtyLabels } from "@/lib/auth/people-schemas";
 
+/**
+ * `overview` se pinta dentro del shell, antes de la lista. Antes el panel de
+ * administración lo montaba fuera y repetía a mano el ancho del contenedor;
+ * con la navegación de la fase 2 eso habría dejado el panorama por encima de
+ * la cabecera.
+ */
 export async function PeoplePanel({
   role,
+  overview,
 }: {
   role: "admin" | "professional";
+  overview?: ReactNode;
 }) {
   const profile = await requireRole(role);
   const supabase = await createClient();
@@ -37,7 +46,9 @@ export async function PeoplePanel({
     <Workspace
       title={role === "admin" ? "Personas y equipo" : "Mis pacientes"}
       name={profile.fullName}
+      role={role === "admin" ? "admin" : "professional"}
     >
+      {overview}
       <div className="grid items-start gap-10 lg:grid-cols-[1fr_320px]">
         <section>
           <p className="mb-5 max-w-xl leading-7 text-muted-foreground">

@@ -1,15 +1,12 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { Workspace } from "@/components/auth/Workspace";
 import { ExerciseForm } from "@/components/catalog/ExerciseForm";
 import { requireStaff } from "@/lib/catalog/access";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 
 export const metadata: Metadata = {
   title: "Nuevo ejercicio propio",
 };
-
-const backLinkClass =
-  "inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring";
 
 export default async function Page() {
   const profile = await requireStaff();
@@ -20,9 +17,9 @@ export default async function Page() {
         Un ejercicio propio del negocio queda marcado como tal y se usa en las
         plantillas igual que cualquiera de los importados.
       </p>
-      <Link href="/exercises" className={`mb-8 mt-4 ${backLinkClass}`}>
+      <ButtonLink href="/exercises" className="mb-8 mt-4">
         Volver al catálogo
-      </Link>
+      </ButtonLink>
 
       <div className="max-w-2xl">
         <ExerciseForm />

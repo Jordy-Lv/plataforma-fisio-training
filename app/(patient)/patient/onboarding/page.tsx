@@ -30,7 +30,12 @@ export default async function Page({
       ? requested
       : nextStep;
   return (
-    <Workspace title="Preparemos tu acompañamiento" name={profile.fullName}>
+    <Workspace
+      title="Preparemos tu acompañamiento"
+      name={profile.fullName}
+      role="patient"
+      withNav={false}
+    >
       <section className="max-w-xl">
         <ol
           aria-label="Pasos del perfil"

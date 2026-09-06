@@ -1,8 +1,5 @@
-import Link from "next/link";
 import { exercisesHref, type ExerciseFilters } from "@/lib/catalog/schemas";
-
-const linkClass =
-  "inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 
 export function ExercisePagination({
   filters,
@@ -20,13 +17,13 @@ export function ExercisePagination({
       className="mt-8 flex items-center justify-between gap-3"
     >
       {page > 1 ? (
-        <Link
+        <ButtonLink
           href={exercisesHref(filters, { page: page - 1 })}
-          className={linkClass}
+          
           rel="prev"
         >
           Anterior
-        </Link>
+        </ButtonLink>
       ) : (
         <span />
       )}
@@ -36,13 +33,13 @@ export function ExercisePagination({
       </p>
 
       {page < pages ? (
-        <Link
+        <ButtonLink
           href={exercisesHref(filters, { page: page + 1 })}
-          className={linkClass}
+          
           rel="next"
         >
           Siguiente
-        </Link>
+        </ButtonLink>
       ) : (
         <span />
       )}

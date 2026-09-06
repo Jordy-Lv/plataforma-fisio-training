@@ -1,15 +1,15 @@
-import Link from "next/link";
 import type { BusinessOverview as Overview } from "@/lib/progress/overview-queries";
 import {
   formatMonth,
   formatTimes,
   monthStart,
 } from "@/lib/progress/vocabulary";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { ButtonLink } from "@/components/ui/ButtonLink";
+import { cn } from "cn";
+import { cardVariants } from "@/components/ui/Card";
 
-const cardClass = "grid gap-2 rounded-2xl border border-border bg-surface p-5";
-
-const linkClass =
-  "inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring";
+const cardClass = cn(cardVariants(), "grid gap-2");
 
 const percentFormat = new Intl.NumberFormat("es-CO", {
   style: "percent",
@@ -59,13 +59,10 @@ export function BusinessOverview({ overview }: { overview: Overview }) {
       </div>
 
       {activePatients === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-          <p className="font-semibold">Todavía no hay clientes activos</p>
-          <p className="mx-auto mt-2 max-w-md leading-7 text-muted-foreground">
-            El panorama se llena cuando haya pacientes entrenando. Registra el
-            primero desde el panel de personas de aquí abajo.
-          </p>
-        </div>
+        <EmptyState title="Todavía no hay clientes activos">
+          El panorama se llena cuando haya pacientes entrenando. Registra el
+          primero desde el panel de personas de aquí abajo.
+        </EmptyState>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Metric title="Clientes activos" value={String(activePatients)}>
@@ -95,18 +92,18 @@ export function BusinessOverview({ overview }: { overview: Overview }) {
       )}
 
       <div className="flex flex-wrap gap-3">
-        <Link href="/attendance" className={linkClass}>
+        <ButtonLink href="/attendance">
           Asistencia por paciente
-        </Link>
-        <Link href="/pro/alerts" className={linkClass}>
+        </ButtonLink>
+        <ButtonLink href="/pro/alerts">
           Alertas
-        </Link>
-        <Link href="/memberships" className={linkClass}>
+        </ButtonLink>
+        <ButtonLink href="/memberships">
           Membresías
-        </Link>
-        <Link href="/plans" className={linkClass}>
+        </ButtonLink>
+        <ButtonLink href="/plans">
           Planes y servicios
-        </Link>
+        </ButtonLink>
       </div>
     </section>
   );

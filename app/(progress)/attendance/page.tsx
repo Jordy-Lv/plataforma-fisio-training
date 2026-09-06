@@ -10,16 +10,13 @@ import {
   formatTimes,
   monthStart,
 } from "@/lib/progress/vocabulary";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Badge } from "@/components/ui/Badge";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 
 export const metadata: Metadata = {
   title: "Asistencia",
 };
-
-const linkClass =
-  "inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring";
-
-const tagClass =
-  "inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground";
 
 export default async function Page() {
   const profile = await requireStaff();
@@ -34,23 +31,20 @@ export default async function Page() {
       </p>
 
       <div className="mb-6 mt-4 flex flex-wrap gap-3">
-        <Link href={rolePaths[profile.role]} className={linkClass}>
+        <ButtonLink href={rolePaths[profile.role]}>
           Volver a mi panel
-        </Link>
-        <Link href="/screenings" className={linkClass}>
+        </ButtonLink>
+        <ButtonLink href="/screenings">
           Seguimiento físico
-        </Link>
+        </ButtonLink>
       </div>
 
       {patients.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-          <p className="font-semibold">Aún no tienes pacientes que seguir</p>
-          <p className="mx-auto mt-2 max-w-md leading-7 text-muted-foreground">
-            {profile.role === "admin"
-              ? "Cuando se registre el primer paciente aparecerá aquí para llevarle la asistencia."
-              : "Aquí verás a los pacientes que tengas asignados. Pídele al administrador que te asigne alguno."}
-          </p>
-        </div>
+        <EmptyState title="Aún no tienes pacientes que seguir">
+          {profile.role === "admin"
+            ? "Cuando se registre el primer paciente aparecerá aquí para llevarle la asistencia."
+            : "Aquí verás a los pacientes que tengas asignados. Pídele al administrador que te asigne alguno."}
+        </EmptyState>
       ) : (
         <ul className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {patients.map((patient) => (
@@ -72,9 +66,9 @@ export default async function Page() {
                   </p>
                 ) : (
                   <>
-                    <span className={tagClass}>
+                    <Badge variant="success">
                       Asistió {formatTimes(patient.days)} este mes
-                    </span>
+                    </Badge>
                     <p className="text-sm leading-6 text-muted-foreground">
                       Última vez: {formatDate(patient.last)}
                     </p>

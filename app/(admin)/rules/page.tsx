@@ -6,16 +6,12 @@ import { rolePaths } from "@/lib/auth/session";
 import { requireStaff } from "@/lib/catalog/access";
 import { describeConditions } from "@/lib/catalog/describe-rule";
 import { listRules } from "@/lib/catalog/rule-queries";
+import { Badge } from "@/components/ui/Badge";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 
 export const metadata: Metadata = {
   title: "Reglas de asignación",
 };
-
-const backLinkClass =
-  "inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring";
-
-const tagClass =
-  "inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground";
 
 export default async function Page({
   searchParams,
@@ -37,15 +33,15 @@ export default async function Page({
       </p>
 
       <div className="mb-6 mt-4 flex flex-wrap gap-3">
-        <Link href={rolePaths[profile.role]} className={backLinkClass}>
+        <ButtonLink href={rolePaths[profile.role]}>
           Volver a mi panel
-        </Link>
-        <Link href="/rules/simulador" className={backLinkClass}>
+        </ButtonLink>
+        <ButtonLink href="/rules/simulador">
           Probar con un perfil
-        </Link>
-        <Link href="/templates" className={backLinkClass}>
+        </ButtonLink>
+        <ButtonLink href="/templates">
           Plantillas de rutina
-        </Link>
+        </ButtonLink>
         {esAdmin && (
           <Link
             href="/rules/new"
@@ -84,9 +80,9 @@ export default async function Page({
               : "El administrador todavía no ha definido ninguna. Sin reglas, cada rutina se asigna a mano."}
           </p>
           {esAdmin && (
-            <Link href="/rules/new" className={`mt-5 ${backLinkClass}`}>
+            <ButtonLink href="/rules/new" className="mt-5">
               Crear la primera regla
-            </Link>
+            </ButtonLink>
           )}
         </div>
       ) : (
@@ -107,23 +103,15 @@ export default async function Page({
                     </Link>
                   </h2>
                   <div className="flex flex-wrap gap-1.5">
-                    <span className={tagClass}>
-                      Prioridad {rule.priority}
-                    </span>
-                    <span
-                      className={
-                        rule.is_active
-                          ? "inline-flex items-center rounded-full bg-brand-soft px-2.5 py-1 text-xs font-semibold text-brand"
-                          : tagClass
-                      }
-                    >
+                    <Badge>Prioridad {rule.priority}</Badge>
+                    <Badge variant={rule.is_active ? "brand" : "neutral"}>
                       {rule.is_active ? "Activa" : "Inactiva"}
-                    </span>
-                    <span className={tagClass}>
+                    </Badge>
+                    <Badge variant={rule.template ? "neutral" : "warning"}>
                       {rule.template
                         ? `Asigna «${rule.template.name}»${rule.template.is_active ? "" : " (borrador)"}`
                         : "Plantilla no disponible"}
-                    </span>
+                    </Badge>
                   </div>
                 </div>
 
