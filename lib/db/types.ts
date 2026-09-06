@@ -161,6 +161,44 @@ export type Database = {
           },
         ]
       }
+      attendance_notices: {
+        Row: {
+          attended: number
+          created_at: string
+          expected: number
+          id: string
+          patient_id: string
+          pct: number
+          period_month: string
+        }
+        Insert: {
+          attended: number
+          created_at?: string
+          expected: number
+          id?: string
+          patient_id: string
+          pct: number
+          period_month: string
+        }
+        Update: {
+          attended?: number
+          created_at?: string
+          expected?: number
+          id?: string
+          patient_id?: string
+          pct?: number
+          period_month?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_notices_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       care_assignments: {
         Row: {
           created_at: string
@@ -210,6 +248,7 @@ export type Database = {
         Row: {
           contraindications: string[]
           created_at: string
+          created_by: string | null
           description: string | null
           difficulty: Database["public"]["Enums"]["fitness_level"] | null
           environments: string[]
@@ -224,6 +263,7 @@ export type Database = {
         Insert: {
           contraindications?: string[]
           created_at?: string
+          created_by?: string | null
           description?: string | null
           difficulty?: Database["public"]["Enums"]["fitness_level"] | null
           environments?: string[]
@@ -238,6 +278,7 @@ export type Database = {
         Update: {
           contraindications?: string[]
           created_at?: string
+          created_by?: string | null
           description?: string | null
           difficulty?: Database["public"]["Enums"]["fitness_level"] | null
           environments?: string[]
@@ -249,7 +290,15 @@ export type Database = {
           muscle_groups?: string[]
           name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "exercises_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       membership_notices: {
         Row: {
@@ -859,6 +908,7 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
+          price: number
         }
         Insert: {
           category: Database["public"]["Enums"]["service_category"]
@@ -867,6 +917,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
+          price?: number
         }
         Update: {
           category?: Database["public"]["Enums"]["service_category"]
@@ -875,6 +926,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          price?: number
         }
         Relationships: []
       }
@@ -1123,6 +1175,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      actor_is_active: { Args: never; Returns: boolean }
+      assignment_rule_matches: {
+        Args: { conditions: Json; profile: Json }
+        Returns: boolean
+      }
       can_read_routine: { Args: { target_routine: string }; Returns: boolean }
       can_write_routine: { Args: { target_routine: string }; Returns: boolean }
       cancel_person_registration: {
@@ -1166,6 +1223,12 @@ export type Database = {
         }
         Returns: string
       }
+      record_manual_routine_assignment: {
+        Args: { target_routine: string }
+        Returns: undefined
+      }
+      resolve_assignment_winner: { Args: { context: Json }; Returns: string }
+      review_low_attendance: { Args: { target_month?: string }; Returns: Json }
       review_membership_expiry: {
         Args: { notice_days?: number }
         Returns: Json

@@ -39,6 +39,13 @@ export type ReviewResult = ReviewPayload & {
   emailed: number;
   emailSkipped: boolean;
   emailErrors: string[];
+  /**
+   * `notice_id` de avisos cuyo correo sí salió pero cuyo `notified_at` no se
+   * pudo escribir. Como `review_membership_expiry` solo devuelve avisos recién
+   * insertados, estos no reaparecen en la siguiente revisión: quedan aquí para
+   * que el panel/cron lo reporte y se puedan reconciliar a mano.
+   */
+  unmarked: string[];
 };
 
 function serviceClient() {
@@ -104,6 +111,7 @@ export async function runMembershipReview(
   const payload = data as unknown as ReviewPayload;
   const emailSkipped = !isMailEnabled();
   const emailErrors: string[] = [];
+  const unmarked: string[] = [];
   let emailed = 0;
 
   if (!emailSkipped) {
@@ -112,18 +120,22 @@ export async function runMembershipReview(
       const { subject, text } = composeNotice(notice);
       try {
         await sendMail({ to: notice.patient_email, subject, text });
-        await supabase
-          .from("membership_notices")
-          .update({ notified_at: new Date().toISOString() })
-          .eq("id", notice.notice_id);
-        emailed += 1;
       } catch (sendError) {
         const reason =
           sendError instanceof Error ? sendError.message : String(sendError);
         emailErrors.push(`${notice.patient_email}: ${reason}`);
+        continue;
       }
+      // El correo salió. Si el marcado falla, el aviso no se reintenta solo:
+      // se registra en `unmarked` para que quien dispara la revisión lo vea.
+      emailed += 1;
+      const { error: markError } = await supabase
+        .from("membership_notices")
+        .update({ notified_at: new Date().toISOString() })
+        .eq("id", notice.notice_id);
+      if (markError) unmarked.push(notice.notice_id);
     }
   }
 
-  return { ...payload, emailed, emailSkipped, emailErrors };
+  return { ...payload, emailed, emailSkipped, emailErrors, unmarked };
 }

@@ -51,6 +51,17 @@ export const updateMembershipSchema = z
   })
   .refine(datesInOrder.check, datesInOrder.params);
 
+/**
+ * Plazo de aviso de vencimiento, en días. Lo comparten el editor del panel de
+ * administración y la ruta del cron para que ambos rechacen exactamente lo
+ * mismo: entero de 1 a 90.
+ */
+export const noticeDaysSchema = z.coerce
+  .number({ error: "Indica el plazo de aviso en días." })
+  .int("El plazo de aviso se cuenta en días enteros.")
+  .min(1, "El plazo de aviso debe ser de al menos un día.")
+  .max(90, "Un plazo mayor de 90 días no tiene sentido para un aviso.");
+
 export function membershipFormValues(form: FormData) {
   return {
     id: form.get("id") ?? undefined,

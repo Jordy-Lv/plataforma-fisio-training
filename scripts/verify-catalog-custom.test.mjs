@@ -86,7 +86,7 @@ test("Ejercicios propios y etiquetado clínico", { timeout: 180_000 }, async (t)
     }
   });
 
-  for (const role of ["admin", "professional", "patient"]) {
+  for (const role of ["admin", "professional", "professional2", "patient"]) {
     const email = `custom-${role}-${crypto.randomUUID()}@demo.local`;
     const auth = createClient(status.API_URL, status.ANON_KEY, {
       auth: { persistSession: false, autoRefreshToken: false },
@@ -98,7 +98,7 @@ test("Ejercicios propios y etiquetado clínico", { timeout: 180_000 }, async (t)
     ids.push(id);
     if (role === "admin")
       sql(`update public.profiles set role = 'admin' where id = '${id}'`);
-    if (role === "professional")
+    if (role.startsWith("professional"))
       sql(
         `update public.profiles set role = 'professional', specialty = 'training' where id = '${id}'`,
       );
@@ -190,44 +190,95 @@ test("Ejercicios propios y etiquetado clínico", { timeout: 180_000 }, async (t)
     );
   });
 
-  await t.test("El profesional ve la ficha pero no la edita", async () => {
-    const client = await signedInAs("professional");
-    const { response, html } = await client.request(`/exercises/${ejercicioId}`);
-    assert.equal(response.status, 200);
-    assert.ok(html.includes("Ejercicio propio del negocio"));
-    assert.ok(
-      html.includes("es cosa del administrador"),
-      "Al profesional hay que decirle por qué no puede editar",
-    );
-    assert.ok(
-      !html.includes("Guardar etiquetado clínico"),
-      "El profesional no debe ver el formulario de etiquetado",
-    );
-  });
+  await t.test(
+    "BACK-006 · el profesional edita el ejercicio propio que creó",
+    async () => {
+      const client = await signedInAs("professional");
+      const { response, html } = await client.request(
+        `/exercises/${ejercicioId}`,
+      );
+      assert.equal(response.status, 200);
+      assert.ok(html.includes("Ejercicio propio del negocio"));
+      assert.ok(
+        html.includes("Guardar etiquetado clínico"),
+        "El autor debe ver el formulario de etiquetado de su ejercicio",
+      );
+      assert.ok(
+        !html.includes("Esta ficha es de solo lectura"),
+        "El autor no debe ver el aviso de solo lectura",
+      );
+
+      const name = `Sentadilla del profesional ${crypto.randomUUID()}`;
+      const result = await client.submit(
+        `/exercises/${ejercicioId}`,
+        { ...fichaValida, name, difficulty: "intermediate" },
+        'name="name"',
+      );
+      assert.equal(result.response.status, 200);
+      assert.ok(
+        result.html.includes("Ejercicio actualizado"),
+        alerta(result.html) || "No confirmó el guardado",
+      );
+      assert.equal(fila(ejercicioId, "name"), name);
+      assert.equal(fila(ejercicioId, "difficulty"), "intermediate");
+      assert.equal(
+        fila(ejercicioId, "contraindications"),
+        "{knee}",
+        "Guardar la ficha no puede borrar el etiquetado clínico",
+      );
+    },
+  );
 
   await t.test(
-    "Enviar el formulario de edición sin ser admin no cambia nada",
+    "BACK-006 · otro profesional no edita un ejercicio ajeno",
     async () => {
-      const admin = await signedInAs("admin");
-      const { html } = await admin.request(`/exercises/${ejercicioId}`);
-      const original = fila(ejercicioId, "name");
+      const otro = await signedInAs("professional2");
+      const { html } = await otro.request(`/exercises/${ejercicioId}`);
+      assert.ok(
+        html.includes("Esta ficha es de solo lectura"),
+        "Al profesional que no lo creó hay que decirle por qué no puede editar",
+      );
+      assert.ok(
+        !html.includes("Guardar etiquetado clínico"),
+        "Un profesional ajeno no debe ver el formulario de etiquetado",
+      );
 
-      // El formulario existe para el admin; se reenvía con la sesión del
-      // profesional, que es lo que haría quien se salta la interfaz.
-      const body = camposOcultos(html, 'name="name"');
+      const original = fila(ejercicioId, "name");
+      // Se salta la interfaz: reenvía el formulario del admin con su sesión.
+      const admin = await signedInAs("admin");
+      const body = camposOcultos(
+        (await admin.request(`/exercises/${ejercicioId}`)).html,
+        'name="name"',
+      );
       body.set("name", "Nombre cambiado sin permiso");
       body.set("description", fichaValida.description);
       body.set("muscleGroups", "glutes");
       body.set("equipment", "bands");
       body.set("environments", "home");
       body.set("difficulty", "beginner");
-
-      const profesional = await signedInAs("professional");
-      const result = await profesional.request(`/exercises/${ejercicioId}`, {
+      const result = await otro.request(`/exercises/${ejercicioId}`, {
         method: "POST",
         body,
       });
       assert.equal(result.response.status, 200);
+      assert.equal(fila(ejercicioId, "name"), original);
+
+      // Contra la API directa: RLS tampoco deja tocar la fila ajena.
+      const api = createClient(status.API_URL, status.ANON_KEY, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const sesion = await api.auth.signInWithPassword({
+        email: people.professional2.email,
+        password,
+      });
+      assert.equal(sesion.error, null);
+      const intento = await api
+        .from("exercises")
+        .update({ name: "Intervenido por API" })
+        .eq("id", ejercicioId)
+        .select("id");
+      assert.equal(intento.error, null);
+      assert.deepEqual(intento.data, [], "RLS no debe dejar tocar la fila ajena");
       assert.equal(fila(ejercicioId, "name"), original);
     },
   );

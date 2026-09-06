@@ -182,6 +182,7 @@ export async function createService(
     .insert({
       name: values.name,
       description: values.description,
+      price: values.price,
       category: values.category,
     })
     .select("id")
@@ -209,6 +210,7 @@ export async function updateService(
     .update({
       name: values.name,
       description: values.description,
+      price: values.price,
       category: values.category,
     })
     .eq("id", values.id)

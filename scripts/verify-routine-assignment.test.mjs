@@ -160,15 +160,50 @@ test("Motor conectado a asignación, aislamiento y vistas", { timeout: 180000 },
     assert.ok(!html.includes('Pendiente de revisión'));
     assert.equal(templateContents(), original);
   });
+  await t.test("BACK-002 · el servidor recalcula el ganador y no acepta la regla del cliente", async () => {
+    const decoyRule = randomUUID();
+    // Regla activa, plantilla activa, criterios que coinciden con el paciente,
+    // pero con peor prioridad: no es la ganadora determinista.
+    sql(`insert into public.assignment_rules(id, name, priority, conditions, template_id)
+      values ('${decoyRule}', 'Regla señuelo BACK-002', 999999,
+        '{"goal":["performance"],"level":["advanced"],"environment":["gym"],"equipment_all_of":["barbell"]}',
+        '${secondTemplateId}')`);
+    try {
+      const snapshot = await context();
+      const before = sql(`select count(*) from public.routines where patient_id='${patient.id}'`);
+      // Enviar otra regla activa en lugar de la ganadora: rechazado.
+      const forgedRule = await pro.api.rpc('commit_routine_assignment', {
+        target_patient: patient.id, expected_context: snapshot, selected_rule: decoyRule,
+      });
+      assert.equal(forgedRule.error?.code, '22023');
+      // Declarar `no_match` (regla nula) habiendo una ganadora: rechazado.
+      const forgedNull = await pro.api.rpc('commit_routine_assignment', {
+        target_patient: patient.id, expected_context: snapshot,
+      });
+      assert.equal(forgedNull.error?.code, '22023');
+      assert.equal(sql(`select count(*) from public.routines where patient_id='${patient.id}'`), before);
+    } finally {
+      sql(`delete from public.assignment_rules where id = '${decoyRule}'`);
+    }
+  });
   await t.test("Sin coincidencia se registra aviso y el paciente ve un estado explicativo", async () => {
-    const snapshot = await context(admin, emptyPatient);
-    const result = await admin.api.rpc('commit_routine_assignment', { target_patient: emptyPatient.id, expected_context: snapshot });
-    assert.equal(result.error, null);
-    assert.equal(result.data.outcome, 'no_match');
-    assert.equal(sql(`select count(*) from public.routines where patient_id='${emptyPatient.id}'`), '0');
-    const web = httpClient();
-    await web.submit('/login', { email: emptyPatient.email, password });
-    assert.match((await web.request('/routine')).html, /Tu profesional está preparando tu rutina/);
+    // El servidor recalcula el ganador (BACK-002): para que el resultado sea
+    // realmente `no_match` no puede quedar ninguna regla activa —ni la de
+    // prueba ni las del seed compartido—. Se desactivan y se restauran.
+    const active = sql(`select coalesce(string_agg(id::text, ','), '') from public.assignment_rules where is_active`);
+    sql(`update public.assignment_rules set is_active = false where is_active`);
+    try {
+      const snapshot = await context(admin, emptyPatient);
+      const result = await admin.api.rpc('commit_routine_assignment', { target_patient: emptyPatient.id, expected_context: snapshot });
+      assert.equal(result.error, null);
+      assert.equal(result.data.outcome, 'no_match');
+      assert.equal(sql(`select count(*) from public.routines where patient_id='${emptyPatient.id}'`), '0');
+      const web = httpClient();
+      await web.submit('/login', { email: emptyPatient.email, password });
+      assert.match((await web.request('/routine')).html, /Tu profesional está preparando tu rutina/);
+    } finally {
+      if (active) sql(`update public.assignment_rules set is_active = true where id in ('${active.split(',').join("','")}')`);
+    }
   });
   await t.test("Un fallo al copiar revierte el cierre de la rutina y los avisos", async () => {
     sql(`insert into public.template_days(template_id,day_number) values ('${secondTemplateId}',2)`);
@@ -185,5 +220,50 @@ test("Motor conectado a asignación, aislamiento y vistas", { timeout: 180000 },
     const results = await Promise.all([commit(pro, patient, snapshot), commit(admin, patient, snapshot)]);
     for (const result of results) assert.equal(result.error, null);
     assert.equal(sql(`select count(*) from public.routines where patient_id='${patient.id}' and status='active' and kind='physio'`), '1');
+  });
+  await t.test("BACK-003 · la copia directa por RPC deja un evento de asignación manual", async () => {
+    // El camino manual: el profesional llama `copy_routine_template` sin pasar
+    // por `commit_routine_assignment`. Es legítimo (D1), pero antes no dejaba
+    // ningún `routine_assignment_event` y se perdía la traza.
+    const before = Number(sql(`select count(*) from public.routine_assignment_events where patient_id='${patient.id}'`));
+    const copy = await pro.api.rpc("copy_routine_template", { patient_id: patient.id, template_id: templateId });
+    assert.equal(copy.error, null);
+    const routineId = copy.data;
+    assert.match(routineId, /^[a-f0-9-]{36}$/);
+
+    const events = await pro.api.from("routine_assignment_events")
+      .select("outcome, payload, routine_id").eq("routine_id", routineId);
+    assert.equal(events.error, null);
+    assert.equal(events.data.length, 1, "la copia directa deja exactamente un evento");
+    assert.equal(events.data[0].outcome, "assigned");
+    assert.equal(events.data[0].payload.source, "manual");
+    assert.equal(events.data[0].payload.template_id, templateId);
+    assert.equal(
+      Number(sql(`select count(*) from public.routine_assignment_events where patient_id='${patient.id}'`)),
+      before + 1,
+    );
+    // El evento generó su aviso para el equipo, igual que el camino con reglas.
+    const alert = await physio.api.from("alerts").select("payload")
+      .eq("patient_id", patient.id).eq("type", "routine_assignment")
+      .order("created_at", { ascending: false }).limit(1);
+    assert.equal(alert.error, null);
+    assert.equal(alert.data[0].payload.routine_id, routineId);
+    assert.equal(alert.data[0].payload.outcome, "assigned");
+
+    // Segunda llamada directa: rutina nueva, evento nuevo. No se acumulan en la
+    // misma rutina (idempotencia del registrador).
+    const again = await pro.api.rpc("copy_routine_template", { patient_id: patient.id, template_id: templateId });
+    assert.equal(again.error, null);
+    assert.notEqual(again.data, routineId);
+    assert.equal(
+      Number(sql(`select count(*) from public.routine_assignment_events where routine_id='${routineId}'`)),
+      1,
+    );
+
+    // El paciente no puede leer el registro de decisiones.
+    assert.deepEqual(
+      (await patient.api.from("routine_assignment_events").select("id").eq("routine_id", routineId)).data,
+      [],
+    );
   });
 });

@@ -80,6 +80,10 @@ const serviceFields = {
     .trim()
     .max(1000, "La descripción admite como máximo 1000 caracteres.")
     .transform((value) => value || null),
+  price: z.coerce
+    .number({ error: "Indica el precio del servicio." })
+    .min(0, "El precio no puede ser negativo.")
+    .max(100_000_000, "Ese precio es demasiado alto. Revísalo."),
   category: z.enum(serviceCategories, {
     error: "Elige una categoría de la lista.",
   }),
@@ -119,6 +123,7 @@ export function serviceFormValues(form: FormData) {
     id: form.get("id") ?? undefined,
     name: form.get("name") ?? undefined,
     description: form.get("description") ?? "",
+    price: form.get("price") ?? undefined,
     category: form.get("category") ?? undefined,
   };
 }

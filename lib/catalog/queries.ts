@@ -74,6 +74,7 @@ export type ExerciseDetail = Pick<
   | "difficulty"
   | "contraindications"
   | "is_custom"
+  | "created_by"
 >;
 
 /** La ficha completa. Devuelve `null` si no existe o si RLS no lo deja ver. */
@@ -82,7 +83,7 @@ export async function getExercise(id: string): Promise<ExerciseDetail | null> {
   const { data, error } = await supabase
     .from("exercises")
     .select(
-      "id, name, description, media_url, muscle_groups, equipment, environments, difficulty, contraindications, is_custom",
+      "id, name, description, media_url, muscle_groups, equipment, environments, difficulty, contraindications, is_custom, created_by",
     )
     .eq("id", id)
     .maybeSingle();

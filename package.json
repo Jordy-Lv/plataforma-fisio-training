@@ -20,6 +20,7 @@
     "test:auth": "node --test scripts/verify-auth-local.test.mjs",
     "test:auth:screens": "node --test scripts/verify-auth-screens.test.mjs",
     "test:rls": "node --test scripts/verify-rls.test.mjs",
+    "test:actor-active": "node --test scripts/verify-actor-active.test.mjs",
     "test:storage": "node --test scripts/verify-catalog-storage.test.mjs",
     "test:catalog": "node --test scripts/verify-catalog-list.test.mjs",
     "test:catalog:custom": "node --test scripts/verify-catalog-custom.test.mjs",
@@ -44,6 +45,7 @@
     "test:plans": "node --test scripts/verify-progress-plans.test.mjs",
     "test:memberships": "node --test scripts/verify-progress-memberships.test.mjs",
     "test:memberships:cron": "node --test scripts/verify-progress-memberships-cron.test.mjs",
+    "test:attendance:cron": "node --test scripts/verify-progress-attendance-cron.test.mjs",
     "test:routines:sessions": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/helpers/alias-hook.mjs --test scripts/verify-routine-sessions.test.mjs",
     "test:auth:resilience": "node --test scripts/verify-onboarding-resilience.test.mjs",
     "test:design": "node --test scripts/verify-design-system.test.mjs"

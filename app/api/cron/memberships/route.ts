@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { runMembershipReview } from "@/lib/progress/membership-review";
+import { noticeDaysSchema } from "@/lib/progress/membership-schemas";
 
 /**
  * Revisión diaria de vencimientos de membresías. La invoca pg_cron con el
@@ -35,13 +36,26 @@ export async function POST(request: Request) {
   }
 
   let noticeDays: number | undefined;
+  let body: unknown;
   try {
-    const body = await request.json();
-    if (body && typeof body.noticeDays === "number") {
-      noticeDays = body.noticeDays;
-    }
+    body = await request.json();
   } catch {
     // Cuerpo vacío o no-JSON: se usa el plazo configurado en alert_settings.
+    body = null;
+  }
+  if (body != null && typeof body === "object" && "noticeDays" in body) {
+    const raw = (body as { noticeDays: unknown }).noticeDays;
+    // `null` explícito = "usa el plazo configurado", igual que omitirlo.
+    if (raw !== null) {
+      const parsed = noticeDaysSchema.safeParse(raw);
+      if (!parsed.success) {
+        return NextResponse.json(
+          { error: parsed.error.issues[0].message },
+          { status: 400, headers: { "cache-control": "no-store" } },
+        );
+      }
+      noticeDays = parsed.data;
+    }
   }
 
   try {

@@ -77,7 +77,12 @@ export default async function Page({
   if (!exercise) notFound();
 
   const recienCreado = (await searchParams).nuevo === "1";
-  const puedeEditar = profile.role === "admin";
+  // El admin edita todo el catálogo; el profesional, solo el ejercicio propio
+  // que creó. RLS impone lo mismo sobre la fila (política de UPDATE de
+  // `exercises`): esto solo decide si se le muestra el formulario.
+  const puedeEditar =
+    profile.role === "admin" ||
+    (exercise.is_custom && exercise.created_by === profile.id);
 
   return (
     <Workspace
@@ -204,9 +209,10 @@ export default async function Page({
         </>
       ) : (
         <EmptyState className="mt-10" title="Esta ficha es de solo lectura">
-          Puedes crear ejercicios propios, pero editar el catálogo —incluido el
-          etiquetado clínico— es cosa del administrador. Pídeselo si algo de
-          esta ficha está mal.
+          Puedes crear y editar tus propios ejercicios, pero este lo
+          {exercise.is_custom ? " creó otra persona del equipo" : " importó la biblioteca"}
+          . Editar su ficha y su etiquetado clínico es cosa del administrador o
+          de quien lo creó. Pídeselo si algo está mal.
         </EmptyState>
       )}
     </Workspace>

@@ -127,7 +127,8 @@ export default async function Page() {
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {serviceCategoryLabels[service.category]}
+                    {serviceCategoryLabels[service.category]} ·{" "}
+                    {formatCurrency(service.price)}
                   </p>
                   {service.description && (
                     <p className="text-sm leading-6 text-muted-foreground">

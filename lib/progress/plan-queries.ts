@@ -23,7 +23,7 @@ export type Plan = Pick<
 
 export type Service = Pick<
   ServiceRow,
-  "id" | "name" | "description" | "category" | "is_active"
+  "id" | "name" | "description" | "price" | "category" | "is_active"
 >;
 
 /** Los servicios de una categoría, para pintar la vitrina por secciones. */
@@ -31,7 +31,7 @@ export type ServiceGroup = { category: ServiceCategory; services: Service[] };
 
 const planColumns =
   "id, name, description, price, billing_period, features, is_active";
-const serviceColumns = "id, name, description, category, is_active";
+const serviceColumns = "id, name, description, price, category, is_active";
 
 /**
  * Los planes de la vitrina: solo los activos, del más barato al más caro. RLS

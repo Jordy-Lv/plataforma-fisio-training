@@ -189,3 +189,69 @@ test("Membresías: alta, consulta y aislamiento", { timeout: 180_000 }, async (t
     );
   });
 });
+
+/** El profesional Beto de `supabase/seed.sql`: un perfil que no es paciente. */
+const beto = "00000000-0000-4000-a000-000000000002";
+
+test("Membresías: la base rechaza datos imposibles (BACK-005)", { timeout: 120_000 }, async (t) => {
+  sql(
+    `insert into public.plans (name, price, billing_period, is_active)
+     values ('Plan activo ${marca}', 100000, 'monthly', true),
+            ('Plan inactivo ${marca}', 100000, 'monthly', false)`,
+  );
+  const planActivo = sql(
+    `select id from public.plans where name = 'Plan activo ${marca}'`,
+  ).trim();
+  const planInactivo = sql(
+    `select id from public.plans where name = 'Plan inactivo ${marca}'`,
+  ).trim();
+
+  t.after(() => {
+    sql(`delete from public.memberships where notes like '%${marca}%'`);
+    sql(`delete from public.plans where name like '%${marca}%'`);
+  });
+
+  const admin = await apiAs("admin");
+  const base = {
+    patient_id: diego,
+    plan_id: planActivo,
+    started_on: dateIn(-10),
+    expires_on: dateIn(20),
+    amount: 100000,
+    status: "active",
+    notes: marca,
+  };
+  const alta = (extra) =>
+    admin.from("memberships").insert({ ...base, ...extra }).select("id");
+
+  await t.test("Una membresía válida sí entra", async () => {
+    const ok = await alta({ notes: `válida ${marca}` });
+    assert.equal(ok.error, null, "La membresía correcta debe seguir funcionando");
+  });
+
+  await t.test("Monto negativo", async () => {
+    assert.notEqual((await alta({ amount: -1, notes: `monto ${marca}` })).error, null);
+  });
+
+  await t.test("Vencimiento anterior al inicio", async () => {
+    assert.notEqual(
+      (await alta({ started_on: dateIn(20), expires_on: dateIn(-10), notes: `fechas ${marca}` }))
+        .error,
+      null,
+    );
+  });
+
+  await t.test("Plan inactivo", async () => {
+    assert.notEqual(
+      (await alta({ plan_id: planInactivo, notes: `plan ${marca}` })).error,
+      null,
+    );
+  });
+
+  await t.test("Titular que no es paciente", async () => {
+    assert.notEqual(
+      (await alta({ patient_id: beto, notes: `titular ${marca}` })).error,
+      null,
+    );
+  });
+});
