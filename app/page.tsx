@@ -1,4 +1,8 @@
-import Link from "next/link";
+import { cn } from "cn";
+
+import { ButtonLink } from "@/components/ui/ButtonLink";
+import { cardVariants } from "@/components/ui/Card";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 const areas = [
   {
@@ -18,10 +22,22 @@ const areas = [
   },
 ];
 
+/*
+  Portada pública. Es la única pantalla sin sesión además de las de acceso, así
+  que trae su propio conmutador de tema: el resto de la aplicación lo recibe del
+  shell.
+
+  El panel de la derecha es una `<section>` con `cardVariants` en vez de un
+  `<Card>`: la tarjeta es un `<div>` y aquí hace falta la etiqueta semántica con
+  su `aria-label`.
+*/
 export default function Home() {
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <section className="mx-auto grid min-h-screen w-full max-w-7xl items-center gap-14 px-6 py-12 lg:grid-cols-[1.05fr_0.95fr] lg:px-12">
+    <main className="min-h-svh bg-background text-foreground">
+      <div className="mx-auto flex w-full max-w-7xl justify-end px-5 pt-6 sm:px-12">
+        <ThemeToggle />
+      </div>
+      <section className="mx-auto grid w-full max-w-7xl items-center gap-14 px-5 py-12 sm:px-12 lg:grid-cols-[1.05fr_0.95fr]">
         <div className="max-w-2xl">
           <p className="mb-8 inline-flex min-h-11 items-center rounded-full border border-border bg-surface px-4 text-sm font-semibold text-muted-foreground">
             Entrenamiento y fisioterapia, conectados
@@ -37,9 +53,14 @@ export default function Home() {
           </p>
 
           <div className="mt-10 flex flex-wrap items-center gap-4">
-            <Link href="/login" className="inline-flex min-h-11 items-center rounded-full bg-brand px-5 text-sm font-semibold text-brand-foreground focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-4">
+            <ButtonLink
+              href="/login"
+              variant="default"
+              size="lg"
+              className="rounded-full px-6"
+            >
               Iniciar sesión
-            </Link>
+            </ButtonLink>
             <span className="text-sm leading-6 text-muted-foreground">
               Primera etapa · Aplicación web instalable
             </span>
@@ -54,10 +75,15 @@ export default function Home() {
 
           <section
             aria-label="Lo que podrás hacer en la plataforma"
-            className="overflow-hidden rounded-[2rem] border border-border bg-surface shadow-panel"
+            className={cn(
+              cardVariants({ padding: "none" }),
+              "overflow-hidden rounded-[2rem] shadow-panel",
+            )}
           >
             <header className="border-b border-border px-6 py-6 sm:px-8">
-              <p className="text-sm font-medium text-muted-foreground">Tu semana</p>
+              <p className="text-sm font-medium text-muted-foreground">
+                Tu semana
+              </p>
               <p className="mt-2 text-3xl font-semibold tracking-[-0.035em]">
                 Todo lo importante, a la vista
               </p>
@@ -69,7 +95,7 @@ export default function Home() {
                   className="grid grid-cols-[3rem_1fr] gap-4 px-6 py-6 sm:px-8"
                   key={area.title}
                 >
-                  <span className="flex size-12 items-center justify-center rounded-2xl bg-brand-soft text-sm font-bold text-brand">
+                  <span className="flex size-12 items-center justify-center rounded-2xl bg-brand-soft text-sm font-bold text-brand-soft-foreground">
                     {index + 1}
                   </span>
                   <div>

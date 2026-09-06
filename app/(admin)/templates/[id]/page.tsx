@@ -31,20 +31,18 @@ import {
   labelFor,
   templateKindLabels,
 } from "@/lib/catalog/vocabulary";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/ButtonLink";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Field, Input } from "@/components/ui/Field";
+import { cn } from "cn";
+import { cardVariants } from "@/components/ui/Card";
 
 const uuid =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const backLinkClass =
-  "inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring";
-
-const sectionClass = "mt-10 rounded-2xl border border-border bg-surface p-5 sm:p-6";
-
-const tagClass =
-  "inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground";
-
-const fieldClass =
-  "min-h-11 w-full rounded-lg border border-input bg-surface px-3 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring";
+const sectionClass = cn(cardVariants({ padding: "lg" }), "mt-10");
 
 /** Un criterio sin valor no restringe: la plantilla sirve para cualquier perfil. */
 const cualquiera = "Cualquiera";
@@ -131,33 +129,29 @@ export default async function Page({
   const reglasActivas = reglas.filter((regla) => regla.is_active);
 
   return (
-    <Workspace title={template.name} name={profile.fullName}>
-      <Link href="/templates" className={`-mt-4 ${backLinkClass}`}>
-        Volver a las plantillas
-      </Link>
-
+    <Workspace
+      title={template.name}
+      name={profile.fullName}
+      actions={
+        <ButtonLink variant="ghost" href="/templates">
+          Volver a las plantillas
+        </ButtonLink>
+      }
+    >
       {recienCreada && (
         <p
           role="status"
-          className="mt-6 rounded-lg bg-brand-soft p-3 text-sm text-foreground"
+          className="mb-6 rounded-lg bg-brand-soft p-3 text-sm text-brand-soft-foreground"
         >
           Plantilla creada como borrador. Añádele sus días y sus ejercicios.
         </p>
       )}
 
-      <div className="mt-6 flex flex-wrap gap-1.5">
-        <span className={tagClass}>
-          {labelFor(templateKindLabels, template.kind)}
-        </span>
-        <span
-          className={
-            template.is_active
-              ? "inline-flex items-center rounded-full bg-brand-soft px-2.5 py-1 text-xs font-semibold text-brand"
-              : tagClass
-          }
-        >
+      <div className="flex flex-wrap gap-1.5">
+        <Badge>{labelFor(templateKindLabels, template.kind)}</Badge>
+        <Badge variant={template.is_active ? "success" : "neutral"}>
           {template.is_active ? "Activa" : "Borrador"}
-        </span>
+        </Badge>
       </div>
 
       <dl className="mt-5 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[auto_1fr_auto_1fr]">
@@ -195,7 +189,7 @@ export default async function Page({
         {problemas.length > 0 && (
           <div
             id="plantilla-incompleta"
-            className="mt-4 rounded-lg border border-destructive p-3 text-sm text-destructive"
+            className="mt-4 rounded-lg border border-destructive bg-danger-soft p-3 text-sm text-destructive"
           >
             <p className="font-semibold">
               Le falta contenido para poder activarse
@@ -262,19 +256,18 @@ export default async function Page({
         </p>
 
         {template.days.length === 0 ? (
-          <p className="mt-6 rounded-2xl border border-dashed border-border p-6 leading-7 text-muted-foreground">
-            Esta plantilla aún no tiene ningún día.{" "}
+          <EmptyState className="mt-6" title="Esta plantilla aún no tiene ningún día">
             {puedeEditar
-              ? "Añade el primero abajo y después sus ejercicios."
+              ? "Añade el primero con el formulario del final de esta sección y después sus ejercicios."
               : "El administrador todavía no ha definido su contenido."}
-          </p>
+          </EmptyState>
         ) : (
           <ol className="mt-6 grid gap-6">
             {template.days.map((dia) => (
               <li
                 key={dia.id}
                 id={`dia-${dia.id}`}
-                className="rounded-2xl border border-border p-4 sm:p-5"
+                className={cn(cardVariants({ padding: "sm" }), "sm:p-5")}
               >
                 <h3 className="text-lg font-semibold">
                   Día {dia.day_number}
@@ -296,7 +289,7 @@ export default async function Page({
                     {dia.items.map((item, indice) => (
                       <li
                         key={item.id}
-                        className="rounded-xl border border-border p-4"
+                        className={cn(cardVariants({ padding: "sm" }), "rounded-xl")}
                       >
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div className="grid gap-2">
@@ -354,16 +347,11 @@ export default async function Page({
                           className="flex flex-wrap items-end gap-3"
                         >
                           <input type="hidden" name="dia" value={dia.id} />
-                          <div className="min-w-60 flex-1 space-y-2">
-                            <label
-                              htmlFor={`q-${dia.id}`}
-                              className="block text-sm font-semibold"
-                            >
-                              Buscar un ejercicio del catálogo
-                            </label>
-                            <input
-                              className={fieldClass}
-                              id={`q-${dia.id}`}
+                          <Field
+                            label="Buscar un ejercicio del catálogo"
+                            className="min-w-60 flex-1"
+                          >
+                            <Input
                               name="q"
                               type="search"
                               defaultValue={filtros.q ?? ""}
@@ -372,19 +360,14 @@ export default async function Page({
                               spellCheck={false}
                               placeholder="Sentadilla, plancha, remo…"
                             />
-                          </div>
-                          <button
-                            type="submit"
-                            className="inline-flex min-h-11 items-center rounded-lg bg-brand px-4 text-sm font-semibold text-brand-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                          >
-                            Buscar
-                          </button>
-                          <Link
+                          </Field>
+                          <Button type="submit">Buscar</Button>
+                          <ButtonLink
+                            variant="ghost"
                             href={`/templates/${template.id}`}
-                            className="inline-flex min-h-11 items-center px-2 text-sm font-medium text-brand underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-ring"
                           >
                             Cerrar
-                          </Link>
+                          </ButtonLink>
                         </form>
 
                         {resultados.length === 0 ? (
@@ -397,7 +380,10 @@ export default async function Page({
                             {resultados.map((ejercicio) => (
                               <li
                                 key={ejercicio.id}
-                                className="grid gap-2 rounded-xl border border-border p-3"
+                                className={cn(
+                                  cardVariants({ padding: "none" }),
+                                  "grid gap-2 rounded-xl p-3",
+                                )}
                               >
                                 <p className="text-sm font-medium">
                                   {ejercicio.name}
@@ -414,12 +400,11 @@ export default async function Page({
                         )}
                       </>
                     ) : (
-                      <Link
+                      <ButtonLink
                         href={`/templates/${template.id}?dia=${dia.id}`}
-                        className={backLinkClass}
                       >
                         Añadir ejercicios a este día
-                      </Link>
+                      </ButtonLink>
                     )}
                   </div>
                 )}
@@ -464,11 +449,11 @@ export default async function Page({
           </section>
         </>
       ) : (
-        <p className="mt-10 rounded-2xl border border-dashed border-border p-6 leading-7 text-muted-foreground">
+        <EmptyState className="mt-10" title="Esta plantilla es de solo lectura">
           Puedes consultar las plantillas, pero editarlas es cosa del
           administrador. Pídeselo si algo de esta no encaja con lo que ves en
           consulta.
-        </p>
+        </EmptyState>
       )}
     </Workspace>
   );

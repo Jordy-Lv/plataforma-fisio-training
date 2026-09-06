@@ -7,18 +7,16 @@ import { DeleteRuleForm, RuleForm } from "@/components/catalog/RuleForm";
 import { requireStaff } from "@/lib/catalog/access";
 import { describeConditions } from "@/lib/catalog/describe-rule";
 import { getRule, listTemplateOptions } from "@/lib/catalog/rule-queries";
+import { Badge } from "@/components/ui/Badge";
+import { ButtonLink } from "@/components/ui/ButtonLink";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { cn } from "cn";
+import { cardVariants } from "@/components/ui/Card";
 
 const uuid =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const backLinkClass =
-  "inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring";
-
-const sectionClass =
-  "mt-10 rounded-2xl border border-border bg-surface p-5 sm:p-6";
-
-const tagClass =
-  "inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground";
+const sectionClass = cn(cardVariants({ padding: "lg" }), "mt-10");
 
 export async function generateMetadata({
   params,
@@ -51,32 +49,30 @@ export default async function Page({
   const criterios = rule.conditions ? describeConditions(rule.conditions) : [];
 
   return (
-    <Workspace title={rule.name} name={profile.fullName}>
-      <Link href="/rules" className={`-mt-4 ${backLinkClass}`}>
-        Volver a las reglas
-      </Link>
-
+    <Workspace
+      title={rule.name}
+      name={profile.fullName}
+      actions={
+        <ButtonLink variant="ghost" href="/rules">
+          Volver a las reglas
+        </ButtonLink>
+      }
+    >
       {recienCreada && (
         <p
           role="status"
-          className="mt-6 rounded-lg bg-brand-soft p-3 text-sm text-foreground"
+          className="mb-6 rounded-lg bg-brand-soft p-3 text-sm text-brand-soft-foreground"
         >
           Regla creada como inactiva. Pruébala en el simulador y actívala
           cuando haga lo que esperas.
         </p>
       )}
 
-      <div className="mt-6 flex flex-wrap gap-1.5">
-        <span className={tagClass}>Prioridad {rule.priority}</span>
-        <span
-          className={
-            rule.is_active
-              ? "inline-flex items-center rounded-full bg-brand-soft px-2.5 py-1 text-xs font-semibold text-brand"
-              : tagClass
-          }
-        >
+      <div className="flex flex-wrap gap-1.5">
+        <Badge>Prioridad {rule.priority}</Badge>
+        <Badge variant={rule.is_active ? "success" : "neutral"}>
           {rule.is_active ? "Activa" : "Inactiva"}
-        </span>
+        </Badge>
       </div>
 
       <section className={sectionClass}>
@@ -103,7 +99,7 @@ export default async function Page({
         {rule.conditions === null ? (
           <div
             id="regla-invalida"
-            className="mt-5 rounded-lg border border-destructive p-3 text-sm text-destructive"
+            className="mt-5 rounded-lg border border-destructive bg-danger-soft p-3 text-sm text-destructive"
           >
             <p className="font-semibold">Sus condiciones no son válidas</p>
             <ul className="mt-2 grid gap-1">
@@ -144,9 +140,9 @@ export default async function Page({
           </div>
         )}
 
-        <Link href="/rules/simulador" className={`mt-6 ${backLinkClass}`}>
+        <ButtonLink href="/rules/simulador" className="mt-6">
           Probar con un perfil
-        </Link>
+        </ButtonLink>
       </section>
 
       {puedeEditar ? (
@@ -172,10 +168,10 @@ export default async function Page({
           </section>
         </>
       ) : (
-        <p className="mt-10 rounded-2xl border border-dashed border-border p-6 leading-7 text-muted-foreground">
+        <EmptyState className="mt-10" title="Esta regla es de solo lectura">
           Puedes consultar esta regla para entender una asignación, pero
           cambiarla es cosa del administrador.
-        </p>
+        </EmptyState>
       )}
     </Workspace>
   );

@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+
 import { Button } from "@/components/ui/button";
+import { Card, CardDescription, CardTitle } from "@/components/ui/Card";
 
 export default function AuthError({ reset }: { reset: () => void }) {
   const hasRetried = useRef(false);
@@ -10,16 +12,19 @@ export default function AuthError({ reset }: { reset: () => void }) {
     hasRetried.current = true;
     reset();
   }, [reset]);
+
   return (
-    <div role="alert" className="space-y-5">
-      <h1 className="text-2xl font-semibold">No pudimos cargar tu acceso</h1>
-      <p className="leading-7 text-muted-foreground">
-        Las respuestas que guardaste al continuar no se han perdido. Revisa tu
-        conexión e inténtalo de nuevo. Si continúa, contacta al administrador.
-      </p>
-      <Button className="min-h-11" onClick={reset}>
-        Intentar de nuevo
-      </Button>
+    <div className="mx-auto max-w-xl px-5 py-10 sm:px-8">
+      <Card role="alert" padding="lg" className="grid gap-4">
+        <CardTitle className="text-2xl">No pudimos cargar tu acceso</CardTitle>
+        <CardDescription className="text-base leading-7">
+          Las respuestas que guardaste al continuar no se han perdido. Revisa tu
+          conexión e inténtalo de nuevo. Si continúa, contacta al administrador.
+        </CardDescription>
+        <Button size="lg" className="justify-self-start" onClick={reset}>
+          Intentar de nuevo
+        </Button>
+      </Card>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { retryRead } from "@/lib/auth/retry-read";
@@ -11,7 +12,13 @@ export const rolePaths: Record<UserRole, string> = {
   patient: "/patient",
 };
 
-export async function getActiveProfile() {
+/*
+  Memoizado por petición con `cache` de React: el shell necesita el rol para
+  pintar la navegación y casi todas las páginas ya habían pedido el perfil en
+  su guarda. Sin esto, cada pantalla haría dos veces `auth.getUser()` más dos
+  lecturas de `profiles`.
+*/
+export const getActiveProfile = cache(async () => {
   const supabase = await createClient();
   let auth;
   try {
@@ -39,7 +46,7 @@ export async function getActiveProfile() {
     role: role.data,
     fullName: data.full_name as string | null,
   };
-}
+});
 
 export async function requireRole(
   role: UserRole,

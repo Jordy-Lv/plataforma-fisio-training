@@ -1,7 +1,22 @@
+/*
+  Esqueleto del formulario de acceso, con la misma forma que ocupará el
+  contenido: título, dos campos y el botón. Una línea de «Cargando…» dejaba la
+  tarjeta casi vacía y parecía que la pantalla se había roto.
+
+  `animate-pulse` se desactiva solo con `prefers-reduced-motion`.
+*/
 export default function Loading() {
   return (
-    <p role="status" className="py-8 text-muted-foreground">
-      Cargando tu espacio…
-    </p>
+    <div role="status" aria-label="Cargando tu acceso" className="grid gap-5">
+      <div className="animate-pulse motion-reduce:animate-none">
+        <div className="h-8 w-52 rounded-lg bg-muted" />
+        <div className="mt-4 h-5 w-full max-w-xs rounded-lg bg-muted" />
+        <div className="mt-8 grid gap-5">
+          <div className="h-12 rounded-lg bg-muted" />
+          <div className="h-12 rounded-lg bg-muted" />
+          <div className="h-12 rounded-lg bg-muted/60" />
+        </div>
+      </div>
+    </div>
   );
 }

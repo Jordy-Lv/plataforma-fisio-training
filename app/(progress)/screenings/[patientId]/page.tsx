@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Workspace } from "@/components/auth/Workspace";
@@ -14,13 +13,13 @@ import {
   measurementLabels,
   measurements,
 } from "@/lib/progress/vocabulary";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { ButtonLink } from "@/components/ui/ButtonLink";
+import { cardVariants } from "@/components/ui/Card";
 
 export const metadata: Metadata = {
   title: "Tamizajes del paciente",
 };
-
-const linkClass =
-  "inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring";
 
 function Measurements({ screening }: { screening: Screening }) {
   const tomadas = measurements.filter(
@@ -59,19 +58,20 @@ export default async function Page({
     <Workspace
       title={patient.full_name ?? "Paciente sin nombre"}
       name={profile.fullName}
+      actions={
+        <>
+          <ButtonLink variant="ghost" href="/screenings">
+            Volver al seguimiento
+          </ButtonLink>
+          <ButtonLink href={`/attendance/${patient.id}`}>
+            Ver su asistencia
+          </ButtonLink>
+          <ButtonLink href={`/evolution/${patient.id}`}>
+            Ver su evolución
+          </ButtonLink>
+        </>
+      }
     >
-      <div className="mb-8 -mt-4 flex flex-wrap gap-3">
-        <Link href="/screenings" className={linkClass}>
-          Volver al seguimiento
-        </Link>
-        <Link href={`/attendance/${patient.id}`} className={linkClass}>
-          Ver su asistencia
-        </Link>
-        <Link href={`/evolution/${patient.id}`} className={linkClass}>
-          Ver su evolución
-        </Link>
-      </div>
-
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-start">
         <section aria-labelledby="historial">
           <h2 id="historial" className="mb-4 text-xl font-semibold">
@@ -79,19 +79,16 @@ export default async function Page({
           </h2>
 
           {screenings.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-              <p className="font-semibold">Este paciente no tiene tamizajes</p>
-              <p className="mx-auto mt-2 max-w-md leading-7 text-muted-foreground">
-                Registra el primero con el formulario de esta página. A partir
-                del segundo se podrá ver su evolución.
-              </p>
-            </div>
+            <EmptyState title="Este paciente no tiene tamizajes">
+              Registra el primero con el formulario de esta página. A partir
+              del segundo se podrá ver su evolución.
+            </EmptyState>
           ) : (
             <ul className="grid gap-4">
               {screenings.map((screening) => (
                 <li
                   key={screening.id}
-                  className="rounded-2xl border border-border bg-surface p-5"
+                  className={cardVariants()}
                 >
                   <h3 className="mb-3 font-semibold">
                     {formatDate(screening.taken_on)}
@@ -127,7 +124,7 @@ export default async function Page({
 
         <section
           aria-labelledby="nuevo"
-          className="rounded-2xl border border-border bg-surface p-5"
+          className={cardVariants()}
         >
           <h2 id="nuevo" className="mb-1 text-xl font-semibold">
             Registrar un tamizaje

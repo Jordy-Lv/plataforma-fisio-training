@@ -1,7 +1,6 @@
-import Link from "next/link";
 import type { Metadata } from "next";
+import { cn } from "cn";
 import { Workspace } from "@/components/auth/Workspace";
-import { rolePaths } from "@/lib/auth/session";
 import { requireAuth } from "@/lib/progress/access";
 import {
   listActivePlans,
@@ -12,6 +11,8 @@ import {
   formatCurrency,
   serviceCategoryLabels,
 } from "@/lib/progress/plan-vocabulary";
+import { cardVariants } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 export const metadata: Metadata = {
   title: "Planes y servicios",
@@ -27,23 +28,17 @@ export default async function Page() {
   const empty = plans.length === 0 && groups.length === 0;
 
   return (
-    <Workspace title="Planes y servicios" name={profile.fullName}>
+    <Workspace
+      title="Planes y servicios"
+      name={profile.fullName}
+      description="Lo que el negocio ofrece hoy: los planes de suscripción y los servicios que se contratan aparte."
+    >
       <section className="max-w-3xl">
-        <Link
-          href={rolePaths[profile.role]}
-          className="mb-8 inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring"
-        >
-          Volver a mi espacio
-        </Link>
-
         {empty ? (
-          <div className="rounded-2xl border border-dashed border-border p-8 text-center">
-            <p className="font-semibold">Todavía no hay oferta publicada</p>
-            <p className="mx-auto mt-2 max-w-md leading-7 text-muted-foreground">
-              Cuando el administrador active los planes y servicios, los verás
-              aquí con su descripción y su precio.
-            </p>
-          </div>
+          <EmptyState title="Todavía no hay oferta publicada">
+            Cuando el administrador active los planes y servicios, los verás
+            aquí con su descripción y su precio.
+          </EmptyState>
         ) : (
           <>
             {plans.length > 0 && (
@@ -55,7 +50,7 @@ export default async function Page() {
                   {plans.map((plan) => (
                     <li
                       key={plan.id}
-                      className="grid gap-3 rounded-2xl border border-border bg-surface p-5"
+                      className={cn(cardVariants(), "grid gap-3")}
                     >
                       <h3 className="text-base font-semibold leading-6">
                         {plan.name}
@@ -101,7 +96,7 @@ export default async function Page() {
                         {group.services.map((service) => (
                           <li
                             key={service.id}
-                            className="rounded-2xl border border-border bg-surface p-5"
+                            className={cardVariants()}
                           >
                             <p className="font-semibold">{service.name}</p>
                             {service.description && (

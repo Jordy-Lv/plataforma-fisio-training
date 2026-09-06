@@ -47,6 +47,13 @@ jobs:
         if: steps.proyecto.outputs.existe == 'true'
         run: npm run lint
 
+      # No levanta la aplicación ni la base: solo lee los archivos y falla si
+      # aparece un color o una tipografía escritos a mano, o una pantalla sin
+      # sus estados. Ver docs/10-sistema-de-diseno.md.
+      - name: Auditoría del sistema de diseño
+        if: steps.proyecto.outputs.existe == 'true'
+        run: npm run test:design
+
       - name: Build
         if: steps.proyecto.outputs.existe == 'true'
         env:

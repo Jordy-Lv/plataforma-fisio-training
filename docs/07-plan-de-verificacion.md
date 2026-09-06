@@ -147,3 +147,44 @@ y **se vuelve a recorrer entero**, no solo el paso que falló.
 | 7 | Membresías y vencimientos | ✅ | 2026-09-05 | Verificado contra la ruta interna y el RPC con `npm run test:memberships:cron`: 401 sin el secreto compartido, transición a `expiring_soon`/`expired`, generación de avisos y alertas para admin y profesional a cargo, idempotencia de dos ejecuciones seguidas, plazo de aviso configurable, correo en español en Mailpit y aviso visible en la vista del paciente. El disparo manual desde el panel de administración funciona (`components/progress/MembershipReviewButton.tsx`). Falta el recorrido en teléfono real del día 10. |
 | 8 | PWA | ⬜ | 2026-09-05 | Verificado en el navegador contra el build de producción (`npm run build` + `npm run start`) con Chrome headless (`Page.getAppManifest` y `getInstallabilityErrors`): el manifest se sirve en `/manifest.webmanifest` como `application/manifest+json`, Chrome lo parsea sin errores y da la app por **instalable** (lista de `installabilityErrors` vacía). Nombre «Entrenamiento y fisioterapia», nombre corto «Fisio Training», `display: standalone`, `start_url: /login` dentro de `scope: /`, `theme_color` y `background_color` tomados de los tokens `--brand` (#146c5b) y `--background` (#f7f9f8). Iconos 192, 512, maskable 512 y `apple-touch-icon` de 180 responden 200 con tipo y tamaño correctos; el `<head>` enlaza manifest, `theme-color`, `apple-mobile-web-app-capable` y `apple-mobile-web-app-title`. El service worker mínimo (`public/sw.js`, sin caché offline, solo para cumplir el criterio de instalabilidad) se registra y activa sin errores de consola. A 375 px, sin sesión y como paciente (`/`, `/login`, `/patient`, `/routine`, `/patient/profile`, `/attendance/me`, `/memberships/me`), `scrollWidth === innerWidth`, sin desbordamiento horizontal. Observación para el carril de acceso: en `/patient/profile` los `input` de radio y checkbox miden 20 px (el área táctil es la etiqueta que los envuelve). Falta el recorrido en teléfono real del día 10, que aquí es imprescindible: instalar desde Chrome Android y desde Safari iOS, abrir desde el icono en ambos y confirmar arranque sin barra de direcciones y sesión mantenida al abrir desde el icono. |
 | 9 | **Aislamiento de datos (RLS)** | ✅ | 2026-09-05 | Verificado directamente contra la API local con `npm run test:rls` (10/10): las seis comprobaciones del plan rechazan o devuelven vacío para registros y perfil de otro paciente, paciente no asignado, edición de ítem propio, lectura de alertas e inserción de sesión ajena. Incluye controles positivos de lectura propia y paciente asignado, y rechazo de escalada a admin. |
+
+### Recorrido por la web desplegada (navegador, 2026-09-05)
+
+Recorrido por la interfaz real contra `https://web-production-fbc17.up.railway.app`
+(Railway + Supabase cloud `izcevgayepwewfrfmcun`, plan Free), complementario a la
+verificación por API de arriba. Detalle y credenciales en la memoria
+`pendiente-validar-flujo-web-e2e`.
+
+- **Onboarding del paciente (regresión de `docs/incidencia-2026-09-05-onboarding-paciente.md`):**
+  al empezar, producción servía un build anterior al arreglo `49ffc85` y el error
+  boundary «No pudimos cargar tu acceso» **reproducía**. Tras redesplegar a HEAD
+  (`railway up`), el circuito completo (pasos 1‑3, finalizar, recargar `/patient`
+  ×3) **pasa sin caer al error boundary**, pese a que el backend devuelve HTTP 503
+  en casi todos los POST de la Server Action (Supabase Free frío + latencia
+  cross‑region). Regresión **corregida y confirmada en producción**.
+- **Vistas del paciente:** `/patient`, `/routine`, `/attendance/me`,
+  `/memberships/me`, `/patient/profile` — OK; estados coherentes, sin
+  desbordamiento horizontal, sin objetivos < 44 px, consola limpia.
+- **Aislamiento RLS desde el navegador:** OK — probado en el SQL Editor con JWT
+  simulado de un paciente (`request.jwt.claims` + `role authenticated`); las
+  lecturas y escrituras cruzadas devuelven 0 filas o error de RLS.
+- **Panel del profesional y panel de administración (revalidado 2026-09-06):** tras
+  aplicar en la nube la migración `20260905210000_routines_session_execution.sql`
+  (`supabase db push`), sembrar las reglas (`seed:rules`, 6 reglas) y reejecutar
+  `seed:progress-demo`:
+  - `/evolution/[patientId]` **ya renderiza** («Peso y medidas» y «Progresión de
+    carga» con datos); `/pro/sessions` y el detalle de sesión, OK.
+  - `/rules`, `/rules/[id]` y `/rules/simulador` OK: 6 reglas activas enlazadas a
+    su plantilla; el simulador corre el motor de punta a punta (Camino 2 probado
+    por web).
+  - Job de vencimientos: «Revisar vencimientos ahora» **responde con éxito** (ya no
+    da 503); sin cambio de estado porque la única membresía próxima a vencer ya
+    está avisada.
+  - **`/pro/alerts` sigue vacío por diseño del seed**, no por despliegue:
+    `evaluate_session_alerts` es `AFTER UPDATE OF status` y `seed-progress-demo.ts`
+    inserta las sesiones ya `completed` sin hacer UPDATE, así que el trigger no
+    dispara. Para verlo en la web hay que cerrar una sesión real (Camino 4) o un
+    round-trip SQL sobre una sesión demo.
+  - Sigue abierto: las Server Actions del onboarding devuelven 503 en ráfaga
+    (Supabase Free / cross‑region) y conviene que `MembershipReviewButton` muestre
+    error ante un 503 en vez de quedarse en «Revisando…».

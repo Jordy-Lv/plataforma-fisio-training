@@ -1,41 +1,23 @@
-import type { ReactNode } from "react";
 import type { AuthState } from "@/lib/auth/schemas";
+import { Notice } from "@/components/ui/Notice";
 
-export const inputClass =
-  "min-h-12 w-full rounded-lg border border-input bg-surface px-3 py-2 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
-export function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
-  return (
-    <label className="grid gap-2 text-sm font-medium">
-      {label}
-      {children}
-    </label>
-  );
-}
+/*
+  `Field` y `inputClass` viven ahora en `components/ui/Field.tsx`, con el resto
+  del sistema de diseño. Se reexportan desde aquí para no reescribir los
+  veintiún archivos que ya los importaban; en código nuevo, impórtalos de
+  `@/components/ui/Field`.
+*/
+export { Field, inputClass, Input, Select, Textarea } from "@/components/ui/Field";
+
 export function FormMessage({ state }: { state: AuthState }) {
   return (
     <div aria-live="polite">
       {state.error && (
-        <p
-          role="alert"
-          className="rounded-lg border border-destructive p-3 text-sm text-destructive"
-        >
+        <Notice tone="danger" role="alert">
           {state.error}
-        </p>
+        </Notice>
       )}
-      {state.success && (
-        <p
-          role="status"
-          className="rounded-lg bg-brand-soft p-3 text-sm text-foreground"
-        >
-          {state.success}
-        </p>
-      )}
+      {state.success && <Notice tone="success">{state.success}</Notice>}
     </div>
   );
 }
