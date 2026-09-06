@@ -4,23 +4,27 @@
 **Fuente:** `qa-backend-hallazgos.md` (auditoría de Codex, 2026-09-06, 12 hallazgos + 2 sospechas)
 **Evidencia:** `qa-backend-evidence/`
 
-Ningún cambio implementado todavía: este documento es el triaje. Los 3 hallazgos
-marcados **ALCANCE** necesitan una decisión de producto antes de tocarlos.
+**ESTADO: CERRADO (2026-09-06).** Los 12 hallazgos corregidos en 4 batches, las 4
+decisiones de alcance resueltas, PR #3 mergeado a `main` (`4fd7091`) y el runbook
+de nube ejecutado (16 migraciones en `izcevgayepwewfrfmcun`, runtime desplegado).
+Detalle al final. BACK-013/014 pospuestos a propósito.
 
 ---
 
 ## Restricciones que gobiernan este plan
 
 - Toda migración: `npm run db:reset` en verde + `lib/db/types.ts` regenerado en el
-  mismo commit + `test:rls` y las `test:*` afectadas.
+  mismo commit + `test:rls` y las `test:*` afectadas. — cumplido en cada batch.
 - BACK-001 toca la RLS del esquema core (`profiles`, `patient_details`): avisar al
-  equipo antes del PR (sección 3 de CLAUDE.md).
+  equipo antes del PR (sección 3 de CLAUDE.md). — el aviso quedó en la descripción
+  del PR #3; el «aviso al equipo» presencial lo da Yordy.
 - Probar ahora es incómodo: la Supabase local compartida la usan otras sesiones y
-  un `db:reset` borra su estado. Hay que coordinar una ventana o levantar una
-  instancia aislada para validar (la de Codex ya se desmontó).
+  un `db:reset` borra su estado. — se resolvió con ventanas coordinadas (Yordy
+  autorizó los `db:reset` sobre la base compartida).
 - `fix/qa-hallazgos` (frontend) ya tocó `lib/auth/actions.ts` y esquemas de
-  `lib/progress`/`lib/routines`; al fusionar ambas ramas habrá conflictos menores
-  en `lib/auth/` y `lib/progress/`.
+  `lib/progress`/`lib/routines`. — comprobado después: las dos ramas **no
+  comparten ningún archivo** (`comm` sobre `git diff --name-only`); van a `main`
+  por separado, sin conflicto, en cualquier orden.
 
 ---
 
@@ -59,11 +63,11 @@ comportamiento «solo admin».
 
 ## Batches de corrección
 
-### Batch 1 — Frontera de autorización (P0, primero)
+### Batch 1 — Frontera de autorización (P0, primero) ✅ HECHO
 
 | ID | Qué | Cómo | Esfuerzo | Riesgo |
 |---|---|---|---|---|
-| **BACK-001** | Un JWT emitido antes de una baja conserva acceso directo a PostgREST/Storage | `current_role()` y `treats_patient()` pasan a exigir `is_active`; las políticas con `id = auth.uid()` llano (self de `profiles`/`patient_details`) añaden término `is_active`; revisar políticas de `storage.objects`. Migración nueva. Decidir aparte si además se revocan sesiones al desactivar (necesita admin API, hoy prohibida fuera de cron/seed). | M | M-A (RLS de todas las tablas de personas) |
+| **BACK-001** ✅ | Un JWT emitido antes de una baja conserva acceso directo a PostgREST/Storage | HECHO (`e7ab22e`). Migración `20260906230000_qa_actor_active_access.sql`: `current_role()` exige `is_active`, nueva `actor_is_active()` añadida a cada rama `= auth.uid()` de ~15 políticas, `treats_patient()` y `can_read_routine()` exigen actor activo. Regresión `verify-actor-active` (falla sin la migración). Revocar sesiones al desactivar queda fuera (necesita admin API). | M | M-A (RLS de todas las tablas de personas) |
 | **BACK-002** ✅ | `commit_routine_assignment` acepta la regla que elige el cliente (o `null`) sin recalcular la ganadora | HECHO. Portada la parte decisoria del motor a SQL (`assignment_rule_matches` + `resolve_assignment_winner`); la RPC recalcula el ganador en la transacción y rechaza con `22023` si `selected_rule` / `no_match` no coinciden. Migración `20260906233000_routines_qa_rule_winner_recompute.sql` + regresión. | M-A | M |
 
 ### Batch 2 — TS contenido, sin migración (ganancias rápidas)
@@ -159,9 +163,37 @@ comportamiento «solo admin».
    scripts `.mjs`; no hay cambio de runtime).
 5. Pospuestos: BACK-013, BACK-014 (medir antes).
 
-**Bloqueo operativo:** los batches 1, 3 y 4 llevan migración y necesitan
-`npm run db:reset` + regen de `lib/db/types.ts` + `test:rls`/`test:*` en verde.
-La Supabase local compartida (54321/54322) la usan otras sesiones y `db:reset`
-borra su estado. Opciones: (a) ventana coordinada para resetear la compartida, o
-(b) levantar una instancia Supabase aislada propia para desarrollar y validar las
-migraciones antes de integrarlas. El batch 2 no tiene este bloqueo.
+---
+
+## Cierre (2026-09-06)
+
+- **Gates CLAUDE.md §11** en verde en ventana coordinada con `next dev` apagado:
+  `typecheck`, `lint` (1 warning previo ajeno), `test:design`, `build` (2.5 s),
+  `db:reset` (16 migraciones limpias sobre base vacía). `lib/db/types.ts`
+  regenerado.
+- **PR #3** (`fix/qa-backend` → `main`) abierto con el aviso de RLS core en la
+  descripción y **mergeado** el 2026-09-06 (merge commit `4fd7091`) con el OK
+  explícito de Yordy. Sin conflictos con `fix/qa-hallazgos` (no comparten
+  archivos).
+- **Runbook de nube ejecutado** (`izcevgayepwewfrfmcun`, plan Free):
+  - `supabase db push --linked` aplicó las 9 migraciones QA
+    `20260906230000..234600` (la nube pasa de 7 a 16; `migration list` confirma
+    local == remote). Los `check` de membresía validaron las filas existentes al
+    aplicarse: nada que corregir.
+  - `cron.job`: `review-membership-expiry` (`0 13 * * *`) y `review-low-attendance`
+    (`5 13 * * *`), ambos `active`. `private.job_config` y `CRON_SECRET` de Railway
+    alineados (el disparo manual de «Revisar vencimientos» responde verde).
+  - `seed:rules` (6/6 ya estaban) y `seed:progress-demo` corridos en la nube
+    (servicios con precio, Laura y Marcos con fechas frescas).
+  - `railway up --service web --ci` desde `main`: build OK (33 rutas), runtime del
+    PR en producción. Verificado por web: `/offer` muestra el precio de los 5
+    servicios, `/rules` con 6 reglas, login paciente + admin OK, políticas de
+    BACK-001 no rompen nada.
+- **Pendiente menor (no bloquea la demo):** el seed de demo no siembra
+  `attendance`, así que `review-low-attendance` marcará a Laura y Marcos con 0/N
+  el primer día. Ampliar `scripts/seed-progress-demo.ts` con filas de `attendance`
+  o sembrarlas a mano si se quiere un escenario curado. Reejecutar
+  `seed:progress-demo` el día de la demo (fechas relativas a `America/Bogota`).
+- **Pospuestos con intención:** BACK-013 (reordenamientos no transaccionales) y
+  BACK-014 (FK sin índice) — medir con `EXPLAIN (ANALYZE, BUFFERS)` y carga
+  representativa antes de tocar.
