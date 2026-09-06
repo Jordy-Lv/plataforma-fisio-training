@@ -12,6 +12,14 @@ import { cn } from "cn";
  * de que todo fue bien se leían con el mismo peso. Los cuatro tonos salen de
  * los tokens semánticos, no de un color literal.
  *
+ * Sin `title` el aviso es un `<p>` con el texto **directo** dentro, y no un
+ * `<div>` con el texto envuelto. No es cosmética: las suites de `scripts/`
+ * extraen el mensaje del HTML del servidor con `/role="alert"[^>]*>([^<]*)/` en
+ * unas y `/role="alert"[^>]*>([\s\S]*?)<\/p>/` en otras, así que solo un
+ * párrafo con el rol encima satisface a las dos. Con `title` sí hace falta un
+ * `<div>`, porque dentro va más de un bloque; ese caso no lo usa ninguna suite.
+ * `as` permite forzarlo cuando el contenido es un bloque (una lista, un botón).
+ *
  * El rol lo decide el tono: `danger` interrumpe con `alert` porque el lector de
  * pantalla debe anunciarlo aunque el foco esté en otro sitio; el resto usa
  * `status`, que espera a que el lector termine la frase en curso. `role` puede
@@ -29,6 +37,7 @@ export type NoticeTone = keyof typeof tones;
 export function Notice({
   tone = "info",
   title,
+  as,
   className,
   children,
   role,
@@ -36,9 +45,11 @@ export function Notice({
 }: Omit<ComponentProps<"div">, "title"> & {
   tone?: NoticeTone;
   title?: ReactNode;
+  as?: "p" | "div";
 }) {
+  const Element = as ?? (title ? "div" : "p");
   return (
-    <div
+    <Element
       data-slot="notice"
       role={role ?? (tone === "danger" ? "alert" : "status")}
       className={cn(
@@ -49,7 +60,7 @@ export function Notice({
       {...props}
     >
       {title && <p className="font-semibold">{title}</p>}
-      {children && <div className={cn(title && "mt-1")}>{children}</div>}
-    </div>
+      {title ? <div className="mt-1">{children}</div> : children}
+    </Element>
   );
 }

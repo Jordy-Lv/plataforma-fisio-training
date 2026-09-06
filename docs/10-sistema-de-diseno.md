@@ -79,9 +79,18 @@ Todo lo compartido está en `components/ui/**` y `components/shell/**`. Ambas ca
 
 | Componente | Cuándo |
 |---|---|
-| `Notice` | El mensaje **ya renderizado en el servidor**: validación, resultado de una server action, aviso al encabezar una pantalla. Cuatro tonos; `danger` usa `role="alert"` y el resto `role="status"`. `FormMessage` es `Notice` por dentro. |
+| `Notice` | El mensaje **ya renderizado en el servidor**: validación, resultado de una server action, aviso al encabezar una pantalla. Cuatro tonos; `danger` usa `role="alert"` y el resto `role="status"`. `FormMessage` es `Notice` por dentro. Sin `title` es un `<p>` con el texto directo dentro (ver el recuadro de abajo). |
 | `Toast` / `useToast` | El acuse **tras una interacción en el cliente**, que desaparece solo. Lo provee `AppShell`, así que cualquier pantalla con sesión puede llamar a `useToast` sin repetir el proveedor. |
 | `Badge` | Estado de una fila o de una entidad. Los estados de negocio (membresía, severidad de alerta, estado de sesión) se traducen a un semántico: cambiar `--warning` mueve a la vez la membresía por vencer y la alerta a revisar. |
+
+> **El aviso simple es un `<p>`, no un `<div>`.** Las suites de `scripts/` sacan el
+> mensaje del HTML del servidor con dos expresiones distintas —`/role="alert"[^>]*>([^<]*)/`
+> en unas y `/role="alert"[^>]*>([\s\S]*?)<\/p>/` en otras—, así que solo un párrafo con
+> el rol encima y el texto directo dentro satisface a las dos. Envolver el texto en
+> cualquier elemento intermedio deja a esas pruebas leyendo una cadena vacía y falla en
+> `test:catalog:custom`, `test:templates` y `test:rules:panel`. Con `title` el aviso sí es
+> un `<div>`, porque dentro va más de un bloque; ningún mensaje que recorra una suite lo
+> usa.
 
 ### Capas
 
