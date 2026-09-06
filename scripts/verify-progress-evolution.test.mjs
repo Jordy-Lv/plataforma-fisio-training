@@ -168,6 +168,42 @@ test("Evolución: agregación, estados y progresión", { timeout: 180_000 }, asy
     );
   });
 
+  await t.test("Sustituir el ejercicio de la rutina no reescribe la historia", async () => {
+    // El profesional cambia el ejercicio del ítem después de que el paciente
+    // ya levantó peso con el anterior. La carga registrada pertenece al
+    // ejercicio con el que se levantó, no al que ocupa hoy esa posición.
+    const anterior = sql(
+      `select e.name from public.exercises e
+         join public.session_logs l on l.exercise_id = e.id
+         join public.sessions s on s.id = l.session_id
+         join public.routines r on r.id = s.routine_id
+         where r.name = '${marca}' limit 1`,
+    ).trim();
+    const nuevo = sql(
+      `select id || '|' || name from public.exercises
+         where name <> '${anterior.replaceAll("'", "''")}' order by name limit 1`,
+    ).trim();
+    const [nuevoId, nuevoNombre] = nuevo.split("|");
+
+    sql(`update public.routine_items i set exercise_id = '${nuevoId}'::uuid,
+      was_modified = true
+      from public.routine_days d join public.routines r on r.id = d.routine_id
+      where d.id = i.routine_day_id and r.name = '${marca}'`);
+
+    // El nombre de la serie viaja en el payload de la gráfica, dentro de un
+    // <script>, así que aquí se mira el HTML entero y no solo el texto visible.
+    const client = await screenAs("admin");
+    const html = (await client.request(`/evolution/${elena}`)).html;
+    assert.ok(
+      html.includes(anterior),
+      `La serie debe seguir nombrada «${anterior}», el ejercicio que se ejecutó`,
+    );
+    assert.ok(
+      !html.includes(nuevoNombre),
+      `«${nuevoNombre}» no se ha ejecutado nunca: no puede heredar esas cargas`,
+    );
+  });
+
   await t.test("El paciente no llega a la evolución de nadie", async () => {
     const client = await screenAs("patient");
     assert.match(destino(await client.request(`/evolution/${elena}`)), /\/patient$/);

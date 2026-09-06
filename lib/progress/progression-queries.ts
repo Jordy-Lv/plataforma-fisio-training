@@ -10,15 +10,21 @@ import type { Series, SeriesPoint } from "@/lib/progress/evolution";
  * de peso corporal no dice nada sobre la progresión de carga. La fecha sale de
  * la sesión, no de `created_at`, porque una sesión se puede cerrar al día
  * siguiente y la gráfica es del día en que se entrenó.
+ *
+ * El ejercicio se lee de `session_logs`, que guarda el que había al registrar,
+ * y no del `routine_item`, que apunta al que hay hoy. Si el profesional
+ * sustituye un ejercicio de la rutina, la carga levantada antes sigue contando
+ * para el ejercicio en el que se levantó: atribuírsela al nuevo mostraría una
+ * progresión que nunca ocurrió.
  */
 export async function getLoadProgression(patientId: string): Promise<Series[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("session_logs")
     .select(
-      `actual_weight,
+      `actual_weight, exercise_id,
        sessions!inner (performed_on),
-       routine_items!inner (exercise_id, exercises!inner (name))`,
+       exercises!session_logs_exercise_id_fkey!inner (name)`,
     )
     .eq("patient_id", patientId)
     .eq("status", "done")
@@ -30,9 +36,12 @@ export async function getLoadProgression(patientId: string): Promise<Series[]> {
   // al navegador le llegue ya una serie por ejercicio y no el registro crudo.
   const porEjercicio = new Map<string, { label: string; points: SeriesPoint[] }>();
   for (const log of data ?? []) {
-    const key = log.routine_items.exercise_id;
+    // `session_log_exercise_required` lo garantiza en la base y el join lo
+    // confirma; el tipo generado no lo sabe porque la columna nació nullable.
+    const key = log.exercise_id;
+    if (!key) continue;
     const serie = porEjercicio.get(key) ?? {
-      label: log.routine_items.exercises.name,
+      label: log.exercises.name,
       points: [],
     };
     serie.points.push({
