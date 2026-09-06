@@ -4,12 +4,8 @@ import { useActionState } from "react";
 import { usePreservedForm } from "@/lib/auth/use-preserved-form";
 import { useFormValidation } from "@/lib/auth/use-form-validation";
 import { Button } from "@/components/ui/button";
-import {
-  Choices,
-  Field,
-  FormMessage,
-  inputClass,
-} from "@/components/auth/FormParts";
+import { Choices, FormMessage } from "@/components/auth/FormParts";
+import { Field, Select, Textarea } from "@/components/ui/Field";
 import {
   updatePatientProfile,
   saveCondition,
@@ -71,7 +67,7 @@ export function PatientProfileForm({ details }: { details: Details }) {
       <FormMessage
         state={{ ...state, error: validation.error ?? state.error }}
       />
-      <Button type="submit" className="min-h-12" disabled={pending}>
+      <Button type="submit" size="lg" disabled={pending}>
         {pending ? "Guardando…" : "Guardar perfil"}
       </Button>
     </form>
@@ -97,8 +93,7 @@ export function ConditionForm({
       <input type="hidden" name="patientId" value={patientId} />
       <input type="hidden" name="conditionId" value={condition?.id ?? ""} />
       <Field label="Parte del cuerpo">
-        <select
-          className={inputClass}
+        <Select
           name="body_part"
           required
           defaultValue={condition?.body_part ?? ""}
@@ -111,24 +106,19 @@ export function ConditionForm({
               {l}
             </option>
           ))}
-        </select>
+        </Select>
       </Field>
       <Field label="Severidad">
-        <select
-          className={inputClass}
-          name="severity"
-          defaultValue={condition?.severity ?? "mild"}
-        >
+        <Select name="severity" defaultValue={condition?.severity ?? "mild"}>
           {Object.entries(severityLabels).map(([v, l]) => (
             <option key={v} value={v}>
               {l}
             </option>
           ))}
-        </select>
+        </Select>
       </Field>
       <Field label="Notas">
-        <textarea
-          className={inputClass}
+        <Textarea
           name="notes"
           defaultValue={condition?.notes ?? ""}
           rows={3}
@@ -147,12 +137,7 @@ export function ConditionForm({
       <FormMessage
         state={{ ...state, error: validation.error ?? state.error }}
       />
-      <Button
-        className="min-h-12"
-        variant="outline"
-        type="submit"
-        disabled={pending}
-      >
+      <Button variant="outline" size="lg" type="submit" disabled={pending}>
         {pending
           ? "Guardando…"
           : condition

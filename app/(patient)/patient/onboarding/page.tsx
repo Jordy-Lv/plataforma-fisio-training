@@ -4,6 +4,10 @@ import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { Workspace } from "@/components/auth/Workspace";
 import { OnboardingForm } from "@/components/auth/OnboardingForm";
+import { Card } from "@/components/ui/Card";
+import { cn } from "cn";
+
+const steps = ["Objetivo", "Equipamiento", "Condiciones"];
 
 export default async function Page({
   searchParams,
@@ -37,24 +41,42 @@ export default async function Page({
       withNav={false}
     >
       <section className="max-w-xl">
+        {/*
+          Los pasos ya recorridos se distinguen del que falta: sin eso, a mitad
+          del alta no se sabía cuánto quedaba y el abandono se pagaba caro,
+          porque hasta terminarla el paciente no puede entrar a nada.
+        */}
         <ol
           aria-label="Pasos del perfil"
-          className="mb-7 grid grid-cols-3 gap-2 text-sm"
+          className="mb-6 grid grid-cols-3 gap-2 text-sm"
         >
-          {["Objetivo", "Equipamiento", "Condiciones"].map((label, i) => (
-            <li
-              key={label}
-              aria-current={step === i + 1 ? "step" : undefined}
-              className={`border-t-4 pt-3 ${step === i + 1 ? "border-brand font-semibold text-brand" : "border-border text-muted-foreground"}`}
-            >
-              {i + 1}. {label}
-            </li>
-          ))}
+          {steps.map((label, i) => {
+            const number = i + 1;
+            const done = number < step;
+            const current = number === step;
+            return (
+              <li
+                key={label}
+                aria-current={current ? "step" : undefined}
+                className={cn(
+                  "border-t-4 pt-3",
+                  current && "border-brand font-semibold text-brand",
+                  done && "border-brand text-foreground",
+                  !current && !done && "border-border text-muted-foreground",
+                )}
+              >
+                {done ? `✓ ${label}` : `${number}. ${label}`}
+              </li>
+            );
+          })}
         </ol>
-        <p className="mb-7 text-sm text-muted-foreground">
-          Paso {step} de 3. Guardamos tu avance al continuar.
-        </p>
-        <OnboardingForm key={step} step={step} details={data} />
+
+        <Card padding="lg">
+          <p className="mb-6 text-sm text-muted-foreground">
+            Paso {step} de {steps.length}. Guardamos tu avance al continuar.
+          </p>
+          <OnboardingForm key={step} step={step} details={data} />
+        </Card>
       </section>
     </Workspace>
   );

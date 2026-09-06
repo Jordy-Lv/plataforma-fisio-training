@@ -1,37 +1,84 @@
 import Link from "next/link";
-import { requireRole } from "@/lib/auth/session";
+import type { Metadata } from "next";
+import { CalendarCheck, CreditCard, HeartPulse, User } from "lucide-react";
+
 import { Workspace } from "@/components/auth/Workspace";
+import { Card, CardDescription, CardTitle } from "@/components/ui/Card";
+import { requireRole } from "@/lib/auth/session";
+
+export const metadata: Metadata = {
+  title: "Mi espacio",
+};
+
+/*
+  Los mismos destinos que la barra inferior, pero con una frase que dice qué hay
+  detrás de cada uno. La barra solo tiene sitio para una etiqueta de dos
+  palabras; esta portada es donde el paciente entiende qué es «Tamizaje» o qué
+  encontrará en «Mi membresía» sin tener que entrar a mirar.
+*/
+const sections = [
+  {
+    href: "/routine",
+    label: "Mi rutina",
+    icon: HeartPulse,
+    description:
+      "Los ejercicios de cada día, con sus series, sus pesos y cómo se hacen.",
+  },
+  {
+    href: "/attendance/me",
+    label: "Mi asistencia",
+    icon: CalendarCheck,
+    description: "Las visitas que tu profesional registró y las de este mes.",
+  },
+  {
+    href: "/memberships/me",
+    label: "Mi membresía",
+    icon: CreditCard,
+    description: "Tu plan, su estado y la fecha en la que vence.",
+  },
+  {
+    href: "/patient/profile",
+    label: "Mi perfil",
+    icon: User,
+    description:
+      "Tu objetivo, tu equipamiento y las condiciones que tenemos en cuenta.",
+  },
+];
+
 export default async function Page() {
   const profile = await requireRole("patient");
+
   return (
-    <Workspace title="Mi espacio" name={profile.fullName}>
-      <section className="max-w-xl">
-        <h2 className="text-xl font-semibold">Tu perfil está listo</h2>
-        <p className="mt-3 leading-7 text-muted-foreground">
-          Consulta tu rutina, tu asistencia y tu membresía desde aquí.
-        </p>
-        <nav aria-label="Mi seguimiento" className="mt-6 grid gap-3">
-          {[
-            ["/routine", "Mi rutina"],
-            ["/attendance/me", "Mi asistencia"],
-            ["/memberships/me", "Mi membresía"],
-          ].map(([href, label]) => (
-            <Link
-              key={href}
-              href={href}
-              className="inline-flex min-h-12 items-center rounded-lg border border-border bg-surface px-5 font-medium text-brand"
-            >
-              {label}
-            </Link>
-          ))}
-        </nav>
-        <Link
-          href="/patient/profile"
-          className="mt-6 inline-flex min-h-12 items-center rounded-lg bg-brand px-5 font-medium text-brand-foreground"
-        >
-          Ver y editar mi perfil
-        </Link>
-      </section>
+    <Workspace
+      title="Mi espacio"
+      name={profile.fullName}
+      role="patient"
+      description="Tu perfil está listo. Desde aquí llegas a tu rutina, a tu asistencia y a tu membresía."
+    >
+      <nav aria-label="Mi seguimiento" className="grid gap-4 sm:grid-cols-2">
+        {sections.map((section) => (
+          <Card key={section.href} interactive padding="lg">
+            <CardTitle className="flex items-center gap-3 text-lg">
+              <section.icon
+                aria-hidden="true"
+                className="size-5 shrink-0 text-brand"
+              />
+              {/*
+                El enlace se estira sobre toda la tarjeta con `after:inset-0`,
+                así que el objetivo táctil es la tarjeta entera y no solo el
+                texto del título.
+              */}
+              <Link
+                href={section.href}
+                className="rounded-lg after:absolute after:inset-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                {section.label}
+              </Link>
+            </CardTitle>
+            <CardDescription>{section.description}</CardDescription>
+          </Card>
+        ))}
+      </nav>
     </Workspace>
   );
 }

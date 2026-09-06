@@ -3,14 +3,10 @@
 import { useActionState, useState } from "react";
 import { usePreservedForm } from "@/lib/auth/use-preserved-form";
 import { useFormValidation } from "@/lib/auth/use-form-validation";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import {
-  Choices,
-  Field,
-  FormMessage,
-  inputClass,
-} from "@/components/auth/FormParts";
+import { ButtonLink } from "@/components/ui/ButtonLink";
+import { Choices, FormMessage } from "@/components/auth/FormParts";
+import { Field, Select, Textarea } from "@/components/ui/Field";
 import { saveOnboardingStep } from "@/lib/auth/onboarding-actions";
 import {
   goalSchema,
@@ -117,8 +113,7 @@ export function OnboardingForm({
                 Condición {index + 1}
               </legend>
               <Field label="Parte del cuerpo">
-                <select
-                  className={inputClass}
+                <Select
                   value={condition.body_part}
                   onChange={(e) =>
                     changeCondition(index, "body_part", e.target.value)
@@ -133,11 +128,10 @@ export function OnboardingForm({
                       {l}
                     </option>
                   ))}
-                </select>
+                </Select>
               </Field>
               <Field label="Severidad">
-                <select
-                  className={inputClass}
+                <Select
                   value={condition.severity}
                   onChange={(e) =>
                     changeCondition(index, "severity", e.target.value)
@@ -148,11 +142,10 @@ export function OnboardingForm({
                       {l}
                     </option>
                   ))}
-                </select>
+                </Select>
               </Field>
               <Field label="Notas (opcional)">
-                <textarea
-                  className={inputClass}
+                <Textarea
                   rows={3}
                   maxLength={1000}
                   value={condition.notes}
@@ -164,7 +157,7 @@ export function OnboardingForm({
               <Button
                 type="button"
                 variant="ghost"
-                className="min-h-11 justify-self-start"
+                className="justify-self-start"
                 onClick={() =>
                   setConditions(conditions.filter((_, i) => i !== index))
                 }
@@ -176,7 +169,7 @@ export function OnboardingForm({
           <Button
             variant="outline"
             type="button"
-            className="min-h-12"
+            size="lg"
             disabled={conditions.length >= 20 || pending}
             onClick={() =>
               setConditions([
@@ -192,8 +185,15 @@ export function OnboardingForm({
       <FormMessage
         state={{ ...state, error: validation.error ?? state.error }}
       />
-      <div className="sticky bottom-0 grid gap-2 border-t border-border bg-background py-4">
-        <Button type="submit" className="min-h-12 w-full" disabled={pending}>
+      {/*
+        La barra de avance se queda pegada abajo para no perseguir el botón en
+        una lista larga de opciones. Va sobre `surface` y con márgenes
+        negativos porque desde la fase 4 el formulario vive dentro de una
+        tarjeta: con el fondo de la página se veía una banda gris flotando
+        dentro de la tarjeta blanca.
+      */}
+      <div className="sticky bottom-0 -mx-5 grid gap-2 border-t border-border bg-surface px-5 py-4 sm:-mx-6 sm:px-6">
+        <Button type="submit" size="lg" className="w-full" disabled={pending}>
           {pending
             ? "Guardando…"
             : step === 3
@@ -201,12 +201,13 @@ export function OnboardingForm({
               : "Guardar y continuar"}
         </Button>
         {step > 1 && (
-          <Link
+          <ButtonLink
             href={`/patient/onboarding?step=${step - 1}`}
-            className="inline-flex min-h-11 items-center justify-center text-sm font-medium text-brand"
+            variant="ghost"
+            className="w-full"
           >
             Volver al paso anterior
-          </Link>
+          </ButtonLink>
         )}
       </div>
     </form>
