@@ -217,6 +217,29 @@ test(
         assert.ok(
           resumed.html.replaceAll(/<!--.*?-->/g, "").includes("Paso 3 de 3"),
         );
+        // Volver a "Objetivo" tras haber pasado por "Equipamiento" no debe fallar:
+        // el guardado no puede reventar el CHECK `onboarding_required_fields` ni
+        // regresar el avance ya alcanzado.
+        expectRedirect(
+          await browser.submit(
+            "/patient/onboarding",
+            { step: "1", goal: "performance", level: "advanced" },
+            'name="step"',
+          ),
+          "/patient/onboarding",
+        );
+        const afterRevisit = await patient.client
+          .from("patient_details")
+          .select("goal, level, environment, equipment, onboarding_step")
+          .eq("profile_id", patient.id)
+          .single();
+        assert.deepEqual(afterRevisit.data, {
+          goal: "performance",
+          level: "advanced",
+          environment: "home",
+          equipment: ["bands"],
+          onboarding_step: 2,
+        });
       },
     );
 
