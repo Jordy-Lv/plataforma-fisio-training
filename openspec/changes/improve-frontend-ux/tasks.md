@@ -10,10 +10,18 @@ Las cinco fases de [`design.md`](design.md) se reparten así, y el orden no es n
 | 2 · Ficha del paciente | 5, 6 | `ui/ficha-paciente*` |
 | 3 · Paciente móvil | 7, 8, 9, 10 | `fix/sesion-acuses`, `ui/paciente-*`, `ui/estados-pendientes` |
 | 4 · Edición del personal | 11, 12 | `ui/confirmaciones`, `ui/catalogo-embebido` |
-| 5 · Cierre | 13 | `docs/cierre-frontend` |
+| 5 · Comodidad | 14, 15, 16, 17 | `ui/densidad-listados`, `ui/detalle-en-dialogo`, `ui/acceso-directo`, `ui/estandar-de-manejo` |
+| 6 · Cierre | 13 | `docs/cierre-frontend` |
 
 La sección 7 —los dos defectos de la sesión del paciente— puede adelantarse como corrección
 independiente si hace falta para una demostración.
+
+La fase 5 se añadió el 2026-09-07 después de medir las pantallas en el navegador
+(`docs/12-medicion-de-densidad.md`). Las secciones 1–4 acotan **cuántas** filas se traen;
+la fase 5 acota **cuánto ocupa** cada una y **cuánto cuesta llegar** a ella. La 14 depende
+de la 1 (necesita `createListParams`), la 15 de nada, y la 16 de la 3 (necesita
+`listPeople`) y de la 5 (necesita la agregación del paciente). La sección 13 se ejecuta al
+final, después de la 16.
 
 ## 1. Cimientos y `/exercises` — rama `ui/listados-cimientos`
 
@@ -151,3 +159,65 @@ independiente si hace falta para una demostración.
 - [ ] 13.4 Añadir a `scripts/verify-design-system.test.mjs` la comprobación de que todo segmento dinámico con `page.tsx` tiene su `loading.tsx`
 - [ ] 13.5 Recorrer los caminos del paciente en un teléfono real y registrar el resultado
 - [ ] 13.6 Las veinticinco suites en verde sobre la rama fusionada, más los cuatro de CI
+
+## 14. Densidad de los listados — rama `ui/densidad-listados`
+
+Nace de la medición del 2026-09-07 (`docs/12-medicion-de-densidad.md`): paginar acota el
+total pero no la altura de la página. Con los filtros de las secciones 1–4 ya montados,
+esto es lo que hace que una lista quepa.
+
+- [ ] 14.1 Añadir `vista` (`tarjetas` | `lista`) a `createListParams`, con `tarjetas` por defecto y el valor en la URL como un parámetro más
+- [ ] 14.2 Crear `components/ui/DataRow.tsx`: fila de 64 px con miniatura de 48 px, título, dos campos secundarios y un objetivo táctil de 44 px, tomando como referencia la tarjeta de `/pro/routines`, que hoy mide 66 px
+- [ ] 14.3 Montar el conmutador tarjetas/lista en `/exercises` como dos enlaces (**no** un `<form method="get">`: la pantalla no admite otro formulario antes del de filtros), y subir `pageSize` a 48 cuando la vista es lista
+- [ ] 14.4 Verificar que en vista de tarjetas `/exercises` conserva el `<h2 class="text-base font-semibold leading-6">` que lee `verify-catalog-list.test.mjs`, y que en vista de lista el mismo `<h2>` sigue siendo el primer elemento con el nombre del ejercicio
+- [ ] 14.5 Plegar la evidencia de cada alerta en `/pro/alerts`: la primera sesión visible, el resto tras un `<details>` con el rótulo «Ver las otras N sesiones». La alerta baja de 658 px a unos 240
+- [ ] 14.6 Verificar que `/pro/alerts` conserva el formulario con `value="<alertId>"` y que la evidencia plegada sigue en el HTML del servidor —`<details>` sin JavaScript se abre igual—, no en un portal
+- [ ] 14.7 Añadir `orden` a `exerciseList`, `templateList` y a los listados de seguimiento, con las claves que cada pantalla puede ordenar y sin tocar el `.order("priority")` de `/rules`
+- [ ] 14.8 Ordenación por defecto explícita en cada listado, documentada en un comentario junto a su `createListParams`
+- [ ] 14.9 Medir de nuevo `/exercises` y `/pro/alerts` en Chrome a 1440×900 y 606×667 y registrar las cifras en `docs/12-medicion-de-densidad.md`
+- [ ] 14.10 `npm run test:catalog`, `test:catalog:custom` y `test:routines:sessions` en verde, más los cuatro de CI
+
+## 15. Detalle sin salir de la pantalla — rama `ui/detalle-en-dialogo`
+
+`Dialog` lleva construido desde la fase 3 del rediseño y hoy solo lo usa `OfferControls`.
+Las tres lecturas de aquí son territorio libre: ninguna suite las recorre, porque no hay
+ningún `<form>` dentro. **Ninguna de estas tareas mueve un formulario a un diálogo**
+(ADR-0008).
+
+- [ ] 15.1 Crear `components/ui/DetailDialog.tsx`: diálogo de solo lectura con su disparador, cierre por `Esc` y por clic fuera, y foco devuelto al disparador
+- [ ] 15.2 Ficha del ejercicio desde `/exercises` en `DetailDialog` —nombre, imagen, indicaciones, músculos, equipo, entorno, nivel—, **conservando** el enlace a `/exercises/[id]` como ruta propia para compartir y para quien no tenga JavaScript
+- [ ] 15.3 Evidencia completa de una alerta en `DetailDialog`, encadenada con el plegado de 14.5
+- [ ] 15.4 Detalle de una sesión desde `/pro/alerts` y desde `/pro/sessions` en `DetailDialog`, conservando `/pro/sessions/[sessionId]` como ruta
+- [ ] 15.5 Comprobar con `curl` que las tres pantallas no han perdido ningún `<form>` del HTML del servidor, y a mano que con JavaScript desactivado los enlaces siguen llevando a la ruta completa
+- [ ] 15.6 `npm run test:catalog`, `test:routines:sessions` y `test:overview` en verde, más los cuatro de CI
+
+## 16. Llegar al paciente sin recorrer una lista — rama `ui/acceso-directo`
+
+Las pestañas de las secciones 5 y 6 resuelven moverse **dentro** de un paciente. Esto
+resuelve llegar hasta él.
+
+- [ ] 16.1 Crear `lib/auth/patient-search.ts` con `searchPatients(term, limit = 8)`, acotado por RLS y sin `select("*")`
+- [ ] 16.2 Buscador de paciente en la cabecera de `AppShell` para `admin` y `professional`: `<form method="get">` que apunta a `/people`, con sugerencias tras dos caracteres y salto directo a la ficha
+- [ ] 16.3 **Antes de montarlo**, verificar que el formulario nuevo queda *después* del de cerrar sesión en el HTML del servidor: `auth-http.mjs` toma el primer `<form>` que contiene el marcador y `AppShell` documenta que solo puede haber uno
+- [ ] 16.4 Crear `app/(people)/people/page.tsx` con el directorio completo —la consulta de `listPeople` de 3.1, con sus filtros y su paginación— y mover ahí la lista y el alta que hoy viven en `PeoplePanel`
+- [ ] 16.5 Convertir `/admin` en panel de trabajo: alertas sin leer, sesiones de hoy, membresías por vencer y tamizajes pendientes, reutilizando `getBusinessOverview` y la agregación de 5.1
+- [ ] 16.6 Adaptar `scripts/verify-people.test.mjs` a la ruta nueva: es el único punto de todo el change donde un contrato de suite se cambia a propósito, y el PR tiene que decirlo en su descripción
+- [ ] 16.7 Verificar que en `/people` el primer formulario con `value="<uuid de la persona>"` sigue siendo el de la baja y que el del alta conserva `name="fullName"`
+- [ ] 16.8 Comprobar a mano que desde cualquier pantalla del personal se llega a un paciente escribiendo su nombre, sin pasar por ningún listado
+- [ ] 16.9 `npm run test:people` y `test:overview` en verde, más los cuatro de CI
+
+## 17. El estándar de manejo — rama `ui/estandar-de-manejo`
+
+Sale de comparar la aplicación con la de Smart Fit sobre seis capturas
+(`docs/13-referencia-smart-fit.md`). No cambia la identidad visual: cambia tres decisiones de
+manejo que ahí están resueltas y aquí no.
+
+- [ ] 17.1 Crear `components/ui/Carousel.tsx`: colección con desplazamiento horizontal, `scroll-snap`, la tarjeta siguiente asomando por el borde, control por teclado y `overflow-x: auto` propio, de modo que el cuerpo de la página nunca se desplace en horizontal
+- [ ] 17.2 Añadir el chevron y el patrón de icono a `ExerciseRow`, y extraerlo a `components/ui/DataRow.tsx` para que lo usen los demás listados
+- [ ] 17.3 Convertir `/patient/profile` en resumen de lectura —objetivo, nivel, entorno, equipamiento y condiciones como pares etiqueta/valor— con la edición detrás de un enlace por bloque; **conservar los formularios existentes en su ruta y en su orden**, que es lo que recorre `test:people`
+- [ ] 17.4 Verificar que `/patient/profile` sigue conteniendo el primer formulario con `name="goal"` y el primero con `name="conditionId"` donde los espera la suite, o mover la suite en el mismo PR y decirlo en su descripción
+- [ ] 17.5 Sustituir las cuatro tarjetas de `/patient` —que hoy duplican la barra inferior— por la tira de la semana con el día de hoy marcado, la racha de sesiones y la sesión en curso si la hay, reutilizando la agregación de 5.1
+- [ ] 17.6 Marcar la pestaña activa de `PatientTabs` (5.2) con subrayado de 2 px del color de marca, no con fondo
+- [ ] 17.7 Llevar las acciones de cabecera a píldoras en `PageHeader` y añadir «Ver todas» junto al título de cada colección que tenga listado propio
+- [ ] 17.8 Medir de nuevo `/patient`, `/patient/profile` y `/exercises` en Chrome y registrar el antes y el después en `docs/12-medicion-de-densidad.md`
+- [ ] 17.9 `npm run test:people`, `test:auth:screens` y `test:catalog` en verde, más los cuatro de CI

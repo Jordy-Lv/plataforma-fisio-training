@@ -83,5 +83,15 @@ navegación— y las funciones de lectura de `lib/**` ganan parámetros opcional
   [`docs/11-contratos-de-las-suites-http.md`](../../../docs/11-contratos-de-las-suites-http.md),
   de lectura obligatoria antes de tocar cualquier pantalla de este change.
 - **Depende de:** los cuatro slices anteriores, completos.
-- **Se entrega en cinco fases con revisión entre fases**, una rama y un pull request por
+- **Añadido el 2026-09-07, tras medir las pantallas en el navegador**
+  ([`docs/12-medicion-de-densidad.md`](../../../docs/12-medicion-de-densidad.md)): filtrar y
+  paginar acota cuántas filas se traen, pero no cuánto ocupa cada una. Una alerta mide
+  658 px —cabe una por pantalla— y una tarjeta de ejercicio dedica el 59 % de su alto a la
+  imagen, mientras `/pro/routines` resuelve un paciente en 66 px. De ahí salen tres secciones
+  nuevas: **densidad conmutable y evidencia plegada** (14), **detalle en diálogo de solo
+  lectura**, que estrena el `Dialog` construido en la fase 3 del rediseño y hoy usado en una
+  sola pantalla (15), y **buscador de paciente en la cabecera con el panel separado del
+  directorio** (16). Ninguna mueve un formulario a un diálogo: el ADR-0008 sigue mandando.
+
+- **Se entrega en seis fases con revisión entre fases**, una rama y un pull request por
   tanda. El protocolo está en [`ejecucion.md`](ejecucion.md).
