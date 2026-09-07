@@ -189,11 +189,16 @@ comportamiento «solo admin».
     PR en producción. Verificado por web: `/offer` muestra el precio de los 5
     servicios, `/rules` con 6 reglas, login paciente + admin OK, políticas de
     BACK-001 no rompen nada.
-- **Pendiente menor (no bloquea la demo):** el seed de demo no siembra
-  `attendance`, así que `review-low-attendance` marcará a Laura y Marcos con 0/N
-  el primer día. Ampliar `scripts/seed-progress-demo.ts` con filas de `attendance`
-  o sembrarlas a mano si se quiere un escenario curado. Reejecutar
-  `seed:progress-demo` el día de la demo (fechas relativas a `America/Bogota`).
+- **Fleco de BACK-012 — RESUELTO (2026-09-06, rama `fix/seed-attendance-demo`,
+  PR #5):** `scripts/seed-progress-demo.ts` ahora siembra un mes de `attendance`
+  por paciente demo (martes y viernes, desde el primer día del mes calendario
+  anterior hasta hoy en `America/Bogota`, una ausencia de cada cinco → ~78 %,
+  por encima del umbral del 50 %; `registered_by` = profesional a cargo;
+  idempotente vía `wipePatientData`). Verificado local: `review_low_attendance`
+  del mes anterior evalúa a los dos pacientes demo y no marca ninguno;
+  `test:attendance` y `test:attendance:cron` en verde. Sigue habiendo que
+  **reejecutar `seed:progress-demo` el día de la demo** (fechas relativas a
+  `America/Bogota`).
 - **Pospuestos con intención:** BACK-013 (reordenamientos no transaccionales) y
   BACK-014 (FK sin índice) — medir con `EXPLAIN (ANALYZE, BUFFERS)` y carga
   representativa antes de tocar.
