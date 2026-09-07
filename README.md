@@ -38,6 +38,7 @@ vistazo, quién está cumpliendo, quién reportó dolor o quién dejó de asisti
 - [`docs/09-verificacion-acceso.md`](docs/09-verificacion-acceso.md) — cómo se comprueba el acceso de cada rol contra la base local.
 - [`docs/10-sistema-de-diseno.md`](docs/10-sistema-de-diseno.md) — tokens, componentes y reglas al pintar una pantalla.
 - [`docs/11-contratos-de-las-suites-http.md`](docs/11-contratos-de-las-suites-http.md) — los marcadores del marcado que las suites de `scripts/` dan por contrato.
+- [`docs/12-excepcion-antigravity-frontend.md`](docs/12-excepcion-antigravity-frontend.md) — excepción acotada: un compañero evalúa Antigravity rehaciendo el frontend en una rama aparte.
 - [`docs/adr/`](docs/adr/) — decisiones de arquitectura con su justificación y sus alternativas descartadas.
 
 ## Stack
