@@ -37,6 +37,7 @@ vistazo, quién está cumpliendo, quién reportó dolor o quién dejó de asisti
 - [`docs/08-onboarding-equipo.md`](docs/08-onboarding-equipo.md) — levantar el proyecto en local, paso a paso.
 - [`docs/09-verificacion-acceso.md`](docs/09-verificacion-acceso.md) — cómo se comprueba el acceso de cada rol contra la base local.
 - [`docs/10-sistema-de-diseno.md`](docs/10-sistema-de-diseno.md) — tokens, componentes y reglas al pintar una pantalla.
+- [`docs/11-contratos-de-las-suites-http.md`](docs/11-contratos-de-las-suites-http.md) — los marcadores del marcado que las suites de `scripts/` dan por contrato.
 - [`docs/adr/`](docs/adr/) — decisiones de arquitectura con su justificación y sus alternativas descartadas.
 
 ## Stack

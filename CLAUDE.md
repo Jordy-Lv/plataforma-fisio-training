@@ -159,6 +159,12 @@ Los mensajes de error que ve el usuario van en español y son accionables:
 El sistema de diseño —tokens, componentes compartidos y las reglas al pintar una
 pantalla— está en [`docs/10-sistema-de-diseno.md`](docs/10-sistema-de-diseno.md).
 
+**Antes de mover, envolver o reordenar un `<form>`, lee**
+[`docs/11-contratos-de-las-suites-http.md`](docs/11-contratos-de-las-suites-http.md): dieciocho
+suites de `scripts/` localizan formularios por expresión regular sobre el HTML del servidor,
+y el orden de los formularios, el rótulo de un botón y varias frases de confirmación son
+contrato. Romperlo bloquea el merge.
+
 - Componentes de shadcn/ui antes que componentes propios; componentes propios antes que
   una dependencia nueva. **Agregar una dependencia requiere justificación en el PR.**
 - Los colores salen de tokens CSS en `app/globals.css`. **Nunca escribas un color literal**
@@ -195,6 +201,9 @@ Los cinco tienen que pasar. CI los repite y bloquea el merge si fallan.
 - **No toques carpetas de otro slice.** Si tu tarea parece requerirlo, deténte y dilo.
 - **No crees migraciones "de paso"** para arreglar algo que viste al lado.
 - **No agregues dependencias** sin decirlo explícitamente en el resumen del cambio.
+- **No cambies el marcado de una pantalla sin leer**
+  [`docs/11-contratos-de-las-suites-http.md`](docs/11-contratos-de-las-suites-http.md). Si una
+  suite falla, no la adaptes para que pase: describe un contrato con el usuario.
 - **No inventes columnas.** El esquema vive en `supabase/migrations/` y está descrito en
   `docs/02-modelo-de-datos.md`; léelo antes de escribir una consulta.
 - Al terminar una tarea, marca su casilla en el `tasks.md` del change correspondiente.
