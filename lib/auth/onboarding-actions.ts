@@ -39,13 +39,20 @@ export async function saveOnboardingStep(
   if (step.data === "1") {
     const parsed = goalSchema.safeParse(Object.fromEntries(form));
     if (!parsed.success) return { error: parsed.error.issues[0].message };
-    const { error } = await supabase
-      .from("patient_details")
-      .upsert({
-        profile_id: profile.id,
-        ...parsed.data,
-        onboarding_step: Math.max(current?.onboarding_step ?? 0, 1),
-      });
+    // Solo se fija `onboarding_step` cuando aún no ha llegado a 1. Mandarlo con un
+    // valor mayor rompía a quien ya pasó por el paso 2 y volvía a "Objetivo":
+    // Postgres valida el CHECK `onboarding_required_fields` sobre la fila candidata
+    // a INSERT del upsert —con `environment` nulo— antes de resolver el ON CONFLICT,
+    // así que `onboarding_step = 2` sin `environment` reventaba la constraint y el
+    // guardado devolvía error. En ese caso el ON CONFLICT conserva el paso ya
+    // alcanzado; el avance real lo hará el paso 2.
+    const advanceStep =
+      (current?.onboarding_step ?? 0) >= 1 ? {} : { onboarding_step: 1 };
+    const { error } = await supabase.from("patient_details").upsert({
+      profile_id: profile.id,
+      ...parsed.data,
+      ...advanceStep,
+    });
     if (error)
       return { error: "No se pudo guardar tu objetivo. Inténtalo de nuevo." };
   } else if (step.data === "2") {
