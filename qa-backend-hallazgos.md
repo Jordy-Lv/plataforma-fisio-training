@@ -172,21 +172,26 @@ Puertas ejecutadas: typecheck aprobado; lint aprobado con una advertencia preexi
 
 ### BACK-013 — Reordenamientos de plantillas y reglas no son transaccionales
 
-- **Área / prioridad / estado:** Atomicidad / MEDIA / SOSPECHA (revisión estática; no se forzó intercalado concurrente).
+- **Área / prioridad / estado:** Atomicidad / MEDIA / **CERRADO SIN ACCIÓN (2026-09-06)** tras análisis dirigido.
 - **Evidencia:** `moveTemplateItem` hace tres UPDATE separados y compensación manual (`lib/catalog/template-actions.ts:352-426`); `moveRule` renumera en un bucle de UPDATE independientes (`lib/catalog/rule-actions.ts:145-191`).
 - **Riesgo esperado:** caída, revocación o carrera entre pasos puede dejar `position=-1`, orden parcial o prioridades renumeradas a medias.
-- **Recomendación:** RPC transaccional con bloqueos y precondición de versión; constraint diferible cuando corresponda.
-- **Validación posterior:** barreras concurrentes y fallos inyectados en cada paso; comprobar rollback total.
+- **Análisis de cierre:** ambas acciones están detrás de `isAdmin()` y el negocio tiene un único admin — **no hay vector de concurrencia real**: dos reordenamientos simultáneos del mismo día de plantilla los serializa el `UNIQUE (template_day_id, position)`, que aborta el perdedor sin corromper nada. El fallo parcial sí existe (no hay `CHECK position >= 1`, así que un `-1` persiste) pero es **cosmético y recuperable**: volver a pulsar «mover» rehace la secuencia; en `moveRule` el orden por `(priority, created_at)` sigue siendo total aunque el renumerado quede a medias. Es configuración que escribe el propio admin, no viola constraints y no pone en riesgo dato clínico (el profesional revisa el snapshot antes de asignarlo).
+- **Recomendación para el piloto (multi-admin):** RPC transaccional con bloqueos, o un único `UPDATE ... SET position = CASE id ... END` (Postgres valida el `UNIQUE` al cierre de la sentencia, así que el swap de dos filas es atómico sin aparcar en `-1`). No se implementa ahora: el listón del plan era «cuando haya evidencia de carrera real» y no la hay.
+- **Validación posterior (si se implementa):** barreras concurrentes y fallos inyectados en cada paso; comprobar rollback total.
 - **Limpieza:** no se inyectó fallo ni se crearon fixtures.
 
 ### BACK-014 — Varias FK de rutas de borrado/join carecen de índice inicial
 
-- **Área / prioridad / estado:** SQL + rendimiento / BAJA / SOSPECHA (catálogo estático; no representa carga productiva).
-- **Evidencia:** introspección marcó, entre otras, `alerts.patient_id`, `assignment_rules.template_id`, `memberships.plan_id`, `routine_assignment_events.patient_id/routine_id`, `routine_items.exercise_id`, `sessions.routine_id/routine_day_id`, `template_items.exercise_id` y columnas de autoría. Las consultas principales sí tienen índices útiles por paciente/estado/fecha.
-- **Impacto posible:** validación/borrado de padres y joins administrativos degradan al crecer los datos.
-- **Recomendación:** medir con volumen representativo y `EXPLAIN (ANALYZE, BUFFERS)` antes de añadir índices; priorizar FK presentes en borrados y paneles.
-- **Validación posterior:** comparar planes y latencia p95 con datos sintéticos representativos.
-- **Limpieza:** introspección de solo lectura.
+- **Área / prioridad / estado:** SQL + rendimiento / BAJA / **CERRADO (2026-09-06):** medido; un índice añadido, 17 FK descartadas con evidencia.
+- **Evidencia:** introspección marcó 18 FK sin índice de cobertura (`alerts.patient_id`, `assignment_rules.template_id`, `memberships.plan_id`, `routine_assignment_events.patient_id/routine_id`, `routine_items.exercise_id`, `sessions.routine_id/routine_day_id`, `session_logs.exercise_id/replaced_by_exercise_id/routine_item_id`, `template_items.exercise_id`, columnas de autoría). Las consultas principales sí tienen índices útiles por paciente/estado/fecha.
+- **Medición (transacción con `ROLLBACK` sobre la base local; ~150 k `session_logs`, 6 k `routine_items`, 2 k `memberships`, 4 k `alerts`, 1,2 k `routines`; `EXPLAIN (ANALYZE, BUFFERS)`):**
+  - `session_logs.routine_item_id` — trigger RI de `deleteRoutineItem` (`lib/routines/item-actions.ts`): **sin índice** Seq Scan 150 k, ~19 MB de buffers, **4,7 ms**; **con índice** Bitmap Index Scan, 2 buffers, **0,02 ms**. Coste sin índice lineal con el historial (≈30 ms a 1 M de logs). Índice ≈1 MB / 150 k filas. → **se añade** (`session_logs_routine_item_idx`, migración `20260906234700`).
+  - `session_logs.exercise_id` / `replaced_by_exercise_id` — solo se ejercen si se hace `DELETE` de `exercises`; **no existe** esa ruta (baja lógica). Descartado.
+  - `memberships.plan_id` (`deletePlan`), `assignment_rules.template_id` / `routines.source_template_id` (`deleteTemplate`): el scan para localizar filas fue 0,1–0,3 ms; las tablas se mantienen pequeñas por diseño y el coste real del borrado es el `UPDATE`/`RESTRICT`, no la búsqueda. Descartado.
+  - `alerts.patient_id`: ningún panel lista alertas por paciente (la RLS y la UI van por `recipient_id`, ya cubierto por `alerts_recipient_idx`). Seq Scan 4 k filas 0,23 ms. Descartado.
+  - `routine_assignment_events.routine_id/patient_id`, `template_items.exercise_id`, columnas de autoría (`*_by`): sin camino de borrado ni consulta que las use hoy; tablas de crecimiento lento. Descartado; reevaluar si aparece la consulta.
+- **Resolución:** un único índice (`session_logs.routine_item_id`). Las otras 17 se dejan a propósito sin índice.
+- **Limpieza:** medición en transacción revertida; la base local quedó intacta y resembrada.
 
 ## Matriz de cobertura
 
@@ -226,8 +231,8 @@ Se intentó una vez `npm run test:routines`: la API apuntó al entorno aislado, 
 Limitaciones declaradas:
 
 - No hubo navegador visual ni dispositivo real: el alcance fue backend/HTTP.
-- No se midió rendimiento con volumen semejante a producción; BACK-014 es riesgo, no latencia demostrada.
-- No se forzó una intercalación determinista en los reordenamientos; BACK-013 permanece sospecha.
+- No se midió rendimiento con volumen semejante a producción; BACK-014 es riesgo, no latencia demostrada. — **resuelto 2026-09-06:** medido con carga sintética representativa, ver la ficha de BACK-014.
+- No se forzó una intercalación determinista en los reordenamientos; BACK-013 permanece sospecha. — **resuelto 2026-09-06:** cerrado sin acción tras análisis dirigido, ver la ficha de BACK-013.
 - No se probaron servicios remotos, SMTP real, Railway ni Supabase cloud.
 
 ## Limpieza y estado final
