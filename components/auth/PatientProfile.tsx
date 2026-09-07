@@ -5,6 +5,7 @@ import {
   PatientProfileForm,
 } from "@/components/auth/PatientProfileForms";
 import { Workspace } from "@/components/auth/Workspace";
+import { ProfileSummary } from "@/components/patients/ProfileSummary";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardDescription, CardTitle } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -66,7 +67,23 @@ export async function PatientProfile({ patientId }: { patientId: string }) {
         <Card padding="lg" className="grid gap-5">
           <CardTitle className="text-xl">Perfil de entrenamiento</CardTitle>
           {details.data ? (
-            <PatientProfileForm details={details.data} />
+            <>
+              <ProfileSummary details={details.data} />
+              {/*
+                El formulario no se ha movido de sitio ni ha cambiado de orden:
+                sigue siendo el primero de la pantalla con `name="goal"`, que es
+                lo que busca `verify-people-onboarding`. Solo está plegado, y un
+                `<details>` cerrado sigue emitiendo su contenido en el servidor.
+              */}
+              <details className="rounded-xl border border-border px-4">
+                <summary className="flex min-h-11 cursor-pointer items-center py-3 font-semibold text-brand">
+                  {esPropio ? "Editar mi perfil" : "Editar el perfil"}
+                </summary>
+                <div className="pb-4">
+                  <PatientProfileForm details={details.data} />
+                </div>
+              </details>
+            </>
           ) : (
             <CardDescription className="leading-7">
               {esPropio
