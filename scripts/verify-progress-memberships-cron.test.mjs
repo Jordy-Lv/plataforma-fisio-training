@@ -31,9 +31,19 @@ const appUrl = process.env.FISIO_TEST_APP_URL ?? "http://localhost:3000";
 const mailpitUrl = process.env.MAILPIT_URL ?? "http://127.0.0.1:54324";
 const cronPath = "/api/cron/memberships";
 
-/** Una fecha relativa a hoy en el formato de una columna `date`. */
+/**
+ * Una fecha relativa a hoy en el formato de una columna `date`, anclada a la
+ * zona del negocio. El RPC calcula `today_on` como
+ * `(now() at time zone 'America/Bogota')::date`; si aquí se usa el día UTC, entre
+ * las 19:00 y la medianoche de Bogotá (cuando UTC ya es el día siguiente) la
+ * membresía "venció ayer" queda fechada hoy y el job la clasifica como próxima a
+ * vencer en vez de vencida.
+ */
 const dateIn = (days) => {
-  const d = new Date();
+  const bogotaToday = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Bogota",
+  }).format(new Date());
+  const d = new Date(`${bogotaToday}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 };
