@@ -147,7 +147,7 @@ for (const failure of [{ authThrows: 1 }, { failedTable: "profiles", failures: 2
     assert.equal(container.querySelector('[name="level"]:checked')?.value, "intermediate");
     assert.equal(s.calls.writes.length, 0);
     const values = new FormData(container.querySelector("form"));
-    await assert.rejects(s.load("lib/auth/onboarding-actions.ts").saveOnboardingStep({}, values), (error) => error.destination === "/patient/onboarding");
+    await assert.rejects(s.load("lib/auth/onboarding-actions.ts").saveOnboardingStep({}, values), (error) => error.destination === "/patient/onboarding?step=2");
     assert.equal(s.calls.writes[0].goal, "rehab");
     assert.equal(s.calls.writes[0].level, "intermediate");
   });
@@ -155,7 +155,7 @@ for (const failure of [{ authThrows: 1 }, { failedTable: "profiles", failures: 2
 
 test("Paso 1 supera un primer error de profiles y guarda antes del render del paso 2", async () => {
   const s = scenario({ failedTable: "profiles", failures: 1 });
-  await assert.rejects(s.load("lib/auth/onboarding-actions.ts").saveOnboardingStep({}, formData({ step: "1", goal: "rehab", level: "beginner" })), (error) => error.destination === "/patient/onboarding");
+  await assert.rejects(s.load("lib/auth/onboarding-actions.ts").saveOnboardingStep({}, formData({ step: "1", goal: "rehab", level: "beginner" })), (error) => error.destination === "/patient/onboarding?step=2");
   assert.equal(s.calls.profiles, 2);
   assert.equal(s.calls.writes[0].onboarding_step, 1);
   assert.ok(await s.load("app/(patient)/patient/onboarding/page.tsx").default({ searchParams: Promise.resolve({}) }));
