@@ -13,7 +13,7 @@
  * oscuros de más abajo, que son los que pinta el navegador alrededor de la app
  * instalada cuando el teléfono está en modo oscuro.
  */
-export const BRAND_COLOR = "#146c5b";
-export const BACKGROUND_COLOR = "#f7f9f8";
-export const DARK_BRAND_COLOR = "#4db6a0";
-export const DARK_BACKGROUND_COLOR = "#0d1614";
+export const BRAND_COLOR = "#876000";
+export const BACKGROUND_COLOR = "#f8f9fa";
+export const DARK_BRAND_COLOR = "#e0aa25";
+export const DARK_BACKGROUND_COLOR = "#121416";
