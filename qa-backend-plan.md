@@ -7,7 +7,13 @@
 **ESTADO: CERRADO (2026-09-06).** Los 12 hallazgos corregidos en 4 batches, las 4
 decisiones de alcance resueltas, PR #3 mergeado a `main` (`4fd7091`) y el runbook
 de nube ejecutado (16 migraciones en `izcevgayepwewfrfmcun`, runtime desplegado).
-Detalle al final. BACK-013/014 pospuestos a propósito.
+Detalle al final.
+
+**BACK-013/014 cerrados el 2026-09-06** (rama `fix/qa-back013-014-cierre`) tras
+medir: BACK-014 → un índice (`session_logs_routine_item_idx`, migración
+`20260906234700`), 17 FK descartadas con evidencia; BACK-013 → sin acción para la
+demo (sin vector de concurrencia, fallo parcial recuperable). Ver «Cierre de los
+pospuestos» al final.
 
 ---
 
@@ -95,12 +101,12 @@ comportamiento «solo admin».
 | **BACK-006** ✅ | HECHO (`759b377`). Migración `20260906234400`: `exercises.created_by` + trigger `exercises_pin_author` (autoría del actor, inmutable) + política de UPDATE = admin **o** autor activo de un `is_custom`. Ficha `/exercises/[id]` muestra los formularios también al autor. Las dos pruebas heredadas «solo admin» se invirtieron en `verify-catalog-custom`. Los custom anteriores quedan sin autor (solo admin). | M | M |
 | **BACK-012** ✅ | HECHO (`30758df`). Migración `20260906234600`: `attendance_notices (patient_id, period_month)` única + `review_low_attendance(date)` SECURITY DEFINER solo `service_role` (esperada = días de rutina vigente × semanas del mes; real = filas de `attendance`; alerta si < umbral %) + `low_attendance_pct_range` (1..100) + cron diario `review-low-attendance` que revisa el mes anterior + `private.run_low_attendance_review()`. `test:attendance:cron` nuevo. Pendiente menor: el seed de demo no siembra asistencia, el cron marcará a los demo con 0/N. | A | M |
 
-### Pospuestos (sospechas, medir antes)
+### Pospuestos (sospechas, medir antes) — CERRADOS 2026-09-06
 
-| ID | Motivo |
+| ID | Estado |
 |---|---|
-| **BACK-013** | Reordenamientos de plantillas/reglas no transaccionales. Solo revisión estática; no se forzó intercalado concurrente. Envolver `moveRule`/`moveTemplateItem` en una RPC con bloqueos cuando haya evidencia de carrera real. |
-| **BACK-014** | FK sin índice. Introspección estática, sin carga representativa. Medir con `EXPLAIN (ANALYZE, BUFFERS)` y datos sintéticos antes de añadir índices. |
+| **BACK-013** ✅ | CERRADO SIN ACCIÓN. Análisis dirigido: `moveRule`/`moveTemplateItem` solo las llama `admin` (uno en el negocio) → sin vector de concurrencia; el `UNIQUE (template_day_id, position)` serializa. Fallo parcial (`position=-1`, renumerado a medias) es cosmético y recuperable, sin dato clínico en riesgo. RPC transaccional / `UPDATE ... CASE` queda especificada para el piloto multi-admin. |
+| **BACK-014** ✅ | CERRADO. Medido con `EXPLAIN (ANALYZE, BUFFERS)` sobre carga sintética (~150 k `session_logs`) en transacción revertida. Un solo índice justificado: `session_logs (routine_item_id)` — camino real (`deleteRoutineItem`), 4,7 ms → 0,02 ms, coste lineal con el historial. Migración `20260906234700_routines_qa_session_log_fk_index.sql`. Las otras 17 FK: sin ruta que las ejerza, tabla pequeña por diseño, o ya cubiertas por un índice compuesto mejor. |
 
 ---
 
@@ -161,7 +167,7 @@ comportamiento «solo admin».
    `verify-auth-screens`). `npm run build` pendiente de una ventana con
    `next dev` apagado (solo se tocó SQL, `lib/`, `components/`, páginas y
    scripts `.mjs`; no hay cambio de runtime).
-5. Pospuestos: BACK-013, BACK-014 (medir antes).
+5. Pospuestos: BACK-013, BACK-014 — cerrados el 2026-09-06 (ver «Cierre de los pospuestos»).
 
 ---
 
@@ -201,4 +207,62 @@ comportamiento «solo admin».
   `America/Bogota`).
 - **Pospuestos con intención:** BACK-013 (reordenamientos no transaccionales) y
   BACK-014 (FK sin índice) — medir con `EXPLAIN (ANALYZE, BUFFERS)` y carga
-  representativa antes de tocar.
+  representativa antes de tocar. → Hecho, ver abajo.
+
+---
+
+## Cierre de los pospuestos (2026-09-06 · rama `fix/qa-back013-014-cierre`)
+
+### Método
+
+`EXPLAIN (ANALYZE, BUFFERS)` sobre la base local, todo dentro de una transacción
+que termina en `ROLLBACK` (la base quedó intacta y se resembró después). Carga
+sintética representativa de ~3 años de operación con ~250 pacientes activos:
+150 k `session_logs`, 6 k `routine_items`, 6 k `sessions`, 1,2 k `routines`,
+2 k `memberships`, 4 k `alerts`, 1,2 k `routine_assignment_events`. Se midieron
+las sondas que ejecutan los triggers RI de Postgres al borrar/actualizar el
+padre (`SELECT ... FOR KEY SHARE` para RESTRICT/NO ACTION, `UPDATE` para SET NULL)
+y las consultas de panel.
+
+### BACK-014 — resultados
+
+| FK / sonda | Ruta en la app | Sin índice | Con índice | Decisión |
+|---|---|---|---|---|
+| `session_logs.routine_item_id` | `deleteRoutineItem` (quitar ejercicio de rutina ya ejecutada) | Seq Scan 150 k, ~19 MB buffers, **4,7 ms** | Bitmap Index Scan, 2 buffers, **0,02 ms** | **AÑADIR** |
+| `session_logs.exercise_id`, `…replaced_by_exercise_id` | `DELETE exercises` — **no existe** (baja lógica) | 10–38 ms (hipotético) | — | descartar |
+| `memberships.plan_id` | `deletePlan` | Seq Scan 29 buffers, **0,1 ms** | igual (tabla pequeña) | descartar |
+| `routines.source_template_id` | `deleteTemplate` (SET NULL) | localizar 1,2 k filas, **0,13 ms** | ~0 | descartar (coste real = `UPDATE`) |
+| `assignment_rules.template_id` | `deleteTemplate` (RESTRICT) | tabla de decenas de filas | — | descartar |
+| `alerts.patient_id` | ningún panel filtra por paciente | Seq Scan 4 k, **0,23 ms** | igual | descartar (`alerts_recipient_idx` cubre lo real) |
+| `routine_assignment_events.routine_id/patient_id` | — | Seq Scan 1,2 k, **0,03 ms** | 0,01 ms | descartar (crecimiento lento) |
+| `template_items.exercise_id`, autoría `*_by` | sin consulta ni borrado que las use | — | — | descartar; reevaluar si aparece |
+
+**Entregado:** `supabase/migrations/20260906234700_routines_qa_session_log_fk_index.sql`
+(`create index if not exists session_logs_routine_item_idx on public.session_logs (routine_item_id)`).
+`db:reset` limpio con 17 migraciones, `lib/db/types.ts` sin cambios (un índice no
+altera los tipos generados), base resembrada. Verde: `test:routines:items` 9/9
+(incluye «quitar un ejercicio ya ejecutado»), `test:routines:snapshot` 9/9,
+`test:rls` 10/10, `typecheck`, `lint` (1 warning previo ajeno en
+`verify-auth-screens`), `test:design` 4/4. `npm run build` no aplica: el cambio
+es solo SQL + documentación, no se tocó runtime.
+
+### BACK-013 — cerrado sin acción
+
+`moveTemplateItem` (`lib/catalog/template-actions.ts:358-431`) y `moveRule`
+(`lib/catalog/rule-actions.ts:145-195`) hacen varios `UPDATE` sueltos sin
+transacción. Análisis:
+
+- **Concurrencia:** ambas están tras `isAdmin()`; el negocio tiene un único
+  admin. Dos reordenamientos simultáneos del mismo día los serializa el
+  `UNIQUE (template_day_id, position)` (aborta el perdedor, sin corrupción).
+- **Fallo parcial:** una caída entre pasos deja un ítem en `position = -1` (no
+  hay `CHECK`, persiste) o prioridades a medio renumerar. Es **recuperable**
+  (volver a pulsar «mover» rehace la secuencia) y **cosmético**: es config del
+  admin, no viola constraints, y el profesional revisa el snapshot antes de
+  asignarlo — no hay dato clínico en riesgo.
+- **Listón del plan:** «envolver en RPC cuando haya evidencia de carrera real».
+  No la hay → no se implementa para la demo.
+- **Para el piloto (multi-admin):** RPC transaccional con `select ... for update`,
+  o un único `UPDATE ... SET position = CASE id WHEN :a THEN :pb WHEN :b THEN :pa END
+  WHERE id IN (:a,:b)` — Postgres valida el `UNIQUE` al cierre de la sentencia, así
+  que el swap de dos filas es atómico y no necesita aparcar en `-1`.

@@ -1,0 +1,33 @@
+-- =============================================================================
+-- QA backend · BACK-014 — índice para la única FK sin cobertura que está en un
+-- camino de escritura real contra una tabla que crece sin techo.
+--
+-- La auditoría marcó 18 FK sin índice de cobertura. Se midió con carga
+-- representativa (~150 k `session_logs`, 6 k `routine_items`, 2 k `memberships`,
+-- 4 k `alerts`, 1,2 k `routines`) y `EXPLAIN (ANALYZE, BUFFERS)`:
+--
+--   * 17 de las 18 son ruido: o no hay ruta en la app que las ejerza
+--     (`exercises` y `profiles` son baja lógica, nunca `DELETE`), o apuntan a
+--     tablas que se mantienen pequeñas por diseño (`memberships`,
+--     `assignment_rules`, `alerts`, `routine_assignment_events`,
+--     `template_items`), o la consulta real ya usa un índice compuesto mejor
+--     (`alerts_recipient_idx`, `sessions_patient_idx`, ...).
+--
+--   * `session_logs.routine_item_id` sí importa: `deleteRoutineItem`
+--     (`lib/routines/item-actions.ts`) borra un `routine_items` y el trigger RI
+--     de `session_logs_routine_item_id_fkey` (NO ACTION, DEFERRABLE) recorre
+--     `session_logs` entera para comprobar que no quedan logs colgando. Medido:
+--       - sin índice: Seq Scan 150 k filas, ~19 MB de buffers, 4,7 ms
+--       - con índice: Bitmap Index Scan, 2 buffers, 0,02 ms
+--     El coste sin índice crece lineal con el historial de ejecución (a 1 M de
+--     logs, ~30 ms por cada ejercicio que el profesional quita de una rutina ya
+--     empezada). El índice pesa ~1 MB por cada 150 k filas.
+--
+-- Las otras 17 FK se dejan sin índice a propósito: se reevaluarán si aparece una
+-- consulta o un camino de borrado que las vuelva relevantes.
+--
+-- Estado de partida: el esquema tras aplicar las 10 migraciones QA anteriores.
+-- =============================================================================
+
+create index if not exists session_logs_routine_item_idx
+  on public.session_logs (routine_item_id);
