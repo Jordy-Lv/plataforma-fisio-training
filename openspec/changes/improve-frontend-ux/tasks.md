@@ -166,10 +166,10 @@ Nace de la medición del 2026-09-07 (`docs/12-medicion-de-densidad.md`): paginar
 total pero no la altura de la página. Con los filtros de las secciones 1–4 ya montados,
 esto es lo que hace que una lista quepa.
 
-- [ ] 14.1 Añadir `vista` (`tarjetas` | `lista`) a `createListParams`, con `tarjetas` por defecto y el valor en la URL como un parámetro más
+- [x] 14.1 Añadir `vista` (`tarjetas` | `lista`) a `createListParams`, con `tarjetas` por defecto y el valor en la URL como un parámetro más
 - [ ] 14.2 Crear `components/ui/DataRow.tsx`: fila de 64 px con miniatura de 48 px, título, dos campos secundarios y un objetivo táctil de 44 px, tomando como referencia la tarjeta de `/pro/routines`, que hoy mide 66 px
-- [ ] 14.3 Montar el conmutador tarjetas/lista en `/exercises` como dos enlaces (**no** un `<form method="get">`: la pantalla no admite otro formulario antes del de filtros), y subir `pageSize` a 48 cuando la vista es lista
-- [ ] 14.4 Verificar que en vista de tarjetas `/exercises` conserva el `<h2 class="text-base font-semibold leading-6">` que lee `verify-catalog-list.test.mjs`, y que en vista de lista el mismo `<h2>` sigue siendo el primer elemento con el nombre del ejercicio
+- [x] 14.3 Montar el conmutador tarjetas/lista en `/exercises` como dos enlaces (**no** un `<form method="get">`: la pantalla no admite otro formulario antes del de filtros), y subir `pageSize` cuando la vista es lista (quedó en 60, no en 48: medida la fila, 60 caben en las mismas pantallas que 24 tarjetas)
+- [x] 14.4 Verificar que en vista de tarjetas `/exercises` conserva el `<h2 class="text-base font-semibold leading-6">` que lee `verify-catalog-list.test.mjs`, y que en vista de lista el mismo `<h2>` sigue siendo el primer elemento con el nombre del ejercicio
 - [ ] 14.5 Plegar la evidencia de cada alerta en `/pro/alerts`: la primera sesión visible, el resto tras un `<details>` con el rótulo «Ver las otras N sesiones». La alerta baja de 658 px a unos 240
 - [ ] 14.6 Verificar que `/pro/alerts` conserva el formulario con `value="<alertId>"` y que la evidencia plegada sigue en el HTML del servidor —`<details>` sin JavaScript se abre igual—, no en un portal
 - [ ] 14.7 Añadir `orden` a `exerciseList`, `templateList` y a los listados de seguimiento, con las claves que cada pantalla puede ordenar y sin tocar el `.order("priority")` de `/rules`
@@ -214,10 +214,11 @@ manejo que ahí están resueltas y aquí no.
 
 - [ ] 17.1 Crear `components/ui/Carousel.tsx`: colección con desplazamiento horizontal, `scroll-snap`, la tarjeta siguiente asomando por el borde, control por teclado y `overflow-x: auto` propio, de modo que el cuerpo de la página nunca se desplace en horizontal
 - [ ] 17.2 Añadir el chevron y el patrón de icono a `ExerciseRow`, y extraerlo a `components/ui/DataRow.tsx` para que lo usen los demás listados
-- [ ] 17.3 Convertir `/patient/profile` en resumen de lectura —objetivo, nivel, entorno, equipamiento y condiciones como pares etiqueta/valor— con la edición detrás de un enlace por bloque; **conservar los formularios existentes en su ruta y en su orden**, que es lo que recorre `test:people`
-- [ ] 17.4 Verificar que `/patient/profile` sigue conteniendo el primer formulario con `name="goal"` y el primero con `name="conditionId"` donde los espera la suite, o mover la suite en el mismo PR y decirlo en su descripción
-- [ ] 17.5 Sustituir las cuatro tarjetas de `/patient` —que hoy duplican la barra inferior— por la tira de la semana con el día de hoy marcado, la racha de sesiones y la sesión en curso si la hay, reutilizando la agregación de 5.1
+- [x] 17.3 Convertir `/patient/profile` en resumen de lectura —objetivo, nivel, entorno, equipamiento y condiciones como pares etiqueta/valor— con la edición detrás de un enlace por bloque; **conservar los formularios existentes en su ruta y en su orden**, que es lo que recorre `test:people`
+- [x] 17.4 Verificar que `/patient/profile` sigue conteniendo el primer formulario con `name="goal"` y el primero con `name="conditionId"` donde los espera la suite, o mover la suite en el mismo PR y decirlo en su descripción
+- [x] 17.5 Sustituir las cuatro tarjetas de `/patient` —que hoy duplican la barra inferior— por la tira de la semana con el día de hoy marcado, la racha de sesiones y la sesión en curso si la hay, reutilizando la agregación de 5.1
+  - La racha se cuenta **por semanas** y no por días: quien entrena tres veces por semana nunca pasaría de una racha de un día. La agregación quedó en `lib/progress/patient-overview.ts` con la forma que pide 5.1, pero solo con lo que la portada necesita; la ficha del profesional le añadirá membresía, condiciones y tamizaje.
 - [ ] 17.6 Marcar la pestaña activa de `PatientTabs` (5.2) con subrayado de 2 px del color de marca, no con fondo
 - [ ] 17.7 Llevar las acciones de cabecera a píldoras en `PageHeader` y añadir «Ver todas» junto al título de cada colección que tenga listado propio
-- [ ] 17.8 Medir de nuevo `/patient`, `/patient/profile` y `/exercises` en Chrome y registrar el antes y el después en `docs/12-medicion-de-densidad.md`
-- [ ] 17.9 `npm run test:people`, `test:auth:screens` y `test:catalog` en verde, más los cuatro de CI
+- [x] 17.8 Medir de nuevo `/patient`, `/patient/profile` y `/exercises` en Chrome y registrar el antes y el después en `docs/12-medicion-de-densidad.md`
+- [x] 17.9 `npm run test:people`, `test:auth:screens` y `test:catalog` en verde, más los cuatro de CI

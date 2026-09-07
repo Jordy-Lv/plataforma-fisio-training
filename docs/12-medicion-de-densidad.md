@@ -206,6 +206,35 @@ pantalla con `name="goal"`. Un `<details>` cerrado emite igualmente su contenido
 del servidor, que es lo que separa esta solución de un diálogo (ADR-0008).
 `npm run test:people` sigue en 10/10.
 
+## 5 quater. Portada del paciente: antes y después
+
+Tercera mejora de la fase 5 (tarea 17.5), medida el 2026-09-07 con la misma paciente
+(`laura.perez.demo@demo.local`) y la misma ventana, que en esta sesión Chrome sirvió como
+500×723. La portada eran cuatro tarjetas con los mismos cuatro destinos de la barra
+inferior; ahora es la semana con el día de hoy marcado, la racha y la sesión en curso.
+
+| | Contenido de `<main>` | Alto de página | Pantallas |
+|---|---|---|---|
+| Antes (4 tarjetas de destino) | 748 px | 815 px | 1,13 |
+| **Después (semana, racha, sesión)** | **574 px** | **723 px** | **1,00** |
+
+Un 23 % menos de contenido y, sobre todo, **deja de haber desplazamiento**: la portada
+entera cabe sin mover el dedo. Los cuatro destinos no se perdieron —siguen en la barra
+inferior del teléfono y en la lateral del escritorio, que es de donde estaban copiados—, así
+que lo que se quitó era literalmente un duplicado.
+
+Lo que ocupa ese espacio ahora responde a algo que antes no se podía saber sin entrar a
+mirar: en qué día de la semana está el paciente, en cuáles entrenó, cuántas semanas
+seguidas lleva y si dejó una sesión a medias.
+
+**La racha se cuenta por semanas, no por días.** Quien entrena tres veces por semana —que es
+lo normal— nunca pasaría de una racha de un día, y una cifra que siempre vale 1 no informa
+de nada. La semana en curso no rompe la racha mientras no termine.
+
+La pantalla conserva **un solo `<form>`**, el de cerrar sesión del shell, que es lo que
+`verify-auth-screens` envía al pedir `/patient`. La tira de la semana es un Server Component
+sin formulario ni estado.
+
 ## 6. Dos fallos encontrados al medir, ya corregidos
 
 Ninguno es de diseño. Los dos bloqueaban la demostración y se arreglaron en el sitio.
