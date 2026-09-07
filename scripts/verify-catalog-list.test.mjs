@@ -204,15 +204,11 @@ test("Listado del catálogo de ejercicios", { timeout: 120_000 }, async (t) => {
   await t.test("La búsqueda por nombre acota el listado", async () => {
     const client = await signedInAs("admin");
     const { html } = await client.request("/exercises?q=sentadilla");
-    const conAcento = totalShown(html);
-    const { html: enIngles } = await client.request("/exercises?q=squat");
-    const total = totalShown(enIngles);
-    assert.ok(total > 0 && total < sembrados, "La búsqueda no acotó nada");
-    for (const name of cardNames(enIngles))
-      assert.match(name.toLowerCase(), /squat/);
-    // El catálogo importado está en inglés: buscar en español no debe fallar,
-    // simplemente no encuentra nada todavía.
-    assert.equal(conAcento, 0);
+    const total = totalShown(html);
+    assert.ok(total > 0 && total < sembrados, "La búsqueda en español no acotó nada");
+    for (const name of cardNames(html)) assert.match(name.toLowerCase(), /sentadilla/);
+    const { html: previousName } = await client.request("/exercises?q=squat");
+    assert.equal(totalShown(previousName), 0, "No deben quedar nombres del catálogo en inglés");
   });
 
   await t.test("Los filtros de equipamiento y entorno acotan el listado", async () => {

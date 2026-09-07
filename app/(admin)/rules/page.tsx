@@ -1,10 +1,14 @@
+import { ruleList } from "@/lib/catalog/rule-list";
+import { ListFilters } from "@/components/catalog/ListFilters";
+import { Pagination } from "@/components/ui/Pagination";
+import { Notice } from "@/components/ui/Notice";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Workspace } from "@/components/auth/Workspace";
 import { MoveRuleForm } from "@/components/catalog/RuleControls";
 import { requireStaff } from "@/lib/catalog/access";
 import { describeConditions } from "@/lib/catalog/describe-rule";
-import { listRules } from "@/lib/catalog/rule-queries";
+import { listRules, listTemplateOptions } from "@/lib/catalog/rule-queries";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { cardVariants } from "@/components/ui/Card";
@@ -20,10 +24,23 @@ export default async function Page({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const profile = await requireStaff();
-  const rules = await listRules();
-  const eliminada = (await searchParams).eliminada === "1";
+  const search = await searchParams;
+  const filters = ruleList.parse(search);
+  const [{ rules, total, pages, activeTotal }, templates] = await Promise.all([listRules(filters), listTemplateOptions()]);
+  const eliminada = search.eliminada === "1";
+  const canReorder = !ruleList.hasActiveFilters(filters) && filters.page === 1 && pages === 1;
+  const choices = [
+    { name: "status", label: "Estado", options: { active: "Activas", inactive: "Inactivas" } },
+    { name: "state", label: "Condiciones", options: { broken: "Condiciones inválidas" } },
+    { name: "template", label: "Plantilla de destino", options: Object.fromEntries(templates.map((template) => [template.id, template.name])) },
+  ];
+  const chips = Object.entries(filters).filter(([key, value]) => key !== "page" && value).map(([key, value]) => {
+    const choice = choices.find((choice) => choice.name === key);
+    const options: Record<string, string> = choice?.options ?? {};
+    return { label: options[String(value)] ?? String(value),
+      href: ruleList.href(filters, { [key]: undefined, page: 1 }), removeLabel: `Quitar ${choice?.label ?? "búsqueda"}` };
+  });
   const esAdmin = profile.role === "admin";
-  const activas = rules.filter((rule) => rule.is_active);
 
   return (
     <Workspace
@@ -52,7 +69,7 @@ export default async function Page({
         </p>
       )}
 
-      {rules.length > 0 && activas.length === 0 && (
+      {rules.length > 0 && activeTotal === 0 && (
         <p
           role="alert"
           className="mb-6 rounded-lg border border-destructive bg-danger-soft p-3 text-sm text-destructive"
@@ -62,7 +79,14 @@ export default async function Page({
         </p>
       )}
 
-      {rules.length === 0 ? (
+      <ListFilters action="/rules" label="Filtros de reglas" values={filters} choices={choices} chips={chips} />
+      {!canReorder && esAdmin && <Notice tone="info" className="mb-4">Quita los filtros para reordenar. Si hay varias páginas, los controles se ocultan para evitar mover una regla respecto a otra que no está a la vista. El orden es el que evalúa el motor.</Notice>}
+      <p className="mb-4 text-sm text-muted-foreground" aria-live="polite">{total} reglas encontradas</p>
+      {rules.length === 0 && (ruleList.hasActiveFilters(filters) || filters.page > 1) ? (
+        <EmptyState title="No hay reglas en esta página" action={<ButtonLink href="/rules">Ver todas las reglas</ButtonLink>}>
+          Prueba con menos filtros o vuelve a la primera página.
+        </EmptyState>
+      ) : rules.length === 0 ? (
         <EmptyState
           title="Aún no hay reglas de asignación"
           action={
@@ -104,8 +128,8 @@ export default async function Page({
                   </div>
                 </div>
 
-                {esAdmin && (
-                  <div className="flex gap-2">
+                {esAdmin && canReorder && (
+                  <div className="grid grid-cols-2 gap-2">
                     <MoveRuleForm
                       ruleId={rule.id}
                       direction="up"
@@ -158,6 +182,7 @@ export default async function Page({
         </ol>
       )}
 
+      <Pagination page={filters.page} pages={pages} hrefFor={(page) => ruleList.href(filters, { page })} label="Páginas de reglas" />
       {!esAdmin && rules.length > 0 && (
         <EmptyState className="mt-8" title="Las reglas son de solo lectura">
           Puedes consultar las reglas para entender por qué un paciente recibió
