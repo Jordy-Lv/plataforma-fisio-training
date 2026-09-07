@@ -1,3 +1,5 @@
+import { Skeleton, SkeletonCard } from "@/components/ui/Skeleton";
+
 /*
   Esqueleto de la vista del paciente. Sustituye al «Cargando…» suelto: con una
   sola línea de texto la pantalla parecía vacía y en una conexión lenta —la
@@ -12,15 +14,14 @@ export default function Loading() {
       aria-label="Cargando tu espacio"
       className="mx-auto max-w-[86rem] px-5 py-8 sm:px-8"
     >
-      <div className="animate-pulse motion-reduce:animate-none">
-        <div className="h-9 w-56 rounded-lg bg-muted" />
-        <div className="mt-4 h-5 w-full max-w-md rounded-lg bg-muted" />
+      <div>
+        <Skeleton className="h-9 w-56 rounded-lg bg-muted" />
+        <Skeleton className="mt-4 h-5 w-full max-w-md rounded-lg bg-muted" />
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           {[0, 1, 2, 3].map((i) => (
-            <div
+            <SkeletonCard
               key={i}
-              className="h-28 rounded-2xl border border-border bg-muted/60"
-            />
+              className="h-28 rounded-2xl border border-border bg-muted/60" />
           ))}
         </div>
       </div>
