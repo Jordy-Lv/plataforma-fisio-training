@@ -41,3 +41,6 @@ Thumbs.db
 
 # Trabajo local no versionado
 /_local/
+
+# Material temporal de implementación y verificación
+/work/
