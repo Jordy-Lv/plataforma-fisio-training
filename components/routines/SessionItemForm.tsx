@@ -11,7 +11,11 @@ import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { bodyPartLabels, bodyParts } from "@/lib/catalog/body-parts";
 import { logSessionItem } from "@/lib/routines/session-actions";
 import { sessionLogSchema, type RoutineActionState } from "@/lib/routines/schemas";
-import type { ExecutionItem, SessionLog } from "@/lib/routines/session-queries";
+import type {
+  ExecutionItem,
+  ReplacementExercise,
+  SessionLog,
+} from "@/lib/routines/session-queries";
 
 const labels = { done: "Hecho", skipped: "Saltado", modified: "Modificado" };
 
@@ -38,11 +42,30 @@ export function SessionItemForm({
   sessionId: string;
   item: ExecutionItem;
   log?: SessionLog;
-  catalog: { id: string; name: string }[];
+  catalog: ReplacementExercise[];
 }) {
   const exercise = log?.exercises ?? item.exercises;
   const [validation, setValidation] = useState<string>();
-  const [pain, setPain] = useState(log?.pain_level ?? 0);
+  // El selector de sustitución arranca acotado a ejercicios que comparten grupo
+  // muscular con el prescrito. Si ya hay una sustitución guardada o el ejercicio
+  // no tiene grupos etiquetados, se muestra el catálogo entero.
+  const itemMuscles = item.exercises?.muscle_groups ?? [];
+  const [showAllReplacements, setShowAllReplacements] = useState(
+    Boolean(log?.replaced_by_exercise_id) || itemMuscles.length === 0,
+  );
+  const replacementOptions =
+    showAllReplacements || itemMuscles.length === 0
+      ? catalog
+      : catalog.filter(
+          (option) =>
+            option.id !== item.exercise_id &&
+            option.muscle_groups.some((group) => itemMuscles.includes(group)),
+        );
+  // Sin valor por defecto: el paciente elige un escalón a conciencia. Antes
+  // llegaba "0 / Sin dolor" preseleccionado y, con `status` en "Hecho", se
+  // registraba el ejercicio sin reportar nada —justo lo que dispara las alertas
+  // clínicas—.
+  const [pain, setPain] = useState<number | null>(log?.pain_level ?? null);
   const [state, action, pending] = useActionState<RoutineActionState, FormData>(
     logSessionItem,
     {},
@@ -179,11 +202,16 @@ export function SessionItemForm({
                   key={level}
                   className="flex min-h-11 cursor-pointer items-center justify-center rounded-lg border border-input bg-surface text-base font-medium has-[:checked]:border-brand has-[:checked]:bg-brand-soft has-[:checked]:text-brand-soft-foreground has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ring"
                 >
+                  {/*
+                    Sin `required` nativo: el radio es `sr-only` y su burbuja
+                    aparece descolgada. La ausencia de escalón la recoge el
+                    `safeParse` del `onSubmit` y el aviso sale en línea, igual
+                    que el resto de reglas del formulario.
+                  */}
                   <input
                     type="radio"
                     name="painLevel"
                     value={level}
-                    required
                     checked={pain === level}
                     onChange={() => setPain(level)}
                     className="sr-only"
@@ -212,19 +240,45 @@ export function SessionItemForm({
             <Textarea name="notes" maxLength={2000} defaultValue={log?.notes ?? ""} />
           </Field>
 
-          <Field label="Ejercicio de sustitución">
-            <Select
-              name="replacedByExerciseId"
-              defaultValue={log?.replaced_by_exercise_id ?? ""}
+          {/*
+            El botón de alternancia va fuera del `Field`: `Field` es un
+            `<label>` y un `<button>` dentro activaría también el `<select>`.
+          */}
+          <div className="grid gap-2">
+            <Field
+              label="Ejercicio de sustitución"
+              hint={
+                itemMuscles.length > 0 && !showAllReplacements
+                  ? `${replacementOptions.length} ejercicios del mismo grupo muscular.`
+                  : undefined
+              }
             >
-              <option value="">Sin sustitución</option>
-              {catalog.map((exercise) => (
-                <option key={exercise.id} value={exercise.id}>
-                  {exercise.name}
-                </option>
-              ))}
-            </Select>
-          </Field>
+              <Select
+                name="replacedByExerciseId"
+                defaultValue={log?.replaced_by_exercise_id ?? ""}
+              >
+                <option value="">Sin sustitución</option>
+                {replacementOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            {itemMuscles.length > 0 && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="justify-self-start"
+                onClick={() => setShowAllReplacements((value) => !value)}
+              >
+                {showAllReplacements
+                  ? "Mostrar solo ejercicios afines"
+                  : "Ver todo el catálogo"}
+              </Button>
+            )}
+          </div>
 
           <Button type="submit" size="lg" disabled={pending} className="w-full">
             {pending

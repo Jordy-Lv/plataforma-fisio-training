@@ -66,6 +66,11 @@ export function AuthForm({ mode }: { mode: Mode }) {
           <label htmlFor="email" className="block text-sm font-semibold">
             Correo electrónico
           </label>
+          {/*
+            React 19 resetea el formulario al terminar la acción. `defaultValue`
+            con el correo que devuelve el estado hace que el reset lo vuelva a
+            escribir en vez de dejar el campo vacío tras un fallo de acceso.
+          */}
           <Input
             id="email"
             name="email"
@@ -75,6 +80,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
             spellCheck={false}
             maxLength={254}
             required
+            defaultValue={state.email}
             disabled={pending}
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? "auth-error" : undefined}

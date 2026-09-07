@@ -20,7 +20,17 @@ export function ReadAlertForm({ alertId }: { alertId: string }) {
   return (
     <form action={action} className="mt-4 grid gap-2">
       <input type="hidden" name="alertId" value={alertId} />
-      <Button variant="outline" className="justify-self-start" disabled={pending}>
+      {/*
+        `type="submit"` explícito: el `<Button>` de `@base-ui/react` emite
+        `type="button"` por defecto, así que sin esto el `<form action>` nunca
+        se envía y la alerta no se marca como leída.
+      */}
+      <Button
+        type="submit"
+        variant="outline"
+        className="justify-self-start"
+        disabled={pending}
+      >
         {pending ? "Guardando…" : "Marcar como leída para mí"}
       </Button>
       <FormMessage state={state} />

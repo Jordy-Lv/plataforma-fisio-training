@@ -58,8 +58,15 @@ export async function PeoplePanel({
       }
     >
       {overview}
-      <div className="mt-10 grid items-start gap-10 lg:grid-cols-[1fr_320px]">
-        <section>
+      {/*
+        La lista y el formulario se parten en dos columnas a partir de `xl`
+        (1280px). Antes lo hacían en `lg` (1024px) y entre ~1024 y ~1200, con la
+        barra lateral del shell, la columna de "Dar de alta" no cabía y la
+        pantalla desbordaba en horizontal. `min-w-0` en la lista deja que su
+        pista flexible se encoja por debajo del ancho de su contenido.
+      */}
+      <div className="mt-10 grid items-start gap-10 xl:grid-cols-[1fr_320px]">
+        <section className="min-w-0">
           {people.length === 0 ? (
             <EmptyState title="Aún no tienes pacientes asignados">
               Crea tu primer paciente con el formulario de esta pantalla para
