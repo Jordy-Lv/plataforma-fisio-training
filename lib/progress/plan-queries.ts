@@ -1,3 +1,5 @@
+import { type OfferFilters } from "@/lib/progress/offer-list";
+import { sanitizeSearch } from "@/lib/shared/search";
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
@@ -51,13 +53,18 @@ export async function listActivePlans(): Promise<Plan[]> {
 }
 
 /** Todos los planes, activos o no, para el panel de administración. */
-export async function listAllPlans(): Promise<Plan[]> {
+export async function listAllPlans(filters?: OfferFilters): Promise<Plan[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("plans")
     .select(planColumns)
     .order("is_active", { ascending: false })
     .order("price", { ascending: true });
+  const term = sanitizeSearch(filters?.q ?? "");
+  if (term) query = query.ilike("name", `%${term}%`);
+  if (filters?.status) query = query.eq("is_active", filters.status === "active");
+  const { data, error } = await query;
+
   if (error)
     throw new Error(`No se pudieron consultar los planes: ${error.message}`);
   return data ?? [];
@@ -100,14 +107,19 @@ export async function listActiveServiceGroups(): Promise<ServiceGroup[]> {
 }
 
 /** Todos los servicios, para el panel de administración. */
-export async function listAllServices(): Promise<Service[]> {
+export async function listAllServices(filters?: OfferFilters): Promise<Service[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("services")
     .select(serviceColumns)
     .order("is_active", { ascending: false })
     .order("category", { ascending: true })
     .order("name", { ascending: true });
+  const term = sanitizeSearch(filters?.q ?? "");
+  if (term) query = query.ilike("name", `%${term}%`);
+  if (filters?.status) query = query.eq("is_active", filters.status === "active");
+  const { data, error } = await query;
+
   if (error)
     throw new Error(`No se pudieron consultar los servicios: ${error.message}`);
   return data ?? [];
