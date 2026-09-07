@@ -86,7 +86,17 @@ export async function saveOnboardingStep(
       };
   }
   revalidatePath("/patient", "layout");
-  redirect(step.data === "3" ? "/patient" : "/patient/onboarding");
+  // Tras los pasos 1 y 2 se vuelve al wizard, pero con el número de paso en la
+  // URL: redirigir a `/patient/onboarding` a secas —la misma ruta en la que ya
+  // está el formulario— el App Router lo trata como no-op y no re-renderiza el
+  // Server Component, así que la pantalla se queda en el paso anterior aunque
+  // `onboarding_step` ya haya subido. Cambiar el query fuerza la navegación.
+  // La página acota `?step=` a `<= onboarding_step + 1`, así que el salto es seguro.
+  redirect(
+    step.data === "3"
+      ? "/patient"
+      : `/patient/onboarding?step=${Number(step.data) + 1}`,
+  );
 }
 
 export async function updatePatientProfile(
