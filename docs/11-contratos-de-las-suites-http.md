@@ -163,6 +163,15 @@ suite los exige **todos en el mismo formulario**.
 > **`/pro/alerts` sin filtros tiene que mostrar la alerta recién creada.** La suite la busca
 > por `value="<alertId>"` y comprueba además que la tercera sesión del camino 5 aparece. Con
 > paginación: orden `created_at desc`, filtro por defecto «todas» y página de 20 o más.
+>
+> Esa tercera sesión se lee por el **texto de la nota**, no por un formulario. Desde 15.3 vive
+> dentro de un diálogo, y por eso ese diálogo no puede usar portal ni montarse al abrirse: ver
+> §5, «Leer un detalle en un diálogo sin perder lo que lee una suite».
+
+> **En `/routine/sessions/[id]` el formulario de cierre va ahora antes que los de registro**:
+> desde 8.2 vive en la banda de avance, en lo alto de la pantalla. No hay conflicto —los
+> marcadores son el texto `Terminar sesión` y `name="itemId"`, y ninguno de los dos formularios
+> cumple el del otro—, pero es un orden que conviene no volver a mover a ciegas.
 
 ### Seguimiento
 
@@ -295,6 +304,35 @@ donde va el formulario emite `<template id="P:n">` y el marcado real viaja al fi
 documento dentro de un `<div hidden id="S:n">`. Sigue estando en el HTML —por eso las suites,
 que buscan con una expresión regular sobre todo el documento, lo encuentran— pero cualquier
 recuento que asocie un campo con el `<details>` que lo contiene dará un resultado falso.
+
+### Leer un detalle en un diálogo sin perder lo que lee una suite
+
+`DetailPanel` (`components/ui/DetailDialog.tsx`) es la contraparte de lectura de `SheetModal`
+y comparte con él la decisión que lo hace compatible: **no usa portal**. El contenido se
+renderiza en su sitio y solo se muestra u oculta con `hidden`, así que sigue en el HTML del
+servidor. Es lo que permite que la evidencia de una alerta —donde `verify-routine-sessions`
+busca la nota `Camino 5: sesión 3`— viva dentro de un diálogo.
+
+Tres reglas al usarlo:
+
+- **`keepMounted` decide si el contenido se emite.** Con `true` (el valor por defecto) el
+  detalle está siempre en el documento, que es lo que necesita cualquier texto que lea una
+  suite. Con `false` se monta al abrir: solo para listados largos donde el detalle se repite
+  en cada fila y nadie lo lee por HTTP.
+- **Dentro no entra ningún formulario.** No es una limitación técnica —sin portal, un `<form>`
+  se emitiría igual— sino la misma decisión del ADR-0008: la edición se pliega con `<details>`,
+  donde se ve que existe.
+- **El enlace de la fila no se sustituye, se intercepta.** El `<a href>` sigue en el HTML con
+  su ruta; un envoltorio de cliente captura el clic y abre el diálogo, respetando `Cmd`/`Ctrl`,
+  `Shift` y el botón central. Sin JavaScript navega como siempre. Ojo: `next/link` navega desde
+  su propio `onClick` **sin mirar si alguien ya llamó a `preventDefault`**, así que el
+  interceptor tiene que llamar además a `stopPropagation`.
+
+**Y una advertencia de peso, que no es de contratos pero cuesta cara.** Las props de un
+componente de cliente viajan serializadas en el documento. Pasarle el detalle —o la fila— ya
+renderizado desde el servidor multiplica el peso de la página: el árbol de React de una tarjeta
+pesa unas veinte veces más que los datos con los que se construye. `/exercises` pasó de 64 kB a
+623 haciéndolo mal, y a 195 pasando el dato (doc 12, punto 3 quater).
 
 ### Acotar una lista sin añadir un `<form>`
 

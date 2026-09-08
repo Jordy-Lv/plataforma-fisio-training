@@ -3,15 +3,17 @@ import { cn } from "cn";
 import { getActiveProfile } from "@/lib/auth/session";
 import { listPeople } from "@/lib/auth/people-queries";
 import { alertList } from "@/lib/routines/alert-list";
-import { clinicalAlerts, type ClinicalAlert } from "@/lib/routines/alert-queries";
+import { clinicalAlerts } from "@/lib/routines/alert-queries";
 import { Workspace } from "@/components/auth/Workspace";
+import { AlertEvidence } from "@/components/routines/AlertEvidence";
 import { ReadAlertForm } from "@/components/routines/ReadAlertForm";
-import { Badge, alertBadgeVariant, PainBadge } from "@/components/ui/Badge";
+import { Badge, alertBadgeVariant } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { cardVariants } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ListFilters } from "@/components/ui/ListFilters";
 import { Pagination } from "@/components/ui/Pagination";
+import { sessionReports } from "@/lib/routines/session-queries";
 import { bodyPartLabels, bodyParts } from "@/lib/catalog/body-parts";
 
 const titles = {
@@ -34,34 +36,6 @@ const readLabels = { unread: "Sin leer", read: "Leídas" };
 const zoneLabel = (zone: string) =>
   bodyPartLabels[zone as (typeof bodyParts)[number]] ?? zone;
 
-type Evidence = ClinicalAlert["evidence"][number];
-
-/** Una sesión que motivó la alerta: nivel de dolor, zona, nota y enlace. */
-function EvidenceItem({ evidence }: { evidence: Evidence }) {
-  return (
-    <div className="grid gap-2 rounded-lg bg-muted p-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <PainBadge level={evidence.pain_level} />
-        {evidence.pain_location && (
-          <Badge>{zoneLabel(evidence.pain_location)}</Badge>
-        )}
-      </div>
-      {evidence.notes && (
-        <p className="whitespace-pre-wrap break-words text-sm">
-          {evidence.notes}
-        </p>
-      )}
-      <ButtonLink
-        variant="ghost"
-        className="justify-self-start"
-        href={`/pro/sessions/${evidence.session_id}`}
-      >
-        Ver sesión del {evidence.performed_on}
-      </ButtonLink>
-    </div>
-  );
-}
-
 export default async function Page({
   searchParams,
 }: {
@@ -76,6 +50,12 @@ export default async function Page({
     clinicalAlerts(filters, actor.id),
     listPeople("patients"),
   ]);
+  // Lo que registró el paciente en las sesiones que motivaron las alertas de
+  // **esta página**, en una sola consulta con `in`. Es lo que se lee dentro del
+  // diálogo sin salir de la pantalla de triaje (15.4).
+  const reports = await sessionReports(
+    alerts.flatMap((alert) => alert.evidence.map((item) => item.session_id)),
+  );
 
   // El filtro por paciente emite uuids, y en esta pantalla no hay conflicto:
   // el marcador de «marcar leída» es el uuid **de la alerta** (`docs/11`, §3),
@@ -168,34 +148,18 @@ export default async function Page({
                   </p>
                 )}
 
-                {alert.evidence.length > 0 && (
-                  <div className="mt-4 grid gap-3">
-                    <EvidenceItem evidence={alert.evidence[0]} />
-                    {alert.evidence.length > 1 && (
-                      // La evidencia restante se pliega: una alerta con tres
-                      // sesiones baja de ~658 px a ~240. Cerrado, el `<details>`
-                      // deja las otras sesiones en el HTML del servidor —sin
-                      // JavaScript se abre igual—, que es lo que lee
-                      // `verify-routine-sessions` («Camino 5: sesión 3»).
-                      <details className="rounded-lg border border-border px-3">
-                        <summary className="flex min-h-11 cursor-pointer items-center py-2.5 text-sm font-medium text-brand">
-                          Ver las otras {alert.evidence.length - 1}{" "}
-                          {alert.evidence.length - 1 === 1
-                            ? "sesión"
-                            : "sesiones"}
-                        </summary>
-                        <div className="grid gap-3 pb-3">
-                          {alert.evidence.slice(1).map((evidence, index) => (
-                            <EvidenceItem
-                              key={`${evidence.session_id}-${index}`}
-                              evidence={evidence}
-                            />
-                          ))}
-                        </div>
-                      </details>
-                    )}
-                  </div>
-                )}
+                {/*
+                  La tarjeta enseña la última sesión y nada más: el resto de la
+                  evidencia —y lo que se registró en cada una— se lee en un
+                  diálogo, encima de la lista, sin cambiar de pantalla.
+                */}
+                <AlertEvidence
+                  title={`${titles[alert.type]} · ${alert.patient?.full_name ?? "Paciente"}`}
+                  evidence={alert.evidence}
+                  reports={alert.evidence.map(
+                    (evidence) => reports.get(evidence.session_id) ?? null,
+                  )}
+                />
 
                 <div className="mt-4 flex flex-wrap items-center gap-3">
                   <ButtonLink href={`/pro/routines/${alert.patient_id}`}>

@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Workspace } from "@/components/auth/Workspace";
-import { ExerciseCard } from "@/components/catalog/ExerciseCard";
 import { ExerciseFilters } from "@/components/catalog/ExerciseFilters";
-import { ExerciseRow } from "@/components/catalog/ExerciseRow";
+import { ExerciseQuickView } from "@/components/catalog/ExerciseQuickView";
 import { ExerciseViewSwitch } from "@/components/catalog/ExerciseViewSwitch";
 import { ExercisePagination } from "@/components/catalog/ExercisePagination";
 import { requireStaff } from "@/lib/catalog/access";
@@ -107,13 +106,16 @@ export default async function Page({
           }
         >
           {exercises.map((exercise) => (
-            <li key={exercise.id} className={filters.vista === "lista" ? undefined : "flex"}>
-              {filters.vista === "lista" ? (
-                <ExerciseRow exercise={exercise} />
-              ) : (
-                <ExerciseCard exercise={exercise} />
-              )}
-            </li>
+            /*
+              La fila y la tarjeta se pintan igual que siempre; el envoltorio
+              solo intercepta el clic del nombre y abre la ficha aquí mismo
+              (15.2). Sin JavaScript el enlace lleva a `/exercises/[id]`.
+            */
+            <ExerciseQuickView
+              key={exercise.id}
+              exercise={exercise}
+              vista={filters.vista}
+            />
           ))}
         </ul>
       )}

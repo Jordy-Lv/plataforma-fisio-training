@@ -12,7 +12,7 @@ import { Field, Input, Select } from "@/components/ui/Field";
 import { FilterForm } from "@/components/ui/FilterForm";
 import { Pagination } from "@/components/ui/Pagination";
 import { sessionList } from "@/lib/routines/session-list";
-import { patientSessions } from "@/lib/routines/session-queries";
+import { patientSessions, sessionReports } from "@/lib/routines/session-queries";
 
 const statusLabels = {
   in_progress: "En curso",
@@ -35,6 +35,10 @@ export default async function Page({
   const { sessions, total, pages } = patient
     ? await patientSessions(patient.id, filters)
     : { sessions: [], total: 0, pages: 1 };
+  // Los informes de esta página, en una sola consulta: cada tarjeta abre lo que
+  // el paciente registró sin cambiar de pantalla (15.4). Nunca una consulta por
+  // tarjeta —el listado pagina de veinte en veinte y el `in` los trae juntos—.
+  const reports = await sessionReports(sessions.map((session) => session.id));
 
   const chips = [
     filters.status ? { key: "status", label: statusLabels[filters.status], removeLabel: "Quitar el estado" } : null,
@@ -124,7 +128,7 @@ export default async function Page({
                   Prueba con otro rango de fechas o vuelve a la primera página.
                 </EmptyState>
               ) : (
-                <SessionHistory sessions={sessions} staff />
+                <SessionHistory sessions={sessions} staff reports={reports} />
               )}
               <Pagination page={filters.page} pages={pages}
                 hrefFor={(page) => sessionList.href(filters, { page })}

@@ -3,19 +3,40 @@ import { createClient } from "@/lib/supabase/server";
 import { sessionList, type SessionListFilters } from "@/lib/routines/session-list";
 import { readPage } from "@/lib/shared/read-pages";
 
-export async function sessionDetails(sessionId: string) {
-  const supabase = await createClient();
-  const { data, error } = await supabase.from("sessions").select(`id, patient_id, routine_id, routine_day_id,
+/** La sesión con todo lo que registró el paciente: es lo que pinta `SessionReport`. */
+const detailColumns = `id, patient_id, routine_id, routine_day_id,
     performed_on, status, completed_at, routines(name), routine_days(title, day_number),
     session_logs(id, routine_item_id, status, actual_sets, actual_reps, actual_weight, prescribed_sets,
       prescribed_reps, prescribed_weight, perceived_effort, pain_level, pain_location, notes,
       replaced_by_exercise_id, exercises!session_logs_exercise_id_fkey(name, description, media_url),
-      replacement:exercises!session_logs_replaced_by_exercise_id_fkey(name))`).eq("id", sessionId).maybeSingle();
+      replacement:exercises!session_logs_replaced_by_exercise_id_fkey(name))`;
+
+export async function sessionDetails(sessionId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("sessions").select(detailColumns).eq("id", sessionId).maybeSingle();
   if (error) throw new Error(`No se pudo consultar la sesión: ${error.message}`);
   return data;
 }
 export type SessionDetails = NonNullable<Awaited<ReturnType<typeof sessionDetails>>>;
 export type SessionLog = SessionDetails["session_logs"][number];
+
+/**
+ * Los informes de varias sesiones de una vez, para leerlos en un diálogo sin
+ * cambiar de pantalla (15.4). Una sola consulta con `in`, nunca una por fila:
+ * quien la llama ya tiene los identificadores de **su página**, así que el
+ * tamaño está acotado por la paginación del listado.
+ *
+ * Devuelve un `Map` porque quien la llama recorre su propia lista y busca por
+ * identificador. Una sesión que RLS no deje ver simplemente no está en el mapa.
+ */
+export async function sessionReports(sessionIds: string[]) {
+  const ids = [...new Set(sessionIds)];
+  if (ids.length === 0) return new Map<string, SessionDetails>();
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("sessions").select(detailColumns).in("id", ids);
+  if (error) throw new Error(`No se pudieron consultar las sesiones: ${error.message}`);
+  return new Map((data ?? []).map((session) => [session.id, session]));
+}
 
 /**
  * El historial de sesiones de un paciente, de la más reciente a la más
@@ -50,12 +71,28 @@ export async function executionExercises(dayId: string) {
 }
 export type ExecutionItem = Awaited<ReturnType<typeof executionExercises>>[number];
 
-export async function replacementExercises() {
+/**
+ * Los ejercicios que pueden sustituir a los de una sesión.
+ *
+ * Se llama **una vez por sesión**, con los grupos musculares de todos sus
+ * ejercicios, no una vez por ejercicio. Antes traía el catálogo entero: 868
+ * filas que en el teléfono se convertían en 1.486 `<option>` y 758 KB de
+ * descarga a mitad de entrenamiento. Con `overlaps` la base devuelve solo los
+ * afines, y el tope de 200 acota el caso de un día que toca medio cuerpo.
+ *
+ * Sin grupos —un día cuyos ejercicios no están etiquetados— cae en el catálogo
+ * ordenado por nombre, también acotado: es preferible una lista corta a una
+ * pantalla que no carga.
+ *
+ * `muscle_groups` viaja con cada fila para que el formulario pueda acotar
+ * todavía más, al grupo del ejercicio concreto que se está registrando.
+ */
+export async function replacementExercises(muscleGroups?: string[], limit = 200) {
   const supabase = await createClient();
-  // `muscle_groups` viaja para acotar en el cliente el selector de sustitución
-  // a ejercicios afines: en móvil, a mitad de sesión, una lista de ~868
-  // opciones sin filtrar es inusable.
-  const { data, error } = await supabase.from("exercises").select("id, name, muscle_groups").order("name").limit(1000);
+  const groups = [...new Set(muscleGroups ?? [])];
+  let query = supabase.from("exercises").select("id, name, muscle_groups").order("name").limit(limit);
+  if (groups.length > 0) query = query.overlaps("muscle_groups", groups);
+  const { data, error } = await query;
   if (error) throw new Error(`No se pudo consultar el catálogo: ${error.message}`);
   return data ?? [];
 }

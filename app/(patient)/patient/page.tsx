@@ -1,14 +1,14 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowRight, Flame, PlayCircle } from "lucide-react";
+import { ArrowRight, Flame } from "lucide-react";
 import { cn } from "cn";
 
 import { Workspace } from "@/components/auth/Workspace";
+import { OpenSessionCard } from "@/components/routines/OpenSessionCard";
 import { WeekStrip } from "@/components/patients/WeekStrip";
 import { Card, CardDescription, CardTitle } from "@/components/ui/Card";
 import { requireRole } from "@/lib/auth/session";
 import { patientOverview } from "@/lib/progress/patient-overview";
-import { formatDate } from "@/lib/progress/vocabulary";
 
 export const metadata: Metadata = {
   title: "Mi espacio",
@@ -66,29 +66,7 @@ export default async function Page() {
         </Card>
 
         {overview.openSession ? (
-          <Card interactive padding="lg">
-            <CardTitle className="flex items-center gap-3 text-lg">
-              <PlayCircle
-                aria-hidden="true"
-                className="size-5 shrink-0 text-brand"
-              />
-              {/*
-                El enlace se estira sobre toda la tarjeta con `after:inset-0`,
-                así que el objetivo táctil es la tarjeta entera y no solo el
-                texto del título.
-              */}
-              <Link
-                href={`/routine/sessions/${overview.openSession.id}`}
-                className="rounded-lg after:absolute after:inset-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-              >
-                Continuar la sesión de {overview.openSession.dayTitle}
-              </Link>
-            </CardTitle>
-            <CardDescription>
-              {overview.openSession.routineName} · empezada el{" "}
-              {formatDate(overview.openSession.performedOn)}. Quedó sin terminar.
-            </CardDescription>
-          </Card>
+          <OpenSessionCard session={overview.openSession} />
         ) : (
           <Card interactive padding="lg">
             <CardTitle className="flex items-center gap-3 text-lg">
