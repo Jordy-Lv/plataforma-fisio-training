@@ -276,9 +276,18 @@ export default async function Page({
                 </h3>
 
                 {puedeEditar && (
-                  <div className="mt-4">
-                    <DayHeaderForms templateId={template.id} day={dia} />
-                  </div>
+                  // Renombrar o eliminar un día es raro; no tiene por qué ocupar
+                  // la cabecera de cada día. Cerrado, el `<details>` deja sus
+                  // formularios («Eliminar día», `value="<dayId>"`) en el HTML
+                  // del servidor, que es lo que recorre `verify-catalog-templates`.
+                  <details className="mt-3 rounded-xl border border-border px-4">
+                    <summary className="flex min-h-11 cursor-pointer items-center py-3 text-sm font-medium text-brand">
+                      Renombrar o eliminar el día
+                    </summary>
+                    <div className="pb-4">
+                      <DayHeaderForms templateId={template.id} day={dia} />
+                    </div>
+                  </details>
                 )}
 
                 {dia.items.length === 0 ? (
