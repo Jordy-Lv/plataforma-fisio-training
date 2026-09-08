@@ -1,5 +1,5 @@
 import { templateList } from "@/lib/catalog/template-list";
-import { ListFilters } from "@/components/catalog/ListFilters";
+import { ListFilters } from "@/components/ui/ListFilters";
 import { Pagination } from "@/components/ui/Pagination";
 import { DataList } from "@/components/ui/DataList";
 import Link from "next/link";

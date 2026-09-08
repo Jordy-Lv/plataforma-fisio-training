@@ -1,5 +1,5 @@
 import { ruleList } from "@/lib/catalog/rule-list";
-import { ListFilters } from "@/components/catalog/ListFilters";
+import { ListFilters } from "@/components/ui/ListFilters";
 import { Pagination } from "@/components/ui/Pagination";
 import { Notice } from "@/components/ui/Notice";
 import Link from "next/link";

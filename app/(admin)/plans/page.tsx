@@ -1,5 +1,5 @@
 import { offerList } from "@/lib/progress/offer-list";
-import { ListFilters } from "@/components/catalog/ListFilters";
+import { ListFilters } from "@/components/ui/ListFilters";
 import type { Metadata } from "next";
 import { Workspace } from "@/components/auth/Workspace";
 import { OfferControls } from "@/components/progress/OfferControls";
