@@ -60,28 +60,21 @@ Rama `ui/ficha-paciente`. Desbloquea 5.3, 5.4, 16.5 y la cabecera de
 
 ## Sección 7 — Los dos defectos de la sesión del paciente
 
-Rama `fix/sesion-acuses`.
+Rama `fix/sesion-acuses`. **Hecha** (salvo el repaso en navegador real de 7.2).
 
-- **[código] 7.1** — En `app/(patient)/routine/sessions/[sessionId]/page.tsx` la
-  `key` del `SessionItemForm` sigue siendo
-  `` `${item.id}-${JSON.stringify(logs.get(item.id) ?? null)}` ``. Cambiarla a
-  `key={item.id}` y comentar por qué no puede volver a depender del registro: al
-  guardar, la `key` cambia, React remonta el componente y descarta el estado de
-  éxito («Registro guardado» desaparece).
-- **[código] 7.3** — El acuse de cierre se pierde hoy: `closeSession` devuelve
-  `{ success: "Sesión completada…" }`, pero lo pintaría `SessionControls`, que
-  vive dentro de `SessionProgress` y solo se renderiza mientras la sesión está
-  `in_progress`. Al cerrar, ese árbol se desmonta y aparece `SessionReport`.
-  Mostrar el acuse **dentro de `SessionReport`** (un `Notice` cuando la sesión se
-  acaba de cerrar). `closeSession` ya **no** usa `redirect()` — eso está bien.
-  - De paso: `SessionReport` mezcla `performed_on` (ISO `2026-09-03`) y
-    `completed_at` (local `3/9/2026, 8:30:00`) en la misma línea. Unificar aquí
-    o en el cierre (hallazgo de 9.6).
-- **[verif.] 7.2** — En el navegador: al guardar un registro el bloque sigue
-  abierto y «Registro guardado» permanece a la vista.
-- **[verif.] 7.4** — La respuesta del envío de cierre contiene `Sesión completada`
-  o `Completada` y **no** contiene `Terminar sesión`.
-- **[verif.] 7.5** — `npm run test:routines:sessions` + CI.
+- **[hecho] 7.1** — `key={item.id}` en `SessionItemForm`, con el comentario que
+  explica por qué no puede volver a depender del registro.
+- **[hecho] 7.3** — `SessionReport` acepta `justClosed?` y pinta un `Notice`
+  de éxito con el texto que devuelve `closeSession`. La pantalla del paciente lo
+  pasa cuando `completed_at` (lo fija un trigger) está dentro de una ventana de
+  dos minutos —sin `redirect()`, el acuse no puede ir en la URL—. De paso, la
+  fecha y la hora del informe salen ya las dos de `formatDate`/`formatTime`.
+- **[verif.] 7.2** — Falta el repaso en un navegador real: al guardar un
+  registro el bloque sigue abierto y «Registro guardado» permanece. La suite ya
+  comprueba que el POST devuelve ese texto.
+- **[hecho] 7.4** — Cubierto por `test:routines:sessions` (`/Sesión completada|Completada/`
+  tras el cierre y `!includes("Terminar sesión")`).
+- **[hecho] 7.5** — `test:routines:sessions` 18/18 + CI en verde.
 
 ## Sección 9 — Rutina y portada del paciente
 

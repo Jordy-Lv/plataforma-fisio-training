@@ -13,6 +13,19 @@ import {
   sessionDetails,
 } from "@/lib/routines/session-queries";
 
+/** Dos minutos: la ventana en la que el paciente sigue mirando la pantalla
+ * tras pulsar «Terminar sesión». `closeSession` no redirige —vaciaría el
+ * cuerpo del POST que lee la suite—, así que el acuse no puede viajar en la
+ * URL; se decide aquí, en el servidor, comparando `completed_at` con ahora. */
+const VENTANA_ACUSE_MS = 2 * 60_000;
+
+function recienCerrada(session: { completed_at: string | null }) {
+  return (
+    session.completed_at != null &&
+    Date.now() - Date.parse(session.completed_at) < VENTANA_ACUSE_MS
+  );
+}
+
 export default async function Page({
   params,
 }: {
@@ -77,8 +90,13 @@ export default async function Page({
           </p>
           <div className="grid gap-5">
             {items.map((item) => (
+              // La `key` es solo el id del ejercicio y no puede volver a
+              // mezclar el registro: al depender de él, cada guardado cambiaba
+              // la `key`, React remontaba el bloque y con él se perdía el
+              // «Registro guardado» que vive en su `useActionState`
+              // (docs/11, §5).
               <SessionItemForm
-                key={`${item.id}-${JSON.stringify(logs.get(item.id) ?? null)}`}
+                key={item.id}
                 sessionId={session.id}
                 item={item}
                 log={logs.get(item.id)}
@@ -89,7 +107,7 @@ export default async function Page({
           </div>
         </>
       ) : (
-        <SessionReport session={session} />
+        <SessionReport session={session} justClosed={recienCerrada(session)} />
       )}
     </Workspace>
   );
