@@ -13,6 +13,7 @@ import {
   measurementLabels,
   measurements,
 } from "@/lib/progress/vocabulary";
+import { ScreeningHistory } from "@/components/progress/ScreeningHistory";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { cardVariants } from "@/components/ui/Card";
@@ -53,6 +54,9 @@ export default async function Page({
   if (!seguimiento) notFound();
 
   const { patient, screenings } = seguimiento;
+  const years = [
+    ...new Set(screenings.map((s) => new Date(s.taken_on).getUTCFullYear())),
+  ].sort((a, b) => b - a);
 
   return (
     <Workspace
@@ -80,52 +84,52 @@ export default async function Page({
 
           {screenings.length === 0 ? (
             <EmptyState title="Este paciente no tiene tamizajes">
-              Registra el primero con el formulario de esta página. A partir
-              del segundo se podrá ver su evolución.
+              Registra el primero con el formulario de esta página. A partir del
+              segundo se podrá ver su evolución.
             </EmptyState>
           ) : (
-            <ul className="grid gap-4">
-              {screenings.map((screening) => (
-                <li
-                  key={screening.id}
-                  className={cardVariants()}
-                >
-                  <h3 className="mb-3 font-semibold">
-                    {formatDate(screening.taken_on)}
-                  </h3>
+            <ScreeningHistory years={years}>
+              <ul className="grid gap-4">
+                {screenings.map((screening) => (
+                  <li
+                    key={screening.id}
+                    data-year={new Date(screening.taken_on).getUTCFullYear()}
+                    className={cardVariants()}
+                  >
+                    <h3 className="mb-3 font-semibold">
+                      {formatDate(screening.taken_on)}
+                    </h3>
 
-                  <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm sm:grid-cols-[auto_1fr_auto_1fr]">
-                    <dt className="text-muted-foreground">Peso</dt>
-                    <dd>{formatNumber(screening.weight_kg)} kg</dd>
-                    <dt className="text-muted-foreground">Talla</dt>
-                    <dd>{formatNumber(screening.height_cm)} cm</dd>
-                    <dt className="text-muted-foreground">IMC</dt>
-                    <dd>{formatNumber(screening.bmi)}</dd>
-                    <dt className="text-muted-foreground">Grasa</dt>
-                    <dd>
-                      {screening.body_fat_pct === null
-                        ? "—"
-                        : `${formatNumber(screening.body_fat_pct)} %`}
-                    </dd>
-                  </dl>
+                    <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm sm:grid-cols-[auto_1fr_auto_1fr]">
+                      <dt className="text-muted-foreground">Peso</dt>
+                      <dd>{formatNumber(screening.weight_kg)} kg</dd>
+                      <dt className="text-muted-foreground">Talla</dt>
+                      <dd>{formatNumber(screening.height_cm)} cm</dd>
+                      <dt className="text-muted-foreground">IMC</dt>
+                      <dd>{formatNumber(screening.bmi)}</dd>
+                      <dt className="text-muted-foreground">Grasa</dt>
+                      <dd>
+                        {screening.body_fat_pct === null
+                          ? "—"
+                          : `${formatNumber(screening.body_fat_pct)} %`}
+                      </dd>
+                    </dl>
 
-                  <Measurements screening={screening} />
+                    <Measurements screening={screening} />
 
-                  {screening.notes && (
-                    <p className="mt-3 leading-7 text-muted-foreground">
-                      {screening.notes}
-                    </p>
-                  )}
-                </li>
-              ))}
-            </ul>
+                    {screening.notes && (
+                      <p className="mt-3 leading-7 text-muted-foreground">
+                        {screening.notes}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </ScreeningHistory>
           )}
         </section>
 
-        <section
-          aria-labelledby="nuevo"
-          className={cardVariants()}
-        >
+        <section aria-labelledby="nuevo" className={cardVariants()}>
           <h2 id="nuevo" className="mb-1 text-xl font-semibold">
             Registrar un tamizaje
           </h2>

@@ -40,6 +40,7 @@ vistazo, quién está cumpliendo, quién reportó dolor o quién dejó de asisti
 - [`docs/11-contratos-de-las-suites-http.md`](docs/11-contratos-de-las-suites-http.md) — los marcadores del marcado que las suites de `scripts/` dan por contrato.
 - [`docs/12-medicion-de-densidad.md`](docs/12-medicion-de-densidad.md) — cómo se mide la densidad de un listado y las cifras registradas.
 - [`docs/13-referencia-smart-fit.md`](docs/13-referencia-smart-fit.md) — la referencia visual que señaló el cliente y qué se toma de ella.
+- [`docs/14-auditoria-de-vistas.md`](docs/14-auditoria-de-vistas.md) — repaso pantalla por pantalla con una rúbrica fija: qué le falta a cada vista y en qué orden se arregla.
 - [`docs/adr/`](docs/adr/) — decisiones de arquitectura con su justificación y sus alternativas descartadas.
 
 ## Stack

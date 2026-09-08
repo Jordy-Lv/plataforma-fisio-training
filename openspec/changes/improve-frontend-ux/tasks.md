@@ -242,3 +242,16 @@ manejo que ahí están resueltas y aquí no.
   - Falta correr `test:templates` y `test:routines:items` contra un build vivo (Supabase local estaba parado en esta sesión); los cuatro de CI —typecheck, lint, test:design, build— pasan.
 - [x] 17.8 Medir de nuevo `/patient`, `/patient/profile` y `/exercises` en Chrome y registrar el antes y el después en `docs/12-medicion-de-densidad.md`
 - [x] 17.9 `npm run test:people`, `test:auth:screens` y `test:catalog` en verde, más los cuatro de CI
+
+## 18. Repaso sistemático de todas las vistas — `docs/14-auditoria-de-vistas.md`
+
+Nace de la revisión de Yordy del 2026-09-07: «hay que repasar todas las vistas, modales,
+tarjetas; no entiendo por qué seguimos en las mismas o peor». Se dejó de arreglar la pantalla
+que el cliente señalaba y se auditaron **todas** de una vez, con una rúbrica fija (scroll,
+formularios abiertos, sin filtro, sin paginación, densidad, sin acceso directo, redacción,
+estados, resumen en modal).
+
+- [x] 18.1 Escribir `docs/14-auditoria-de-vistas.md`: método de medición, la rúbrica de nueve defectos, la tabla con las ~38 rutas y sus defectos, y el orden de ejecución. Enlazado desde el README.
+- [x] 18.2 Filtro por año en el historial de `/screenings/[patientId]` (`components/progress/ScreeningHistory.tsx`): arranca en el año más reciente, «Todos los años» en el `<select>`; sin JavaScript se ven todos. `test:screenings` 8/8 —los `<h3>` con la fecha y su orden no cambian—.
+- [ ] 18.3 Trabajar la tabla del doc 14 por orden de prioridad: primero los cimientos (sección 1), luego filtros y paginación en las listas del personal, luego los historiales de un paciente, luego los formularios largos que siguen abiertos.
+- [ ] 18.4 Cada vez que se cierre una fila de la tabla, medir el antes/después en Chrome y anotarlo en `docs/12-medicion-de-densidad.md`.
