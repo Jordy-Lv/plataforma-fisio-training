@@ -28,6 +28,36 @@ const severities = {
 const zoneLabel = (zone: string) =>
   bodyPartLabels[zone as (typeof bodyParts)[number]] ?? zone;
 
+type Evidence = Awaited<
+  ReturnType<typeof clinicalAlerts>
+>[number]["evidence"][number];
+
+/** Una sesión que motivó la alerta: nivel de dolor, zona, nota y enlace. */
+function EvidenceItem({ evidence }: { evidence: Evidence }) {
+  return (
+    <div className="grid gap-2 rounded-lg bg-muted p-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <PainBadge level={evidence.pain_level} />
+        {evidence.pain_location && (
+          <Badge>{zoneLabel(evidence.pain_location)}</Badge>
+        )}
+      </div>
+      {evidence.notes && (
+        <p className="whitespace-pre-wrap break-words text-sm">
+          {evidence.notes}
+        </p>
+      )}
+      <ButtonLink
+        variant="ghost"
+        className="justify-self-start"
+        href={`/pro/sessions/${evidence.session_id}`}
+      >
+        Ver sesión del {evidence.performed_on}
+      </ButtonLink>
+    </div>
+  );
+}
+
 export default async function Page() {
   const actor = await getActiveProfile();
   if (!actor) redirect("/login");
@@ -91,33 +121,34 @@ export default async function Page() {
                   </p>
                 )}
 
-                <ul className="mt-4 grid gap-3">
-                  {alert.evidence.map((evidence, index) => (
-                    <li
-                      key={`${evidence.session_id}-${index}`}
-                      className="grid gap-2 rounded-lg bg-muted p-3"
-                    >
-                      <div className="flex flex-wrap items-center gap-2">
-                        <PainBadge level={evidence.pain_level} />
-                        {evidence.pain_location && (
-                          <Badge>{zoneLabel(evidence.pain_location)}</Badge>
-                        )}
-                      </div>
-                      {evidence.notes && (
-                        <p className="whitespace-pre-wrap break-words text-sm">
-                          {evidence.notes}
-                        </p>
-                      )}
-                      <ButtonLink
-                        variant="ghost"
-                        className="justify-self-start"
-                        href={`/pro/sessions/${evidence.session_id}`}
-                      >
-                        Ver sesión del {evidence.performed_on}
-                      </ButtonLink>
-                    </li>
-                  ))}
-                </ul>
+                {alert.evidence.length > 0 && (
+                  <div className="mt-4 grid gap-3">
+                    <EvidenceItem evidence={alert.evidence[0]} />
+                    {alert.evidence.length > 1 && (
+                      // La evidencia restante se pliega: una alerta con tres
+                      // sesiones baja de ~658 px a ~240. Cerrado, el `<details>`
+                      // deja las otras sesiones en el HTML del servidor —sin
+                      // JavaScript se abre igual—, que es lo que lee
+                      // `verify-routine-sessions` («Camino 5: sesión 3»).
+                      <details className="rounded-lg border border-border px-3">
+                        <summary className="flex min-h-11 cursor-pointer items-center py-2.5 text-sm font-medium text-brand">
+                          Ver las otras {alert.evidence.length - 1}{" "}
+                          {alert.evidence.length - 1 === 1
+                            ? "sesión"
+                            : "sesiones"}
+                        </summary>
+                        <div className="grid gap-3 pb-3">
+                          {alert.evidence.slice(1).map((evidence, index) => (
+                            <EvidenceItem
+                              key={`${evidence.session_id}-${index}`}
+                              evidence={evidence}
+                            />
+                          ))}
+                        </div>
+                      </details>
+                    )}
+                  </div>
+                )}
 
                 <div className="mt-4 flex flex-wrap items-center gap-3">
                   <ButtonLink href={`/pro/routines/${alert.patient_id}`}>
