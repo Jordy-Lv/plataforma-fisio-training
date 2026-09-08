@@ -97,7 +97,7 @@ Estado: ⬜ pendiente · 🟡 parcial · ✅ hecho. Los números son del 2026-09
 
 | Ruta | kB | li | det | filtro | pag | Defectos | Qué hacer | Estado |
 |---|---|---|---|---|---|---|---|---|
-| `/plans` | 106 | 37 | **12** | sí | no | A | La edición de cada plan y servicio ya estaba plegada; ahora también las dos altas del final. **Falta paginar**: con veinte planes la pantalla vuelve a crecer sin tope | 🟡 |
+| `/plans` | 106 | 37 | **12** | sí | **sí** | — | Edición y altas plegadas, y **dos paginaciones independientes** de doce: `page` para los planes y `spage` para los servicios, porque las dos colecciones comparten pantalla y crecen sin relación | ✅ |
 | `/memberships` | 61 | 17 | **5** | **sí** | **sí** | — | Buscador y filtros de estado y plan, las tres secciones intactas (4.5) y el alta del final plegada | ✅ |
 | `/offer` (vitrina) | 27 | 34 | 0 | **sí** | no | E | Buscador y filtro por categoría, con la agrupación intacta. No pagina a propósito: la vitrina se lee entera | 🟡 |
 
@@ -148,7 +148,11 @@ change dejó preparado y nunca se ejecutó.
    de 5.1.
 6. **Detalle en modal** (15.x) donde una lectura no necesita cambiar de pantalla.
 7. **Vistas del paciente**: plegar los días de `/routine`, acotar el registro de sesión.
-8. **Paginar `/plans`**, que es la última lista del personal sin tope.
+8. ~~**Paginar `/plans`**~~ — **hecho** (2026-09-07). Al hacerlo salió un fallo que afectaba a
+   **seis listados**: cuando la página pedida empieza más allá de la última fila, PostgREST
+   devuelve un `416 PGRST103` y la pantalla entera se caía —`?page=99` a mano, o quedarse en
+   la página 4 y quitar un filtro—. Corregido en un solo sitio, `readPage` de
+   `lib/shared/read-pages.ts`: una página vacía es una página vacía, no un error.
 
 ## 5. Regla para las sesiones futuras
 

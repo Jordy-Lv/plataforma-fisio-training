@@ -49,8 +49,15 @@ export function createListParams<S extends z.ZodObject<z.ZodRawShape>>({
     ([key, value]) => !ignored.has(key) && value !== empty[key] &&
       value !== undefined && value !== null && value !== "" && value !== false,
   );
-  const range = (filters: z.infer<S>) => {
-    const from = (pageParam.parse(filters.page) - 1) * pageSize;
+  /**
+   * El rango de filas de la página actual. `key` existe porque una pantalla
+   * puede tener **dos** colecciones que paginan por separado —`/plans` lista
+   * planes y servicios a la vez— y entonces cada una lleva su propia clave en
+   * la URL. Las claves que no son `page` hay que declararlas además en
+   * `notFilters`: son navegación, no un filtro.
+   */
+  const range = (filters: z.infer<S>, key: keyof z.infer<S> = "page") => {
+    const from = (pageParam.parse(filters[key] ?? 1) - 1) * pageSize;
     return { from, to: from + pageSize - 1 };
   };
   const pages = (total: number) => Math.max(1, Math.ceil(total / pageSize));

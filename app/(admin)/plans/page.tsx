@@ -15,6 +15,7 @@ import {
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/ButtonLink";
+import { Pagination } from "@/components/ui/Pagination";
 import { cn } from "cn";
 import { cardVariants } from "@/components/ui/Card";
 
@@ -31,13 +32,13 @@ export default async function Page({ searchParams }: {
   const choices = [{ name: "status", label: "Estado", options: { active: "Activos", inactive: "Inactivos" } }];
   const chips = Object.entries(filters).filter(([key, value]) => key !== "page" && value).map(([key, value]) => ({
     label: key === "status" ? (value === "active" ? "Activos" : "Inactivos") : String(value),
-    href: offerList.href(filters, { [key]: undefined, page: 1 }), removeLabel: `Quitar ${key === "status" ? "estado" : "búsqueda"}`,
+    href: offerList.href(filters, { [key]: undefined, page: 1, spage: 1 }), removeLabel: `Quitar ${key === "status" ? "estado" : "búsqueda"}`,
   }));
   const profile = await requireAdmin();
-  const [plans, services] = await Promise.all([
-    listAllPlans(filters),
-    listAllServices(filters),
-  ]);
+  const [
+    { plans, total: totalPlans, pages: planPages },
+    { services, total: totalServices, pages: servicePages },
+  ] = await Promise.all([listAllPlans(filters), listAllServices(filters)]);
 
   return (
     <Workspace
@@ -51,12 +52,25 @@ export default async function Page({ searchParams }: {
       }
     >
       <ListFilters action="/plans" label="Filtros de planes y servicios" values={filters} choices={choices} chips={chips} />
-      <p className="mb-4 text-sm text-muted-foreground" aria-live="polite">{plans.length} planes y {services.length} servicios encontrados</p>
+      <p className="mb-4 text-sm text-muted-foreground" aria-live="polite">
+        {totalPlans === 1 ? "1 plan" : `${totalPlans} planes`} y{" "}
+        {totalServices === 1 ? "1 servicio" : `${totalServices} servicios`} encontrados
+      </p>
       <section className="grid gap-6">
         <h2 className="text-xl font-semibold">Planes de suscripción</h2>
 
-        {plans.length === 0 ? (
-          <EmptyState title={offerList.hasActiveFilters(filters) ? "Ningún plan coincide con estos filtros" : "Todavía no hay planes"}>
+        {plans.length === 0 && (offerList.hasActiveFilters(filters) || filters.page > 1) ? (
+          <EmptyState
+            title={offerList.hasActiveFilters(filters)
+              ? "Ningún plan coincide con estos filtros"
+              : "No hay planes en esta página"}
+            action={<ButtonLink href={offerList.href(offerList.empty, { spage: filters.spage })}>
+              Ver todos los planes
+            </ButtonLink>}>
+            Prueba con menos filtros o vuelve a la primera página.
+          </EmptyState>
+        ) : plans.length === 0 ? (
+          <EmptyState title="Todavía no hay planes">
             Ábrelo con «Crear un plan», al final de esta sección. Aparecerá en
             la vitrina en cuanto esté activo.
           </EmptyState>
@@ -111,6 +125,12 @@ export default async function Page({ searchParams }: {
           </ul>
         )}
 
+        {plans.length > 0 && (
+          <Pagination page={filters.page} pages={planPages}
+            hrefFor={(page) => offerList.href(filters, { page })}
+            label="Páginas de planes" />
+        )}
+
         {/*
           El alta no es lo que trae al admin a esta pantalla —viene a revisar la
           oferta—, así que va plegada. Ni `test:plans` ni `test:memberships`
@@ -128,8 +148,18 @@ export default async function Page({ searchParams }: {
       <section className="mt-12 grid gap-6">
         <h2 className="text-xl font-semibold">Servicios adicionales</h2>
 
-        {services.length === 0 ? (
-          <EmptyState title={offerList.hasActiveFilters(filters) ? "Ningún servicio coincide con estos filtros" : "Todavía no hay servicios"}>
+        {services.length === 0 && (offerList.hasActiveFilters(filters) || filters.spage > 1) ? (
+          <EmptyState
+            title={offerList.hasActiveFilters(filters)
+              ? "Ningún servicio coincide con estos filtros"
+              : "No hay servicios en esta página"}
+            action={<ButtonLink href={offerList.href(offerList.empty, { page: filters.page })}>
+              Ver todos los servicios
+            </ButtonLink>}>
+            Prueba con menos filtros o vuelve a la primera página.
+          </EmptyState>
+        ) : services.length === 0 ? (
+          <EmptyState title="Todavía no hay servicios">
             Nutrición, fisioterapia, artes marciales o talleres. Crea el
             primero con «Crear un servicio», al final de esta sección.
           </EmptyState>
@@ -173,6 +203,12 @@ export default async function Page({ searchParams }: {
               </li>
             ))}
           </ul>
+        )}
+
+        {services.length > 0 && (
+          <Pagination page={filters.spage} pages={servicePages}
+            hrefFor={(spage) => offerList.href(filters, { spage })}
+            label="Páginas de servicios" />
         )}
 
         <details className={cardClass}>

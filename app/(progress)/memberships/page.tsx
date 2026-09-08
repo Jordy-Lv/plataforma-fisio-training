@@ -87,12 +87,15 @@ function AdminCard({
 }
 
 async function AdminView({ name, filters }: { name?: string | null; filters: MembershipFilters }) {
-  const [matches, patients, plans, noticeDays] = await Promise.all([
+  const [matches, patients, oferta, noticeDays] = await Promise.all([
     listMembershipsWithPatient(filters),
     listPatients(),
-    listAllPlans(),
+    // El `<select>` del alta necesita todos los planes, no la primera página
+    // de `/plans`.
+    listAllPlans(undefined, { paginate: false }),
     getMembershipNoticeDays(),
   ]);
+  const plans = oferta.plans;
   // Las tres secciones se conservan siempre —son contrato de `test:memberships`—
   // y agrupan lo que hay en esta página, no todo el histórico.
   const { from, to } = membershipList.range(filters);
