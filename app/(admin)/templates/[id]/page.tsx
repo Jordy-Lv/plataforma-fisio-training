@@ -2,9 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Workspace } from "@/components/auth/Workspace";
+import { CatalogPicker } from "@/components/catalog/CatalogPicker";
 import {
   AddDayForm,
   AddItemButton,
+  AddItemDayPicker,
   DayHeaderForms,
   ItemActions,
   ItemForm,
@@ -17,7 +19,13 @@ import { TemplateStatusForm } from "@/components/catalog/TemplateStatus";
 import { bodyPartLabels } from "@/lib/catalog/body-parts";
 import { requireStaff } from "@/lib/catalog/access";
 import { listExercises } from "@/lib/catalog/queries";
-import { exerciseFiltersSchema, exercisesHref } from "@/lib/catalog/schemas";
+import {
+  catalogChips,
+  catalogFiltered,
+  catalogHref,
+  embeddedCatalogPageSize,
+} from "@/lib/catalog/embedded-catalog";
+import { exerciseFiltersSchema } from "@/lib/catalog/schemas";
 import {
   getTemplate,
   listRulesUsingTemplate,
@@ -32,11 +40,9 @@ import {
   templateKindLabels,
 } from "@/lib/catalog/vocabulary";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Field, Input } from "@/components/ui/Field";
-import { SectionHeader, SeeAllLink } from "@/components/ui/SectionHeader";
+import { FlashToast } from "@/components/ui/FlashToast";
 import { cn } from "cn";
 import { cardVariants } from "@/components/ui/Card";
 
@@ -47,9 +53,6 @@ const sectionClass = cn(cardVariants({ padding: "lg" }), "mt-10");
 
 /** Un criterio sin valor no restringe: la plantilla sirve para cualquier perfil. */
 const cualquiera = "Cualquiera";
-
-/** Cuántos ejercicios se ofrecen al buscar: los que caben sin sepultar el día. */
-const maxResultados = 8;
 
 export async function generateMetadata({
   params,
@@ -106,18 +109,28 @@ export default async function Page({
   const recienCreada = query.nueva === "1";
   const puedeEditar = profile.role === "admin";
 
-  // El buscador de ejercicios se abre dentro de un día concreto; la URL es su
-  // estado, así que el botón de retroceso lo cierra.
+  // El buscador es único y permanente. Con `?dia=<dayId>` se enfoca en ese día
+  // —el modo que abre `verify-catalog-templates` para añadir ejercicios—; sin
+  // él, cada resultado elige el día en un desplegable.
   const diaAbierto =
     typeof query.dia === "string" &&
     template.days.some((dia) => dia.id === query.dia)
       ? query.dia
       : null;
-  const filtros = exerciseFiltersSchema.parse({ q: query.q });
-  const resultados =
-    puedeEditar && diaAbierto
-      ? (await listExercises(filtros)).exercises.slice(0, maxResultados)
-      : [];
+  const filtros = exerciseFiltersSchema.parse({
+    q: query.q,
+    muscle: query.muscle,
+    equipment: query.equipment,
+    environment: query.environment,
+    page: query.page,
+  });
+  const base = `/templates/${template.id}`;
+  const extra = diaAbierto ? { dia: diaAbierto } : {};
+  const mostrarCatalogo =
+    puedeEditar && (Boolean(diaAbierto) || catalogFiltered(filtros));
+  const { exercises: resultados, pages: paginasCatalogo } = mostrarCatalogo
+    ? await listExercises(filtros, { pageSize: embeddedCatalogPageSize })
+    : { exercises: [], pages: 1 };
 
   const totalEjercicios = template.days.reduce(
     (total, dia) => total + dia.items.length,
@@ -147,6 +160,10 @@ export default async function Page({
           Plantilla creada como borrador. Añádele sus días y sus ejercicios.
         </p>
       )}
+      <FlashToast
+        param="nueva"
+        message="Plantilla creada como borrador. Añádele sus días y sus ejercicios."
+      />
 
       <div className="flex flex-wrap gap-1.5">
         <Badge>{labelFor(templateKindLabels, template.kind)}</Badge>
@@ -248,6 +265,59 @@ export default async function Page({
           </div>
         )}
       </section>
+
+      {puedeEditar && (
+        <CatalogPicker
+          action={base}
+          filters={filtros}
+          hiddenParams={diaAbierto ? { dia: diaAbierto } : {}}
+          heading={
+            diaAbierto
+              ? `Añadir ejercicios a Día ${
+                  template.days.find((dia) => dia.id === diaAbierto)
+                    ?.day_number ?? ""
+                }`
+              : "Añadir ejercicios del catálogo"
+          }
+          description={
+            diaAbierto
+              ? "Los resultados se añaden al día enfocado."
+              : "Busca un ejercicio y elige a qué día lo añades."
+          }
+          closeHref={diaAbierto ? base : undefined}
+          closeLabel="Salir del día"
+          chips={catalogChips(base, extra, filtros)}
+          clearHref={
+            catalogFiltered(filtros) ? catalogHref(base, extra, {}) : undefined
+          }
+          exercises={resultados}
+          pages={paginasCatalogo}
+          hrefForPage={(page) => catalogHref(base, extra, { ...filtros, page })}
+          emptyHint={
+            catalogFiltered(filtros)
+              ? "Ningún ejercicio coincide con esa búsqueda. Prueba con otra palabra del nombre."
+              : "Escribe el nombre de un ejercicio para buscarlo en el catálogo."
+          }
+        >
+          {(ejercicio) =>
+            diaAbierto ? (
+              <AddItemButton
+                templateId={template.id}
+                dayId={diaAbierto}
+                exerciseId={ejercicio.id}
+                exerciseName={ejercicio.name}
+              />
+            ) : (
+              <AddItemDayPicker
+                templateId={template.id}
+                days={template.days}
+                exerciseId={ejercicio.id}
+                exerciseName={ejercicio.name}
+              />
+            )
+          }
+        </CatalogPicker>
+      )}
 
       <section className={sectionClass}>
         <h2 className="text-xl font-semibold">Días de la plantilla</h2>
@@ -361,92 +431,16 @@ export default async function Page({
 
                 {puedeEditar && (
                   <div className="mt-5 border-t border-border pt-5">
-                    {diaAbierto === dia.id ? (
-                      <>
-                        <form
-                          method="get"
-                          action={`/templates/${template.id}`}
-                          className="flex flex-wrap items-end gap-3"
-                        >
-                          <input type="hidden" name="dia" value={dia.id} />
-                          <Field
-                            label="Buscar un ejercicio del catálogo"
-                            className="min-w-60 flex-1"
-                          >
-                            <Input
-                              name="q"
-                              type="search"
-                              defaultValue={filtros.q ?? ""}
-                              maxLength={80}
-                              autoCapitalize="none"
-                              spellCheck={false}
-                              placeholder="Sentadilla, plancha, remo…"
-                            />
-                          </Field>
-                          <Button type="submit">Buscar</Button>
-                          <ButtonLink
-                            variant="ghost"
-                            href={`/templates/${template.id}`}
-                          >
-                            Cerrar
-                          </ButtonLink>
-                        </form>
-
-                        {resultados.length === 0 ? (
-                          <p className="mt-4 leading-7 text-muted-foreground">
-                            Ningún ejercicio coincide con esa búsqueda. Prueba
-                            con otra palabra del nombre.
-                          </p>
-                        ) : (
-                          <div className="mt-4">
-                            {/*
-                              El buscador corta en `maxResultados`, así que
-                              cuando llega al tope el «Ver el catálogo» es lo
-                              único que dice que hay más y adónde ir a verlo.
-                            */}
-                            <SectionHeader
-                              as="h3"
-                              title="Ejercicios encontrados"
-                              count={resultados.length}
-                              action={
-                                resultados.length === maxResultados && (
-                                  <SeeAllLink href={exercisesHref(filtros)}>
-                                    Ver el catálogo
-                                  </SeeAllLink>
-                                )
-                              }
-                            />
-                            <ul className="grid gap-3 sm:grid-cols-2">
-                              {resultados.map((ejercicio) => (
-                                <li
-                                  key={ejercicio.id}
-                                  className={cn(
-                                    cardVariants({ padding: "none" }),
-                                    "grid gap-2 rounded-xl p-3",
-                                  )}
-                                >
-                                  <p className="text-sm font-medium">
-                                    {ejercicio.name}
-                                  </p>
-                                  <AddItemButton
-                                    templateId={template.id}
-                                    dayId={dia.id}
-                                    exerciseId={ejercicio.id}
-                                    exerciseName={ejercicio.name}
-                                  />
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <ButtonLink
-                        href={`/templates/${template.id}?dia=${dia.id}`}
-                      >
-                        Añadir ejercicios a este día
-                      </ButtonLink>
-                    )}
+                    {/* El buscador vive arriba, único y permanente; este enlace
+                        solo lo enfoca en este día (`?dia=`). */}
+                    <ButtonLink
+                      href={`/templates/${template.id}?dia=${dia.id}#catalogo-buscador`}
+                      variant={diaAbierto === dia.id ? "outline" : "default"}
+                    >
+                      {diaAbierto === dia.id
+                        ? "Buscando para este día"
+                        : "Añadir ejercicios a este día"}
+                    </ButtonLink>
                   </div>
                 )}
               </li>

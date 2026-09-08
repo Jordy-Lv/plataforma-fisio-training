@@ -167,12 +167,18 @@ final, después de la 16.
 
 ## 12. Construir una plantilla sin recargar — rama `ui/catalogo-embebido`
 
-- [ ] 12.1 Buscador único y permanente en `/templates/[id]`, con filtros, paginación y `pageSize` reducido, y un `<select name="dayId">` por resultado
-- [ ] 12.2 Verificar que el formulario de añadir sigue conteniendo `value="<exerciseId>"` y que los de eliminar conservan sus rótulos
-- [ ] 12.3 Mismo buscador en `/pro/routines/[patientId]`, **conservando el comportamiento de `?dia=` y `?item=`**, que la suite abre literalmente
-- [ ] 12.4 Comprobar que en esa pantalla el formulario de quitar sigue siendo el primero del ítem
-- [ ] 12.5 Sustituir los acuses de la URL por `FlashToast` en `/templates`, `/rules`, `/exercises` y `/plans`
-- [ ] 12.6 `npm run test:templates`, `test:templates:seed` y `test:routines:items` en verde, más los cuatro de CI
+- [x] 12.1 Buscador único y permanente en `/templates/[id]`, con filtros, paginación y `pageSize` reducido, y un `<select name="dayId">` por resultado
+  - `components/catalog/CatalogPicker.tsx` (server, compartido) = `FilterForm` + `Chip` + `Pagination`, `pageSize` 6 (`lib/catalog/embedded-catalog.ts`). Tres modos: navegación (`<select name="dayId">` por resultado, `AddItemDayPicker`), enfoque de día (`?dia=`, `AddItemButton` con el día oculto) y —en rutinas— enfoque de ítem (`?item=`). Los resultados solo aparecen si hay filtro o modo enfocado, así que en `/templates/[id]` sin `?dia=` no hay ningún uuid en el buscador. El enlace por día pasa a `?dia=<id>#catalogo-buscador`.
+- [x] 12.2 Verificar que el formulario de añadir sigue conteniendo `value="<exerciseId>"` y que los de eliminar conservan sus rótulos
+  - `test:templates` 19/19: en modo `?dia=` el resultado es `AddItemButton` (oculto `exerciseId` + `dayId`); «Eliminar día» y «Eliminar plantilla» intactos (siguen en `TemplateDays`/`TemplateForm`, el buscador no los toca).
+- [x] 12.3 Mismo buscador en `/pro/routines/[patientId]`, **conservando el comportamiento de `?dia=` y `?item=`**, que la suite abre literalmente
+  - `CatalogPicker` único tras el aviso de condiciones. `?dia=` → `AddRoutineItemButton`, `?item=` → `ReplaceRoutineItemButton`, sin parámetro → `AddRoutineItemDayPicker` con los días de todas las rutinas. El `dia`/`item` oculto del `FilterForm` GET es un uuid, pero ningún marcador de `verify-routine-items` es «un uuid cualquiera» (todos son compuestos o piden `$ACTION_`/`name="sets"`), igual que en el buscador anterior. `test:routines:items` 9/9.
+- [x] 12.4 Comprobar que en esa pantalla el formulario de quitar sigue siendo el primero del ítem
+  - `RemoveRoutineItemButton` sigue fuera del `<details>` y primero del ítem; `verify-routine-items` «Quitar…» (marcador `value="<itemId>"` + `$ACTION_`, sin `name="sets"`) pasa. El buscador va antes del listado de rutinas y no contiene ningún `value="<itemId>"`.
+- [x] 12.5 Sustituir los acuses de la URL por `FlashToast` en `/templates`, `/rules`, `/exercises` y `/plans`
+  - `FlashToast` añadido junto al `<p role="status">` en `/templates` (`?eliminada=1`), `/templates/[id]` (`?nueva=1`), `/rules` (`?eliminada=1`) y `/rules/[id]` (`?nueva=1`). `/exercises/[id]` ya lo tenía desde 10.3. **`/exercises` y `/plans` (listados) no emiten ningún acuse en la URL**, así que no hay nada que convertir ahí.
+- [x] 12.6 `npm run test:templates`, `test:templates:seed` y `test:routines:items` en verde, más los cuatro de CI
+  - Contra un `next start` propio en el 3222 con Supabase local por el túnel ssh del 54321: `test:templates` 19/19, `test:templates:seed` 4/4, `test:routines:items` 9/9, y de refuerzo `test:routines` 12/12, `test:catalog` 9/9, `test:catalog:custom` 12/12, `test:rules:panel` 12/12. CI: typecheck, lint (solo el aviso preexistente de `verify-auth-screens`), `test:design` 4/4 y `build` en verde. `openspec validate --strict` OK. Sin migraciones.
 
 ## 13. Cierre — rama `docs/cierre-frontend`
 

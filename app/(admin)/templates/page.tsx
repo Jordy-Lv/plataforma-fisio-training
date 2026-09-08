@@ -1,4 +1,5 @@
 import { templateList } from "@/lib/catalog/template-list";
+import { FlashToast } from "@/components/ui/FlashToast";
 import { ListFilters } from "@/components/ui/ListFilters";
 import { Pagination } from "@/components/ui/Pagination";
 import { DataList } from "@/components/ui/DataList";
@@ -74,6 +75,7 @@ export default async function Page({
           Plantilla eliminada.
         </p>
       )}
+      <FlashToast param="eliminada" message="Plantilla eliminada." />
 
       <ListFilters action="/templates" label="Filtros de plantillas" values={filters} choices={choices} chips={chips} />
       <p className="mb-4 text-sm text-muted-foreground" aria-live="polite">{total} plantillas encontradas</p>

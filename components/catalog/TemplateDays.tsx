@@ -350,3 +350,61 @@ export function AddItemButton({
     </form>
   );
 }
+
+/**
+ * Añade un ejercicio a la plantilla eligiendo el día en un desplegable. Es el
+ * control del buscador permanente cuando no se ha entrado a un día concreto:
+ * evita la navegación a `?dia=<dayId>` para lo habitual.
+ *
+ * El `<select name="dayId">` solo lo lee un navegador real; las suites HTTP
+ * únicamente recorren el modo enfocado (`?dia=`), que usa `AddItemButton` con
+ * el día en un `<input type="hidden">`.
+ */
+export function AddItemDayPicker({
+  templateId,
+  days,
+  exerciseId,
+  exerciseName,
+}: {
+  templateId: string;
+  days: TemplateDay[];
+  exerciseId: string;
+  exerciseName: string;
+}) {
+  const [state, action, pending] = useActionState(addTemplateItem, {});
+
+  if (days.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Añade un día antes de colocar ejercicios.
+      </p>
+    );
+  }
+
+  return (
+    <form action={action} className="grid gap-2">
+      <input type="hidden" name="templateId" value={templateId} />
+      <input type="hidden" name="exerciseId" value={exerciseId} />
+      <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+        Día
+        <select name="dayId" className={inputClass} defaultValue={days[0].id}>
+          {days.map((day) => (
+            <option key={day.id} value={day.id}>
+              Día {day.day_number}
+              {day.title ? ` · ${day.title}` : ""}
+            </option>
+          ))}
+        </select>
+      </label>
+      <Button
+        type="submit"
+        className="min-h-11 w-full"
+        aria-label={`Añadir ${exerciseName} a la plantilla`}
+        disabled={pending}
+      >
+        {pending ? "Añadiendo…" : "Añadir al día"}
+      </Button>
+      <FormMessage state={state} />
+    </form>
+  );
+}

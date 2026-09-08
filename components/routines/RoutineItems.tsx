@@ -214,3 +214,53 @@ export function ReplaceRoutineItemButton({
     </form>
   );
 }
+
+/**
+ * Añade un ejercicio a la rutina eligiendo el día en un desplegable. Es el
+ * control del buscador permanente cuando no se ha entrado a un día concreto.
+ *
+ * El `<select name="dayId">` solo lo lee un navegador real; las suites HTTP
+ * únicamente recorren el modo enfocado (`?dia=`), que usa `AddRoutineItemButton`
+ * con el día en un `<input type="hidden">`.
+ */
+export function AddRoutineItemDayPicker({
+  patientId,
+  days,
+  exerciseId,
+  exerciseName,
+}: {
+  patientId: string;
+  days: { id: string; label: string }[];
+  exerciseId: string;
+  exerciseName: string;
+}) {
+  const [state, action, pending] = useActionState(addRoutineItem, {});
+
+  if (days.length === 0) return null;
+
+  return (
+    <form action={action} className="grid gap-2">
+      <input type="hidden" name="patientId" value={patientId} />
+      <input type="hidden" name="exerciseId" value={exerciseId} />
+      <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+        Día
+        <select name="dayId" className={inputClass} defaultValue={days[0].id}>
+          {days.map((day) => (
+            <option key={day.id} value={day.id}>
+              {day.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <Button
+        type="submit"
+        className="min-h-11 w-full"
+        aria-label={`Añadir ${exerciseName} a la rutina`}
+        disabled={pending}
+      >
+        {pending ? "Añadiendo…" : "Añadir al día"}
+      </Button>
+      <FormMessage state={state} />
+    </form>
+  );
+}
