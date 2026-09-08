@@ -4,18 +4,45 @@ import { cn } from "cn";
 import { Workspace } from "@/components/auth/Workspace";
 import { requireStaff } from "@/lib/progress/access";
 import { listPatientsWithLastScreening } from "@/lib/progress/screening-queries";
+import { screeningList } from "@/lib/progress/screening-list";
 import { formatDate, formatNumber } from "@/lib/progress/vocabulary";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 import { cardVariants } from "@/components/ui/Card";
+import { DataList } from "@/components/ui/DataList";
+import { ListFilters } from "@/components/ui/ListFilters";
+import { Pagination } from "@/components/ui/Pagination";
 
 export const metadata: Metadata = {
   title: "Seguimiento físico",
 };
 
-export default async function Page() {
+const takenLabels = { some: "Con tamizaje", none: "Sin tamizaje" };
+
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const profile = await requireStaff();
-  const patients = await listPatientsWithLastScreening();
+  const filters = screeningList.parse(await searchParams);
+  const { patients, total, pages } = await listPatientsWithLastScreening(filters);
+
+  const choices = [
+    { name: "taken", label: "Tamizaje", options: takenLabels },
+  ];
+  const chips = Object.entries(filters)
+    .filter(([key, value]) => key !== "page" && value)
+    .map(([key, value]) => {
+      const choice = choices.find((choice) => choice.name === key);
+      const options: Record<string, string> = choice?.options ?? {};
+      return {
+        label: options[String(value)] ?? String(value),
+        href: screeningList.href(filters, { [key]: undefined, page: 1 }),
+        removeLabel: `Quitar ${choice?.label ?? "la búsqueda"}`,
+      };
+    });
 
   return (
     <Workspace
@@ -23,7 +50,19 @@ export default async function Page() {
       name={profile.fullName}
       description="El tamizaje periódico de cada paciente: peso, talla, IMC y medidas corporales. Sustituye la hoja de cálculo con la que se llevaba antes."
     >
-      {patients.length === 0 ? (
+      <ListFilters action="/screenings" label="Filtros de seguimiento" values={filters}
+        choices={choices} chips={chips}
+        search={{ label: "Buscar paciente", placeholder: "Escribe un nombre…" }} />
+      <p className="mb-4 text-sm text-muted-foreground" aria-live="polite">
+        {total === 1 ? "1 paciente encontrado" : `${total} pacientes encontrados`}
+      </p>
+
+      {patients.length === 0 && (screeningList.hasActiveFilters(filters) || filters.page > 1) ? (
+        <EmptyState title="Ningún paciente coincide con estos filtros"
+          action={<ButtonLink href="/screenings">Ver todos los pacientes</ButtonLink>}>
+          Prueba con menos filtros o vuelve a la primera página.
+        </EmptyState>
+      ) : patients.length === 0 ? (
         <EmptyState title="Aún no tienes pacientes que seguir">
           {profile.role === "admin"
             ? "Cuando se registre el primer paciente aparecerá aquí para tomarle su tamizaje inicial."
@@ -53,12 +92,10 @@ export default async function Page() {
                     <Badge variant="info">
                       Último tamizaje: {formatDate(patient.last.taken_on)}
                     </Badge>
-                    <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-                      <dt className="text-muted-foreground">Peso</dt>
-                      <dd>{formatNumber(patient.last.weight_kg)} kg</dd>
-                      <dt className="text-muted-foreground">IMC</dt>
-                      <dd>{formatNumber(patient.last.bmi)}</dd>
-                    </dl>
+                    <DataList items={[
+                      { term: "Peso", value: `${formatNumber(patient.last.weight_kg)} kg` },
+                      { term: "IMC", value: formatNumber(patient.last.bmi) },
+                    ]} />
                   </>
                 ) : (
                   <p className="text-sm leading-6 text-muted-foreground">
@@ -71,6 +108,10 @@ export default async function Page() {
           ))}
         </ul>
       )}
+
+      <Pagination page={filters.page} pages={pages}
+        hrefFor={(page) => screeningList.href(filters, { page })}
+        label="Páginas de pacientes" />
     </Workspace>
   );
 }

@@ -1,4 +1,5 @@
 import { type OfferFilters } from "@/lib/progress/offer-list";
+import { type ShowcaseFilters } from "@/lib/progress/showcase-list";
 import { sanitizeSearch } from "@/lib/shared/search";
 import "server-only";
 
@@ -40,13 +41,19 @@ const serviceColumns = "id, name, description, price, category, is_active";
  * deja leer los planes a cualquiera con sesión; el filtro por `is_active` es
  * lo que separa la vitrina del panel de administración.
  */
-export async function listActivePlans(): Promise<Plan[]> {
+export async function listActivePlans(filters?: ShowcaseFilters): Promise<Plan[]> {
+  // Con una categoría de servicio elegida, la vitrina habla de servicios: los
+  // planes no pertenecen a ninguna categoría y no se pueden filtrar por ella.
+  if (filters?.category) return [];
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("plans")
     .select(planColumns)
     .eq("is_active", true)
     .order("price", { ascending: true });
+  const term = sanitizeSearch(filters?.q ?? "");
+  if (term) query = query.ilike("name", `%${term}%`);
+  const { data, error } = await query;
   if (error)
     throw new Error(`No se pudieron consultar los planes: ${error.message}`);
   return data ?? [];
@@ -87,13 +94,17 @@ export async function getPlan(id: string): Promise<Plan | null> {
  * Los servicios activos agrupados por categoría, en el orden en que se
  * enumeran en el vocabulario. Las categorías sin servicios no aparecen.
  */
-export async function listActiveServiceGroups(): Promise<ServiceGroup[]> {
+export async function listActiveServiceGroups(filters?: ShowcaseFilters): Promise<ServiceGroup[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("services")
     .select(serviceColumns)
     .eq("is_active", true)
     .order("name", { ascending: true });
+  const term = sanitizeSearch(filters?.q ?? "");
+  if (term) query = query.ilike("name", `%${term}%`);
+  if (filters?.category) query = query.eq("category", filters.category);
+  const { data, error } = await query;
   if (error)
     throw new Error(`No se pudieron consultar los servicios: ${error.message}`);
 

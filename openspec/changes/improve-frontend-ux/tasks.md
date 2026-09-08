@@ -66,13 +66,13 @@ final, después de la 16.
 
 ## 4. Seguimiento — rama `ui/listados-seguimiento`
 
-- [ ] 4.1 Extender `listPatientsWithMonthAttendance(filters?)` con `month` en formato `YYYY-MM` —por defecto el mes en curso— sustituyendo el rango fijo, más `q` y «sin asistencias»
-- [ ] 4.2 Selector de mes en `/attendance`, con navegación al mes anterior y siguiente
-- [ ] 4.3 Extender `listPatientsWithLastScreening(filters?)` con `q` y «sin tamizaje»
-- [ ] 4.4 Extender `listMembershipsWithPatient(filters?)` y `listPatientsWithMembership(filters?)` con `q`, `status` y `plan`
-- [ ] 4.5 Filtros de `/memberships` como `Chip` encima de las tres secciones, que se conservan con sus rótulos cuando no hay estado activo
-- [ ] 4.6 Verificar que `/memberships` sigue conteniendo `Próximas a vencer`, `Vencidas` y `vence en N días`, y que la vista del profesional muestra a su paciente sin filtrar
-- [ ] 4.7 `npm run test:attendance`, `test:screenings`, `test:memberships` y `test:overview` en verde, más los cuatro de CI
+- [x] 4.1 Extender `listPatientsWithMonthAttendance(filters?)` con `month` en formato `YYYY-MM` —por defecto el mes en curso— sustituyendo el rango fijo, más `q` y «sin asistencias»
+- [x] 4.2 Selector de mes en `/attendance`, con navegación al mes anterior y siguiente
+- [x] 4.3 Extender `listPatientsWithLastScreening(filters?)` con `q` y «sin tamizaje»
+- [x] 4.4 Extender `listMembershipsWithPatient(filters?)` y `listPatientsWithMembership(filters?)` con `q`, `status` y `plan`
+- [x] 4.5 Filtros de `/memberships` como `Chip` encima de las tres secciones, que se conservan con sus rótulos cuando no hay estado activo
+- [x] 4.6 Verificar que `/memberships` sigue conteniendo `Próximas a vencer`, `Vencidas` y `vence en N días`, y que la vista del profesional muestra a su paciente sin filtrar
+- [x] 4.7 `npm run test:attendance`, `test:screenings`, `test:memberships` y `test:overview` en verde, más los cuatro de CI
 
 ## 5. Ficha del paciente: agregación y banda — rama `ui/ficha-paciente`
 

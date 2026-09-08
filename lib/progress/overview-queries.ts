@@ -63,7 +63,7 @@ export async function getBusinessOverview(): Promise<BusinessOverview> {
       .from("sessions")
       .select("id, session_logs (status)")
       .gte("performed_on", month),
-    listPatientsWithMonthAttendance(),
+    listPatientsWithMonthAttendance(undefined, { paginate: false }),
   ]);
 
   if (patients.error)
@@ -87,8 +87,8 @@ export async function getBusinessOverview(): Promise<BusinessOverview> {
       sessions: sessions.data?.length ?? 0,
     },
     attendance: {
-      visits: attendance.reduce((total, patient) => total + patient.days, 0),
-      attended: attendance.filter((patient) => patient.days > 0).length,
+      visits: attendance.patients.reduce((total, patient) => total + patient.days, 0),
+      attended: attendance.patients.filter((patient) => patient.days > 0).length,
     },
   };
 }
