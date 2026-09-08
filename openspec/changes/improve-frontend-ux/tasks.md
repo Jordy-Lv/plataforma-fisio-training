@@ -156,14 +156,14 @@ final, después de la 16.
 
 ## 11. Confirmación de acciones destructivas — rama `ui/confirmaciones`
 
-- [ ] 11.1 Crear `components/ui/ConfirmSubmit.tsx`: botón de envío que intercepta su clic, abre el diálogo y confirma con `form.requestSubmit()`, dejando intacto el `<form action>` y su rótulo
-- [ ] 11.2 Aplicarlo a quitar un ejercicio de la rutina, conservando ese formulario como el primero del ítem y sin `name="sets"`
-- [ ] 11.3 Aplicarlo a quitar un ejercicio de una plantilla y a eliminar un día, conservando el rótulo `Eliminar día`
-- [ ] 11.4 Aplicarlo a eliminar una plantilla, conservando el rótulo `Eliminar plantilla`
-- [ ] 11.5 Aplicarlo a eliminar una regla
-- [ ] 11.6 Aplicarlo a asignar una rutina cuando reemplaza a la activa, **sin añadir ningún campo obligatorio** al formulario
-- [ ] 11.7 Comprobar las seis confirmaciones con JavaScript activado y desactivado
-- [ ] 11.8 `npm run test:templates`, `test:rules:panel`, `test:routines` y `test:routines:items` en verde, más los cuatro de CI
+- [x] 11.1 Crear `components/ui/ConfirmSubmit.tsx`: botón de envío que intercepta su clic, abre el diálogo y confirma con `form.requestSubmit()`, dejando intacto el `<form action>` y su rótulo — lee la espera con `useFormStatus` como `SubmitButton` (el `<form>` no se hace de cliente); el `AlertDialog` va controlado y sin `Trigger`; `requestSubmit()` dispara el `submit` nativo que React intercepta; sin JavaScript no hay manejador y el botón envía directo. Bandera `confirmed` como red de seguridad del patrón de `docs/11` §5
+- [x] 11.2 Aplicarlo a quitar un ejercicio de la rutina, conservando ese formulario como el primero del ítem y sin `name="sets"` — `RemoveRoutineItemButton` en `components/routines/RoutineItems.tsx`; `useActionState` se conserva solo para el `FormMessage`. `test:routines:items` 9/9
+- [x] 11.3 Aplicarlo a quitar un ejercicio de una plantilla y a eliminar un día, conservando el rótulo `Eliminar día` — `ItemActions` (icono, `aria-label`) y `DayHeaderForms` en `components/catalog/TemplateDays.tsx`; la descripción del diálogo del día lleva el conteo de ejercicios. `test:templates` 19/19
+- [x] 11.4 Aplicarlo a eliminar una plantilla, conservando el rótulo `Eliminar plantilla` — `DeleteTemplateForm` en `components/catalog/TemplateForm.tsx`
+- [x] 11.5 Aplicarlo a eliminar una regla — `DeleteRuleForm` en `components/catalog/RuleForm.tsx`. `test:rules:panel` 12/12
+- [x] 11.6 Aplicarlo a asignar una rutina cuando reemplaza a la activa, **sin añadir ningún campo obligatorio** al formulario — `AssignmentForm` recibe `replacesActive` (lo calcula la página con `routines.some(r => r.status === "active")`); con rutina activa el botón es `ConfirmSubmit` (`tone="default"`), sin ella sigue siendo `SubmitButton`. Ningún `<input>` nuevo. `test:routines` 12/12
+- [~] 11.7 Comprobar las seis confirmaciones con JavaScript activado y desactivado — *pendiente: los dos navegadores conectados por la extensión son remotos (Windows) y no alcanzan el `next start` local. Verificado por HTTP que las seis pantallas conservan sus `<form action>` con sus marcadores en el HTML del servidor (las cuatro suites recorren esos formularios). Falta el recorrido visual con JS on/off.*
+- [x] 11.8 `npm run test:templates`, `test:rules:panel`, `test:routines` y `test:routines:items` en verde, más los cuatro de CI — las cuatro suites en verde contra un `next start` propio en el 3220 con Supabase local por el túnel ssh del 54321; typecheck, lint (solo el aviso preexistente de `verify-auth-screens`), `test:design` 4/4 y `build` en verde. Sin migraciones
 
 ## 12. Construir una plantilla sin recargar — rama `ui/catalogo-embebido`
 

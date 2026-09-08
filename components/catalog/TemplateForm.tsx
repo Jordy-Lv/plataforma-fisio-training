@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
+import { ConfirmSubmit } from "@/components/ui/ConfirmSubmit";
 import { Field, FormMessage, inputClass } from "@/components/auth/FormParts";
 import {
   createTemplate,
@@ -158,20 +159,22 @@ export function TemplateForm({ template }: { template?: TemplateDetail }) {
  * desactivarla.
  */
 export function DeleteTemplateForm({ templateId }: { templateId: string }) {
-  const [state, action, pending] = useActionState(deleteTemplate, {});
+  const [state, action] = useActionState(deleteTemplate, {});
 
   return (
     <form action={action} className="grid gap-4">
       <input type="hidden" name="id" value={templateId} />
       <FormMessage state={state} />
-      <Button
-        type="submit"
+      <ConfirmSubmit
         variant="destructive"
         className="min-h-12 justify-self-start text-base"
-        disabled={pending}
+        pendingLabel="Eliminando…"
+        title="¿Eliminar la plantilla?"
+        description="Solo se puede si ninguna regla la usa. Si quieres conservarla para consultarla, desactívala en lugar de eliminarla."
+        confirmLabel="Eliminar plantilla"
       >
-        {pending ? "Eliminando…" : "Eliminar plantilla"}
-      </Button>
+        Eliminar plantilla
+      </ConfirmSubmit>
     </form>
   );
 }

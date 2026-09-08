@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { Repeat2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ConfirmSubmit } from "@/components/ui/ConfirmSubmit";
 import { Field, FormMessage, inputClass } from "@/components/auth/FormParts";
 import {
   addRoutineItem,
@@ -125,22 +126,23 @@ export function RemoveRoutineItemButton({
   patientId: string;
   item: EditableRoutineItem;
 }) {
-  const [state, action, pending] = useActionState(deleteRoutineItem, {});
+  const [state, action] = useActionState(deleteRoutineItem, {});
 
   return (
     <div className="grid gap-2">
       <form action={action}>
         <input type="hidden" name="patientId" value={patientId} />
         <input type="hidden" name="id" value={item.id} />
-        <Button
-          type="submit"
+        <ConfirmSubmit
           variant="destructive"
           className={iconButtonClass}
           aria-label={`Quitar ${item.exercises?.name ?? "el ejercicio"} de la rutina`}
-          disabled={pending}
+          title="¿Quitar este ejercicio de la rutina?"
+          description="Se quita solo de la rutina de este paciente. La plantilla de origen no cambia y, si ya lo ejecutó, el historial se conserva."
+          confirmLabel="Quitar ejercicio"
         >
           <X aria-hidden="true" />
-        </Button>
+        </ConfirmSubmit>
       </form>
       <FormMessage state={state} />
     </div>

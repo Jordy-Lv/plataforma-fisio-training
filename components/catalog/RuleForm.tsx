@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
+import { ConfirmSubmit } from "@/components/ui/ConfirmSubmit";
 import { Choices, Field, FormMessage, inputClass } from "@/components/auth/FormParts";
 import { bodyPartLabels } from "@/lib/catalog/body-parts";
 import { equipmentLabels } from "@/lib/catalog/equipment";
@@ -230,20 +231,22 @@ export function RuleForm({
  * copias— así que no hay más que confirmar el gesto.
  */
 export function DeleteRuleForm({ ruleId }: { ruleId: string }) {
-  const [state, action, pending] = useActionState(deleteRule, {});
+  const [state, action] = useActionState(deleteRule, {});
 
   return (
     <form action={action} className="grid gap-4">
       <input type="hidden" name="id" value={ruleId} />
       <FormMessage state={state} />
-      <Button
-        type="submit"
+      <ConfirmSubmit
         variant="destructive"
         className="min-h-12 justify-self-start text-base"
-        disabled={pending}
+        pendingLabel="Eliminando…"
+        title="¿Eliminar la regla?"
+        description="El motor dejará de aplicarla al asignar rutinas. Las rutinas ya asignadas son copias y no se ven afectadas."
+        confirmLabel="Eliminar regla"
       >
-        {pending ? "Eliminando…" : "Eliminar regla"}
-      </Button>
+        Eliminar regla
+      </ConfirmSubmit>
     </form>
   );
 }

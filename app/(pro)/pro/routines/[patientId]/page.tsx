@@ -203,7 +203,14 @@ export default async function Page({
       */}
       <PatientTabs patientId={patientId} active="routine" />
 
-      {patient.is_active && <AssignmentForm patientId={patientId} />}
+      {patient.is_active && (
+        <AssignmentForm
+          patientId={patientId}
+          replacesActive={routines.some(
+            (routine) => routine.status === "active",
+          )}
+        />
+      )}
 
       {conditions.length > 0 && (
         <p className="mt-6 rounded-lg bg-warning-soft p-3 text-sm leading-7 text-warning">

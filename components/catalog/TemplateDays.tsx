@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { ArrowDown, ArrowUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ConfirmSubmit } from "@/components/ui/ConfirmSubmit";
 import { Field, FormMessage, inputClass } from "@/components/auth/FormParts";
 import {
   addTemplateDay,
@@ -79,10 +80,7 @@ export function DayHeaderForms({
     updateTemplateDay,
     {},
   );
-  const [deleteState, deleteAction, deletePending] = useActionState(
-    deleteTemplateDay,
-    {},
-  );
+  const [deleteState, deleteAction] = useActionState(deleteTemplateDay, {});
 
   return (
     <div className="grid gap-3">
@@ -117,14 +115,20 @@ export function DayHeaderForms({
         <form action={deleteAction}>
           <input type="hidden" name="templateId" value={templateId} />
           <input type="hidden" name="id" value={day.id} />
-          <Button
-            type="submit"
+          <ConfirmSubmit
             variant="destructive"
             className="min-h-12"
-            disabled={deletePending}
+            pendingLabel="Eliminando…"
+            title="¿Eliminar el día completo?"
+            description={
+              day.items.length === 1
+                ? "Se elimina también su ejercicio. No se puede deshacer."
+                : `Se eliminan también sus ${day.items.length} ejercicios. No se puede deshacer.`
+            }
+            confirmLabel="Eliminar día"
           >
-            {deletePending ? "Eliminando…" : "Eliminar día"}
-          </Button>
+            Eliminar día
+          </ConfirmSubmit>
         </form>
       </div>
 
@@ -158,10 +162,7 @@ export function ItemActions({
     moveTemplateItem,
     {},
   );
-  const [removeState, removeAction, removePending] = useActionState(
-    deleteTemplateItem,
-    {},
-  );
+  const [removeState, removeAction] = useActionState(deleteTemplateItem, {});
 
   const hidden = (
     <>
@@ -203,15 +204,16 @@ export function ItemActions({
 
         <form action={removeAction}>
           {hidden}
-          <Button
-            type="submit"
+          <ConfirmSubmit
             variant="destructive"
             className={iconButtonClass}
             aria-label={`Quitar ${item.exercise.name} del día`}
-            disabled={removePending}
+            title="¿Quitar este ejercicio del día?"
+            description="Se quita de la plantilla. Las rutinas ya asignadas a partir de ella no cambian."
+            confirmLabel="Quitar ejercicio"
           >
             <X aria-hidden="true" />
-          </Button>
+          </ConfirmSubmit>
         </form>
       </div>
 
