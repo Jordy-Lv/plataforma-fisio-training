@@ -269,6 +269,26 @@ export default async function Page({
                     <ol className="mt-4 grid gap-4">
                       {day.routine_items.map((item, indice) => {
                         const choques = clashes(item, conditions);
+                        // La prescripción actual en una línea, para leer el día
+                        // sin abrir cada ejercicio.
+                        const resumen =
+                          [
+                            item.sets != null && item.reps != null
+                              ? `${item.sets} × ${item.reps}`
+                              : item.sets != null
+                                ? `${item.sets} series`
+                                : item.reps != null
+                                  ? `${item.reps} repeticiones`
+                                  : null,
+                            item.target_weight != null
+                              ? `${item.target_weight} kg`
+                              : null,
+                            item.rest_seconds != null
+                              ? `${item.rest_seconds} s de descanso`
+                              : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ") || "Sin prescripción todavía";
                         return (
                           <li
                             key={item.id}
@@ -278,7 +298,7 @@ export default async function Page({
                             )}
                           >
                             <div className="flex flex-wrap items-start justify-between gap-3">
-                              <div className="grid gap-2">
+                              <div className="grid gap-1">
                                 <p className="break-words font-semibold">
                                   {/* El número es el orden de ejecución, no un
                                       adorno: va pegado al nombre. */}
@@ -301,6 +321,9 @@ export default async function Page({
                                     </Badge>
                                   )}
                                 </p>
+                                <p className="text-sm text-muted-foreground">
+                                  {resumen}
+                                </p>
                                 {choques.length > 0 && (
                                   <p className="text-xs text-destructive">
                                     Contraindicado para{" "}
@@ -319,7 +342,8 @@ export default async function Page({
                                 prescripción a propósito:
                                 `scripts/verify-routine-items.test.mjs` toma el
                                 primer formulario del ítem y comprueba que no
-                                arrastra los campos de la prescripción.
+                                arrastra los campos de la prescripción. Queda
+                                fuera del `<details>` para no mover ese orden.
                               */}
                               <RemoveRoutineItemButton
                                 patientId={patientId}
@@ -327,29 +351,47 @@ export default async function Page({
                               />
                             </div>
 
-                            <div className="mt-4 border-t border-border pt-4">
-                              <RoutineItemForm
-                                patientId={patientId}
-                                item={item}
-                              />
-                            </div>
-
-                            <div className="mt-4 border-t border-border pt-4">
-                              {itemAbierto === item.id ? (
-                                buscador("item", item.id, (ejercicio) => (
-                                  <ReplaceRoutineItemButton
-                                    patientId={patientId}
-                                    itemId={item.id}
-                                    exerciseId={ejercicio.id}
-                                    exerciseName={ejercicio.name}
-                                  />
-                                ))
-                              ) : (
-                                <ButtonLink href={`${base}?item=${item.id}`}>
-                                  Sustituir por otro ejercicio
-                                </ButtonLink>
-                              )}
-                            </div>
+                            {/*
+                              La prescripción y la sustitución se pliegan: un día
+                              de cinco ejercicios pasa de cinco formularios
+                              abiertos a cinco líneas. Cerrado, el `<details>`
+                              sigue emitiendo sus formularios en el HTML del
+                              servidor —`verify-routine-items` los encuentra
+                              igual—; se abre solo cuando el profesional llega a
+                              sustituir este ítem por enlace.
+                            */}
+                            <details
+                              className="mt-3 rounded-xl border border-border px-4"
+                              open={itemAbierto === item.id || undefined}
+                            >
+                              <summary className="flex min-h-11 cursor-pointer items-center py-3 font-semibold text-brand">
+                                Ajustar la prescripción o sustituir
+                              </summary>
+                              <div className="grid gap-4 pb-4">
+                                <RoutineItemForm
+                                  patientId={patientId}
+                                  item={item}
+                                />
+                                <div className="border-t border-border pt-4">
+                                  {itemAbierto === item.id ? (
+                                    buscador("item", item.id, (ejercicio) => (
+                                      <ReplaceRoutineItemButton
+                                        patientId={patientId}
+                                        itemId={item.id}
+                                        exerciseId={ejercicio.id}
+                                        exerciseName={ejercicio.name}
+                                      />
+                                    ))
+                                  ) : (
+                                    <ButtonLink
+                                      href={`${base}?item=${item.id}`}
+                                    >
+                                      Sustituir por otro ejercicio
+                                    </ButtonLink>
+                                  )}
+                                </div>
+                              </div>
+                            </details>
                           </li>
                         );
                       })}
