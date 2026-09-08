@@ -14,8 +14,10 @@ import {
   formatTimes,
   monthStart,
 } from "@/lib/progress/vocabulary";
+import { AttendanceHistory } from "@/components/progress/AttendanceHistory";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ButtonLink } from "@/components/ui/ButtonLink";
+import { PatientTabs } from "@/components/patients/PatientTabs";
 import { cardVariants } from "@/components/ui/Card";
 
 export const metadata: Metadata = {
@@ -37,25 +39,22 @@ export default async function Page({
 
   const { patient, attendance } = registro;
   const delMes = daysThisMonth(attendance);
+  // `attended_on` ya viene ordenada de más reciente a más antigua, así que los
+  // meses salen en ese mismo orden sin volver a ordenarlos.
+  const months = [...new Set(attendance.map((r) => r.attended_on.slice(0, 7)))];
 
   return (
     <Workspace
       title={patient.full_name ?? "Paciente sin nombre"}
       name={profile.fullName}
       actions={
-        <>
-          <ButtonLink variant="ghost" href="/attendance">
-            Volver a la asistencia
-          </ButtonLink>
-          <ButtonLink href={`/screenings/${patient.id}`}>
-            Ver su seguimiento físico
-          </ButtonLink>
-          <ButtonLink href={`/evolution/${patient.id}`}>
-            Ver su evolución
-          </ButtonLink>
-        </>
+        <ButtonLink variant="ghost" href="/attendance">
+          Volver a la asistencia
+        </ButtonLink>
       }
     >
+      <PatientTabs patientId={patient.id} active="attendance" />
+
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-start">
         <section aria-labelledby="historial">
           <h2 id="historial" className="mb-1 text-xl font-semibold">
@@ -73,31 +72,34 @@ export default async function Page({
               venga.
             </EmptyState>
           ) : (
-            <ul className="grid gap-3">
-              {attendance.map((record) => {
-                const hora = formatTime(record.check_in_at);
-                return (
-                  <li
-                    key={record.id}
-                    className={cardVariants()}
-                  >
-                    <h3 className="font-semibold">
-                      {formatDate(record.attended_on)}
-                    </h3>
-                    {hora && (
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Entrada a las {hora}
-                      </p>
-                    )}
-                    {record.notes && (
-                      <p className="mt-2 leading-7 text-muted-foreground">
-                        {record.notes}
-                      </p>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+            <AttendanceHistory months={months}>
+              <ul className="grid gap-3">
+                {attendance.map((record) => {
+                  const hora = formatTime(record.check_in_at);
+                  return (
+                    <li
+                      key={record.id}
+                      data-month={record.attended_on.slice(0, 7)}
+                      className={cardVariants()}
+                    >
+                      <h3 className="font-semibold">
+                        {formatDate(record.attended_on)}
+                      </h3>
+                      {hora && (
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Entrada a las {hora}
+                        </p>
+                      )}
+                      {record.notes && (
+                        <p className="mt-2 leading-7 text-muted-foreground">
+                          {record.notes}
+                        </p>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </AttendanceHistory>
           )}
         </section>
 
