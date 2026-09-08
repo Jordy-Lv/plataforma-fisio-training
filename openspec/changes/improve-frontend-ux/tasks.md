@@ -53,16 +53,16 @@ final, después de la 16.
 
 ## 3. Personas y atención — rama `ui/listados-personas`
 
-- [ ] 3.1 Crear `lib/auth/people-queries.ts` con `listPeople(scope, filters)` y `listPatientProfiles(filters)`, sacando la consulta que hoy vive dentro de `PeoplePanel.tsx`
-- [ ] 3.2 Sustituir por `listPatientProfiles` las consultas inline duplicadas de `/pro/routines` y `/pro/sessions`
-- [ ] 3.3 Montar filtros en `PeoplePanel` con **solo** `q`, `role` y `state`; el filtro por profesional, como `Chip` enlazado. **Ningún `value="<uuid>"` en el formulario de filtros**
-- [ ] 3.4 Verificar que en `/admin` y `/pro` el primer formulario con `value="<uuid de la persona>"` sigue siendo el de la baja, y que el del alta conserva `name="fullName"`
-- [ ] 3.5 Montar filtros y paginación en `/pro/routines`, con el estado de la rutina visible en la tarjeta
-- [ ] 3.6 Extender `patientSessions(patientId, filters?)` con `count:"exact"` y `.range()`, retirando el `.limit(50)`; filtros de estado y de rango de fechas en `/pro/sessions`
-- [ ] 3.7 Extender `clinicalAlerts(filters?)` retirando el `.limit(200)`, con filtros de leídas, tipo, severidad y paciente, y página de veinte o más
-- [ ] 3.8 Llevar el conteo de alertas sin leer a la consulta, en vez de calcularlo sobre la lista recortada
-- [ ] 3.9 Verificar que `/pro/alerts` sin filtros muestra la alerta más reciente y conserva el formulario con `value="<alertId>"`
-- [ ] 3.10 `npm run test:people` y `npm run test:routines:sessions` en verde, más los cuatro de CI
+- [x] 3.1 Crear `lib/auth/people-queries.ts` con `listPeople(scope, filters)` y `listPatientProfiles(filters)`, sacando la consulta que hoy vive dentro de `PeoplePanel.tsx`
+- [x] 3.2 Sustituir por `listPatientProfiles` las consultas inline duplicadas de `/pro/routines` y `/pro/sessions`
+- [ ] 3.3 Montar filtros en `PeoplePanel` con **solo** `q`, `role` y `state`; el filtro por profesional, como `Chip` enlazado. **Ningún `value="<uuid>"` en el formulario de filtros** — *pendiente a propósito: desde que `/people` son cuatro tarjetas con `SheetModal`, un filtro en la URL navega y cierra el modal en cada tecla. `PeopleFilter` ya filtra en el cliente sobre `<li data-name data-specialty>` y sin JavaScript la lista se ve entera. Reabrir cuando el modal conserve su estado en la URL.*
+- [x] 3.4 Verificar que en `/admin` y `/pro` el primer formulario con `value="<uuid de la persona>"` sigue siendo el de la baja, y que el del alta conserva `name="fullName"`
+- [x] 3.5 Montar filtros y paginación en `/pro/routines`, con el estado de la rutina visible en la tarjeta
+- [x] 3.6 Extender `patientSessions(patientId, filters?)` con `count:"exact"` y `.range()`, retirando el `.limit(50)`; filtros de estado y de rango de fechas en `/pro/sessions`
+- [x] 3.7 Extender `clinicalAlerts(filters?)` retirando el `.limit(200)`, con filtros de leídas, tipo, severidad y paciente, y página de veinte o más
+- [x] 3.8 Llevar el conteo de alertas sin leer a la consulta, en vez de calcularlo sobre la lista recortada
+- [x] 3.9 Verificar que `/pro/alerts` sin filtros muestra la alerta más reciente y conserva el formulario con `value="<alertId>"`
+- [x] 3.10 `npm run test:people` y `npm run test:routines:sessions` en verde, más los cuatro de CI
 
 ## 4. Seguimiento — rama `ui/listados-seguimiento`
 

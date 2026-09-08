@@ -1,13 +1,17 @@
 import { redirect } from "next/navigation";
 import { cn } from "cn";
 import { getActiveProfile } from "@/lib/auth/session";
-import { clinicalAlerts } from "@/lib/routines/alert-queries";
+import { listPeople } from "@/lib/auth/people-queries";
+import { alertList } from "@/lib/routines/alert-list";
+import { clinicalAlerts, type ClinicalAlert } from "@/lib/routines/alert-queries";
 import { Workspace } from "@/components/auth/Workspace";
 import { ReadAlertForm } from "@/components/routines/ReadAlertForm";
 import { Badge, alertBadgeVariant, PainBadge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { cardVariants } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ListFilters } from "@/components/ui/ListFilters";
+import { Pagination } from "@/components/ui/Pagination";
 import { bodyPartLabels, bodyParts } from "@/lib/catalog/body-parts";
 
 const titles = {
@@ -24,13 +28,13 @@ const severities = {
   info: "Información",
 };
 
+const readLabels = { unread: "Sin leer", read: "Leídas" };
+
 /** La zona del cuerpo en español, o el código si llega uno desconocido. */
 const zoneLabel = (zone: string) =>
   bodyPartLabels[zone as (typeof bodyParts)[number]] ?? zone;
 
-type Evidence = Awaited<
-  ReturnType<typeof clinicalAlerts>
->[number]["evidence"][number];
+type Evidence = ClinicalAlert["evidence"][number];
 
 /** Una sesión que motivó la alerta: nivel de dolor, zona, nota y enlace. */
 function EvidenceItem({ evidence }: { evidence: Evidence }) {
@@ -58,23 +62,66 @@ function EvidenceItem({ evidence }: { evidence: Evidence }) {
   );
 }
 
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const actor = await getActiveProfile();
   if (!actor) redirect("/login");
   if (actor.role === "patient") redirect("/patient");
 
-  const alerts = await clinicalAlerts();
-  const sinLeer = alerts.filter(
-    (alert) => alert.recipient_id === actor.id && !alert.read_at,
-  ).length;
+  const filters = alertList.parse(await searchParams);
+  const [{ alerts, total, pages, unread }, patients] = await Promise.all([
+    clinicalAlerts(filters, actor.id),
+    listPeople("patients"),
+  ]);
+
+  // El filtro por paciente emite uuids, y en esta pantalla no hay conflicto:
+  // el marcador de «marcar leída» es el uuid **de la alerta** (`docs/11`, §3),
+  // que nunca coincide con el de un paciente.
+  const choices = [
+    { name: "read", label: "Lectura", options: readLabels },
+    { name: "severity", label: "Prioridad", options: severities },
+    { name: "type", label: "Motivo", options: titles },
+    {
+      name: "patient",
+      label: "Paciente",
+      options: Object.fromEntries(
+        patients.map((person) => [person.id, person.full_name ?? "Paciente sin nombre"]),
+      ),
+    },
+  ];
+  const chips = Object.entries(filters)
+    .filter(([key, value]) => key !== "page" && value)
+    .map(([key, value]) => {
+      const choice = choices.find((choice) => choice.name === key);
+      const options: Record<string, string> = choice?.options ?? {};
+      return {
+        label: options[String(value)] ?? String(value),
+        href: alertList.href(filters, { [key]: undefined, page: 1 }),
+        removeLabel: `Quitar ${choice?.label ?? "filtro"}`,
+      };
+    });
 
   return (
     <Workspace
       title={actor.role === "admin" ? "Todas las alertas" : "Mis alertas"}
       name={actor.fullName}
-      description={`${sinLeer} sin leer para ti entre las últimas 200 alertas.`}
+      description={`${unread} sin leer para ti. Aquí aparece lo que el equipo tiene que revisar tras cerrar una sesión.`}
     >
-      {alerts.length === 0 ? (
+      <ListFilters action="/pro/alerts" label="Filtros de alertas" values={filters}
+        choices={choices} chips={chips} search={false} />
+      <p className="mb-4 text-sm text-muted-foreground" aria-live="polite">
+        {total === 1 ? "1 alerta encontrada" : `${total} alertas encontradas`}
+      </p>
+
+      {alerts.length === 0 && (alertList.hasActiveFilters(filters) || filters.page > 1) ? (
+        <EmptyState title="No hay alertas en esta página"
+          action={<ButtonLink href="/pro/alerts">Ver todas las alertas</ButtonLink>}>
+          Prueba con menos filtros o vuelve a la primera página.
+        </EmptyState>
+      ) : alerts.length === 0 ? (
         <EmptyState title="No hay alertas disponibles">
           Aquí aparecerán los avisos que se generan al cerrar las sesiones de
           tus pacientes: dolor persistente, ejercicios saltados o asistencia
@@ -164,6 +211,9 @@ export default async function Page() {
           ))}
         </ul>
       )}
+
+      <Pagination page={filters.page} pages={pages}
+        hrefFor={(page) => alertList.href(filters, { page })} label="Páginas de alertas" />
     </Workspace>
   );
 }
