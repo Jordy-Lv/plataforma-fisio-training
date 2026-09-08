@@ -15,6 +15,7 @@ import {
 } from "@/lib/catalog/vocabulary";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/ButtonLink";
+import { FlashToast } from "@/components/ui/FlashToast";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "cn";
 import { cardVariants } from "@/components/ui/Card";
@@ -95,12 +96,19 @@ export default async function Page({
       }
     >
       {recienCreado && (
-        <p
-          role="status"
-          className="mb-6 rounded-lg bg-brand-soft p-3 text-sm text-brand-soft-foreground"
-        >
-          Ejercicio creado. Ya se puede usar en las plantillas de rutina.
-        </p>
+        <>
+          <FlashToast
+            param="nuevo"
+            message="Ejercicio creado"
+            description="Ya se puede usar en las plantillas de rutina."
+          />
+          <p
+            role="status"
+            className="mb-6 rounded-lg bg-brand-soft p-3 text-sm text-brand-soft-foreground"
+          >
+            Ejercicio creado. Ya se puede usar en las plantillas de rutina.
+          </p>
+        </>
       )}
 
       <article className="grid gap-6 md:grid-cols-[minmax(0,20rem)_1fr]">

@@ -2,8 +2,8 @@
 
 import { useActionState } from "react";
 import { cn } from "cn";
-import { Button } from "@/components/ui/button";
 import { cardVariants } from "@/components/ui/Card";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { FormMessage } from "@/components/auth/FormParts";
 import { assignRoutine } from "@/lib/routines/assignment-actions";
 import { assignmentSchema } from "@/lib/routines/assignment";
@@ -15,7 +15,11 @@ import { assignmentSchema } from "@/lib/routines/assignment";
  * `name="patientId"` en el HTML del servidor (ADR-0008).
  */
 export function AssignmentForm({ patientId }: { patientId: string }) {
-  const [state, action, pending] = useActionState(assignRoutine, {});
+  // `useActionState` se conserva: `verify-routine-assignment.test.mjs` lee la
+  // respuesta del envío buscando «Rutina asignada. El paciente ya puede
+  // consultarla», que sale de `state.success`. La espera del botón la lleva
+  // `SubmitButton` con `useFormStatus`.
+  const [state, action] = useActionState(assignRoutine, {});
 
   return (
     <form
@@ -35,9 +39,12 @@ export function AssignmentForm({ patientId }: { patientId: string }) {
         revisión por el equipo.
       </p>
       <FormMessage state={state} />
-      <Button type="submit" className="justify-self-start" disabled={pending}>
-        {pending ? "Evaluando y asignando…" : "Evaluar y asignar rutina"}
-      </Button>
+      <SubmitButton
+        className="justify-self-start"
+        pendingLabel="Evaluando y asignando…"
+      >
+        Evaluar y asignar rutina
+      </SubmitButton>
     </form>
   );
 }
