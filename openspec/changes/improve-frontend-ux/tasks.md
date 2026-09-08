@@ -2,6 +2,9 @@ Antes de empezar cualquier sección, lee
 [`docs/11-contratos-de-las-suites-http.md`](../../../docs/11-contratos-de-las-suites-http.md)
 y el protocolo de [`ejecucion.md`](ejecucion.md). Cada sección es un pull request.
 
+Vista consolidada de lo que queda, con orden y dependencias:
+[`pendiente-frontend.md`](pendiente-frontend.md) (foto del 2026-09-08).
+
 Las cinco fases de [`design.md`](design.md) se reparten así, y el orden no es negociable:
 
 | Fase | Secciones | Rama por sección |
@@ -139,7 +142,8 @@ final, después de la 16.
   - Mismo patrón que los `loading.tsx` ya existentes: `Skeleton`/`SkeletonCard` sobre tokens, `role="status"` con su `aria-label`, y el contenedor con el ancho y los márgenes del shell. Cada esqueleto repite la forma real de su pantalla —`/routine`: tarjeta de sesión en curso, días plegables e historial; la sesión: banda de avance y bloques de registro—. `test:design` 4/4 (incluye «cada grupo de rutas define sus estados de carga y de error»).
 - [x] 9.6 Revisar las cinco pantallas del paciente a 375 px, en claro y en oscuro
   - `/patient`, `/routine`, `/routine/sessions/[id]` (en curso y completada), `/patient/profile` y `/attendance/me` revisadas en Chrome a 375 px con `prefers-color-scheme` claro y oscuro. Sin desplazamiento horizontal, objetivos táctiles ≥ 44 px y los tokens resuelven en los dos temas. La tarjeta de sesión en curso (9.1) aparece en la portada y en `/routine`; los días plegables (9.2) y la banda de avance (8.2) se ven bien en ambos temas. Único detalle de redacción, preexistente: el informe de la sesión mezcla fecha ISO (`2026-09-03`) y fecha local (`3/9/2026, 8:30:00 a. m.`) en la misma línea.
-- [ ] 9.7 `npm run test:routines:sessions` y `test:auth:screens` en verde, más los cuatro de CI
+- [x] 9.7 `npm run test:routines:sessions` y `test:auth:screens` en verde, más los cuatro de CI
+  - 2026-09-08, contra el build de producción: `test:routines:sessions` 18/18, `test:auth:screens` 10/10; typecheck, lint, `test:design` 4/4 y build en verde. También `test:catalog` 9/9, `test:catalog:custom` 12/12, `test:overview` 5/5, `test:routines:items` 9/9, `test:routines` 12/12, `test:templates` 19/19, `test:people` 10/10, `test:rules:panel` 12/12.
 
 ## 10. Estados pendientes y avisos — rama `ui/estados-pendientes`
 
