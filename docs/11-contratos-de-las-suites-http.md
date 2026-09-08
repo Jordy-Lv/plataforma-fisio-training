@@ -96,16 +96,21 @@ suite los exige **todos en el mismo formulario**.
 |---|---|---|
 | `/login` | `name="email"` (implícito, único formulario) | casi todas |
 | `/patient/onboarding` | `name="step"` | `test:people`, `test:auth:resilience` |
-| `/admin` · alta de persona | `name="fullName"` | `test:people` |
-| `/pro` · alta de persona | `name="fullName"` | `test:people` |
-| `/admin` · baja de persona | **`value="<uuid de la persona>"`** | `test:people` |
+| `/people` · registrar persona | `name="fullName"` | `test:people` |
+| `/people` · baja de persona | **`value="<uuid de la persona>"`** | `test:people` |
 | `/people/[id]` · perfil | `name="goal"` | `test:people` |
 | `/people/[id]` · condición | `name="conditionId"` | `test:people` |
 
-> `/admin` y `/pro` son las pantallas más frágiles del proyecto: su marcador es un uuid suelto.
-> Cualquier `<select>`, `<input>` u `<option>` con `value="<uuid>"` que aparezca **antes** de
-> la lista de personas se convierte en «el formulario» y la suite falla con
-> «Falta el formulario de server action».
+> `/people` es de las pantallas más frágiles del proyecto: el marcador de la baja es un uuid
+> suelto. Cualquier `<select>`, `<input>` u `<option>` con `value="<uuid>"` que aparezca
+> **antes** del formulario de baja —el de asignar acompañamiento tiene un `<option>` por cada
+> profesional— se convierte en «el formulario» y la suite falla con «Falta el formulario de
+> server action». Por eso las tarjetas van en el orden registrar → pacientes → equipo →
+> asignar: las bajas quedan antes que la asignación. Los modales de `SheetModal` no usan
+> portal, así que su contenido —listas y formularios— sí está en el HTML del servidor.
+>
+> `/admin` y `/pro` ya no montan formularios de personas: son el panorama del negocio. El
+> login sigue redirigiendo el personal a `/admin` y `/pro`, y `test:people` lo comprueba.
 
 ### Catálogo
 
