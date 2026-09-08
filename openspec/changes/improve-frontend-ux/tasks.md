@@ -79,14 +79,20 @@ final, después de la 16.
 
 ## 5. Ficha del paciente: agregación y banda — rama `ui/ficha-paciente`
 
-- [ ] 5.1 Crear `lib/progress/patient-overview.ts` con `patientOverview(patientId)`: membresía, condiciones activas, último tamizaje, asistencia del mes, rutina activa, sesión abierta y alertas sin leer, en un `Promise.all` y sin ninguna consulta dentro de un `map`
+- [x] 5.1 Crear `lib/progress/patient-overview.ts` con `patientOverview(patientId)`: membresía, condiciones activas, último tamizaje, asistencia del mes, rutina activa, sesión abierta y alertas sin leer, en un `Promise.all` y sin ninguna consulta dentro de un `map`
+  - Ya existía con lo que necesitaba la portada (`week`, `streakWeeks`, `openSession`, 17.5). Se añadieron al mismo `Promise.all` seis lecturas más: membresía vigente con el nombre del plan, condiciones activas, último tamizaje, conteo de asistencia del mes (`head: true`), rutina activa y conteo de alertas sin leer. `unreadAlerts` es cero para el propio paciente porque RLS no le devuelve alertas.
 - [x] 5.2 Crear `components/patients/PatientTabs.tsx` (Server Component, activo por props) con desplazamiento horizontal a 375 px, objetivos de 44 px, `aria-current` y **sin ningún `<form>` dentro**
   - Seis pestañas: ficha, rutina, sesiones, tamizajes, asistencia y evolución. Son enlaces: ni un `<form method="get">` —se colaría delante de los formularios de server action— ni ningún `value="<uuid>"`; el identificador viaja en el `href`, que ningún marcador de las suites mira.
-- [ ] 5.3 Crear `components/patients/PatientHeader.tsx` con nombre, estado, membresía y condiciones, reutilizando `membershipBadgeVariant`
-- [ ] 5.4 Añadir el resumen a `/people/[id]` **antes** del contenido actual, dejando los formularios de perfil y de condición en su sitio y en su orden
-- [ ] 5.5 Añadir `app/(people)/people/[id]/loading.tsx` con la forma real de la ficha
-- [ ] 5.6 Verificar que en `/people/[id]` el primer formulario con `name="goal"` y el primero con `name="conditionId"` siguen siendo los mismos
-- [ ] 5.7 `npm run test:people` en verde, más los cuatro de CI
+- [x] 5.3 Crear `components/patients/PatientHeader.tsx` con nombre, estado, membresía y condiciones, reutilizando `membershipBadgeVariant`
+  - Solo lectura: sin ningún `<form>` dentro y sin `value="<uuid>"`, la misma condición que `PatientTabs`. La membresía y las condiciones se pintan como `Badge`; el plazo restante sale de `formatDueIn`.
+- [x] 5.4 Añadir el resumen a `/people/[id]` **antes** del contenido actual, dejando los formularios de perfil y de condición en su sitio y en su orden
+  - `PatientProfile` monta `PatientHeader` justo después de `PatientTabs`, solo para el personal (`!esPropio`). Los dos `<details>` con `name="goal"` y `name="conditionId"` no se movieron.
+- [x] 5.5 Añadir `app/(people)/people/[id]/loading.tsx` con la forma real de la ficha
+  - Banda de pestañas + tarjeta de cabecera + dos columnas. Repite el ancho del shell (`mx-auto max-w-[86rem] px-5 py-8 sm:px-8`) porque el shell lo monta la página, no el layout del grupo.
+- [x] 5.6 Verificar que en `/people/[id]` el primer formulario con `name="goal"` y el primero con `name="conditionId"` siguen siendo los mismos
+  - `PatientHeader` no emite ningún `<form>` ni `value="<uuid>"`, así que el orden no se movió. `test:people` recorre `/people/[id]` enviando a los marcadores `name="goal"` y `name="conditionId"` y pasa 10/10.
+- [x] 5.7 `npm run test:people` en verde, más los cuatro de CI
+  - `test:people` 10/10 contra el build de producción. `typecheck`, `lint` (solo el aviso preexistente de `verify-auth-screens`), `test:design` 4/4 y `build` en verde. Sin migraciones.
 
 ## 6. Ficha del paciente: montaje y enlaces — rama `ui/ficha-paciente-enlaces`
 

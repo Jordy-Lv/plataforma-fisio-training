@@ -5,6 +5,7 @@ import {
   PatientProfileForm,
 } from "@/components/auth/PatientProfileForms";
 import { Workspace } from "@/components/auth/Workspace";
+import { PatientHeader } from "@/components/patients/PatientHeader";
 import { PatientTabs } from "@/components/patients/PatientTabs";
 import { ProfileSummary } from "@/components/patients/ProfileSummary";
 import { Badge } from "@/components/ui/Badge";
@@ -13,6 +14,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { patientIdSchema } from "@/lib/auth/onboarding-schemas";
 import { getActiveProfile } from "@/lib/auth/session";
 import { bodyPartLabels } from "@/lib/catalog/body-parts";
+import { patientOverview } from "@/lib/progress/patient-overview";
 import { createClient } from "@/lib/supabase/server";
 
 export async function PatientProfile({ patientId }: { patientId: string }) {
@@ -48,6 +50,11 @@ export async function PatientProfile({ patientId }: { patientId: string }) {
 
   const esPropio = actor.role === "patient";
 
+  // El resumen agregado es para el personal: reúne membresía, condiciones y
+  // estado en la cabecera para que la ficha deje de ser un callejón sin salida.
+  // El paciente ve su propia versión en la portada (`/patient`).
+  const overview = esPropio ? null : await patientOverview(patientId);
+
   return (
     <Workspace
       title={esPropio ? "Mi perfil" : person.data.full_name || "Perfil del paciente"}
@@ -65,6 +72,15 @@ export async function PatientProfile({ patientId }: { patientId: string }) {
         `name="goal"` que busca `verify-people-onboarding`.
       */}
       {!esPropio && <PatientTabs patientId={patientId} active="profile" />}
+
+      {overview && (
+        <PatientHeader
+          name={person.data.full_name}
+          isActive={person.data.is_active}
+          membership={overview.membership}
+          conditions={overview.conditions}
+        />
+      )}
 
       {!person.data.is_active && (
         <Card padding="sm" className="mb-6 border-l-4 border-l-warning bg-warning-soft">
