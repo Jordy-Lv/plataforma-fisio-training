@@ -171,12 +171,20 @@ esto es lo que hace que una lista quepa.
   - Creada junto con 17.2. `DataRow` recibe `media`/`icon` (48 px), `title` —lo pinta quien llama para no perder el `<h2>` de contrato del catálogo—, `secondary`, `trailing` y siempre un chevron. La adoptan los listados en sus propias secciones; aquí sólo se estrena en `ExerciseRow`.
 - [x] 14.3 Montar el conmutador tarjetas/lista en `/exercises` como dos enlaces (**no** un `<form method="get">`: la pantalla no admite otro formulario antes del de filtros), y subir `pageSize` cuando la vista es lista (quedó en 60, no en 48: medida la fila, 60 caben en las mismas pantallas que 24 tarjetas)
 - [x] 14.4 Verificar que en vista de tarjetas `/exercises` conserva el `<h2 class="text-base font-semibold leading-6">` que lee `verify-catalog-list.test.mjs`, y que en vista de lista el mismo `<h2>` sigue siendo el primer elemento con el nombre del ejercicio
-- [ ] 14.5 Plegar la evidencia de cada alerta en `/pro/alerts`: la primera sesión visible, el resto tras un `<details>` con el rótulo «Ver las otras N sesiones». La alerta baja de 658 px a unos 240
-- [ ] 14.6 Verificar que `/pro/alerts` conserva el formulario con `value="<alertId>"` y que la evidencia plegada sigue en el HTML del servidor —`<details>` sin JavaScript se abre igual—, no en un portal
+- [x] 14.5 Plegar la evidencia de cada alerta en `/pro/alerts`: la primera sesión visible, el resto tras un `<details>` con el rótulo «Ver las otras N sesiones». La alerta baja de 658 px a unos 240
+- [x] 14.6 Verificar que `/pro/alerts` conserva el formulario con `value="<alertId>"` y que la evidencia plegada sigue en el HTML del servidor —`<details>` sin JavaScript se abre igual—, no en un portal
+  - `EvidenceItem` extraído; la primera sesión se ve, el resto va en `<details>`. `test:routines:sessions` 18/18 contra la app viva: «Camino 5: sesión 3» (3ª sesión, plegada) y el formulario `value="<alertId>"` siguen en el HTML. **Falta medir el px antes/después en Chrome (14.9).**
 - [ ] 14.7 Añadir `orden` a `exerciseList`, `templateList` y a los listados de seguimiento, con las claves que cada pantalla puede ordenar y sin tocar el `.order("priority")` de `/rules`
 - [ ] 14.8 Ordenación por defecto explícita en cada listado, documentada en un comentario junto a su `createListParams`
 - [ ] 14.9 Medir de nuevo `/exercises` y `/pro/alerts` en Chrome a 1440×900 y 606×667 y registrar las cifras en `docs/12-medicion-de-densidad.md`
 - [ ] 14.10 `npm run test:catalog`, `test:catalog:custom` y `test:routines:sessions` en verde, más los cuatro de CI
+
+Añadidas tras la revisión de Yordy en Safari (2026-09-07): las pantallas de edición abrían
+con **todos los formularios de todos los ejercicios desplegados a la vez**. Mismo patrón que
+`/patient/profile` (17.3): resumen en una línea, formulario tras un `<details>` cerrado.
+
+- [x] 14.11 `/pro/routines/[patientId]`: cada ejercicio muestra su prescripción en una línea («4 × 8 · 45 kg · 90 s de descanso») y el `RoutineItemForm` + la sustitución van en un `<details>` cerrado, forzado abierto con `?item=<id>`. El botón de quitar queda fuera y primero del ítem. `test:routines:items` 9/9.
+- [x] 14.12 `/templates/[id]`: `ItemSummary` (que ya existía para la vista de solo lectura) se muestra siempre; el `ItemForm` y la cabecera de día (renombrar/eliminar) van en `<details>` cerrados. `test:templates` 19/19.
 
 ## 15. Detalle sin salir de la pantalla — rama `ui/detalle-en-dialogo`
 

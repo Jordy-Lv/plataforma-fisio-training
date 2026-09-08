@@ -58,6 +58,29 @@ solo enlace de salida**. Se entra al perfil de un paciente y desde ahí no se pu
 rutina, ni a sus sesiones, ni a su evolución, ni a su asistencia. Es exactamente el agujero
 que llena la banda de pestañas de las secciones 5 y 6.
 
+## 1 ter. Pantallas de edición: los formularios plegados (2026-09-07)
+
+Yordy revisó `/pro/routines/[patientId]` en Safari y el veredicto fue «demasiado scroll,
+demasiados formularios». Las tres pantallas de edición abrían con **el formulario completo de
+cada ejercicio desplegado a la vez**: cuatro campos numéricos, una nota y dos botones por
+ejercicio, por día. La rutina de demostración tiene dieciséis ejercicios.
+
+La solución es la misma que ya se aplicó en `/patient/profile` (tarea 17.3): la prescripción
+actual se lee en una línea y el formulario para cambiarla espera detrás de un `<details>`
+cerrado. Un `<details>` cerrado emite igual su contenido en el HTML del servidor, así que
+ninguna suite se rompe (`test:routines:items` 9/9, `test:templates` 19/19,
+`test:routines:sessions` 18/18, medidos contra la app viva).
+
+| Pantalla | Antes | Después (pendiente medir en Chrome) |
+|---|---|---|
+| `/templates/[id]` (2 días) | 8.313 px · 9,24 pantallas · 59 `<form>` | ~1 línea por ejercicio + `<details>` |
+| `/pro/routines/[patientId]` (16 ejercicios) | 5.041 px · 5,60 pantallas · 17 `<form>` | ~1 línea por ejercicio + `<details>` |
+| Alerta en `/pro/alerts` (3 sesiones) | 658 px (420 de evidencia) | 1ª sesión visible + `<details>` «Ver las otras N» |
+
+Los `<form>` no desaparecen ni cambian de orden: el de quitar un ejercicio sigue siendo el
+primero del ítem y fuera del `<details>`; el de marcar una alerta como leída sigue tras la
+evidencia. **Falta la medición en Chrome del antes y el después** (tareas 14.9 y 17.8).
+
 ## 2. Alto de una fila
 
 Es la cifra que gobierna todo lo demás: multiplicada por el número de filas da el recorrido
