@@ -7,6 +7,7 @@ import { buildScreeningSeries } from "@/lib/progress/evolution";
 import { getLoadProgression } from "@/lib/progress/progression-queries";
 import { getPatientScreenings } from "@/lib/progress/screening-queries";
 import { ButtonLink } from "@/components/ui/ButtonLink";
+import { PatientTabs } from "@/components/patients/PatientTabs";
 
 export const metadata: Metadata = {
   title: "Evolución del paciente",
@@ -38,16 +39,13 @@ export default async function Page({
       title={patient.full_name ?? "Paciente sin nombre"}
       name={profile.fullName}
       actions={
-        <>
-          <ButtonLink variant="ghost" href={`/screenings/${patient.id}`}>
-            Sus tamizajes
-          </ButtonLink>
-          <ButtonLink variant="ghost" href={`/attendance/${patient.id}`}>
-            Su asistencia
-          </ButtonLink>
-        </>
+        <ButtonLink variant="ghost" href="/screenings">
+          Volver al seguimiento
+        </ButtonLink>
       }
     >
+      <PatientTabs patientId={patient.id} active="evolution" />
+
       <div className="grid gap-10">
         <section aria-labelledby="medidas">
           <h2 id="medidas" className="mb-1 text-xl font-semibold">

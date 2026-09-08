@@ -16,6 +16,7 @@ import {
 import { ScreeningHistory } from "@/components/progress/ScreeningHistory";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ButtonLink } from "@/components/ui/ButtonLink";
+import { PatientTabs } from "@/components/patients/PatientTabs";
 import { cardVariants } from "@/components/ui/Card";
 
 export const metadata: Metadata = {
@@ -63,19 +64,13 @@ export default async function Page({
       title={patient.full_name ?? "Paciente sin nombre"}
       name={profile.fullName}
       actions={
-        <>
-          <ButtonLink variant="ghost" href="/screenings">
-            Volver al seguimiento
-          </ButtonLink>
-          <ButtonLink href={`/attendance/${patient.id}`}>
-            Ver su asistencia
-          </ButtonLink>
-          <ButtonLink href={`/evolution/${patient.id}`}>
-            Ver su evolución
-          </ButtonLink>
-        </>
+        <ButtonLink variant="ghost" href="/screenings">
+          Volver al seguimiento
+        </ButtonLink>
       }
     >
+      <PatientTabs patientId={patient.id} active="screenings" />
+
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-start">
         <section aria-labelledby="historial">
           <h2 id="historial" className="mb-4 text-xl font-semibold">

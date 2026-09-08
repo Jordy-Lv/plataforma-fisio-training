@@ -142,6 +142,19 @@ export default async function Page({
                     </p>
                   </>
                 )}
+
+                {/*
+                  `relative` para quedar por encima del `after:inset-0` que hace
+                  clicable toda la tarjeta; sin eso, el enlace de la ficha es
+                  inalcanzable.
+                */}
+                <ButtonLink
+                  variant="ghost"
+                  href={`/people/${patient.id}`}
+                  className="relative mt-auto justify-self-start"
+                >
+                  Ver ficha
+                </ButtonLink>
               </article>
             </li>
           ))}

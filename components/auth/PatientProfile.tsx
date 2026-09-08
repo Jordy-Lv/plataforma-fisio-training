@@ -5,6 +5,7 @@ import {
   PatientProfileForm,
 } from "@/components/auth/PatientProfileForms";
 import { Workspace } from "@/components/auth/Workspace";
+import { PatientTabs } from "@/components/patients/PatientTabs";
 import { ProfileSummary } from "@/components/patients/ProfileSummary";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardDescription, CardTitle } from "@/components/ui/Card";
@@ -57,6 +58,14 @@ export async function PatientProfile({ patientId }: { patientId: string }) {
           : "El objetivo y las condiciones del paciente deciden qué rutina le corresponde."
       }
     >
+      {/*
+        La banda solo se monta para el personal: las otras cinco vistas son de
+        seguimiento clínico y el paciente no entra en ellas. No lleva ningún
+        `<form>`, así que el primero de la pantalla sigue siendo el de
+        `name="goal"` que busca `verify-people-onboarding`.
+      */}
+      {!esPropio && <PatientTabs patientId={patientId} active="profile" />}
+
       {!person.data.is_active && (
         <Card padding="sm" className="mb-6 border-l-4 border-l-warning bg-warning-soft">
           <p>Paciente dado de baja. Su perfil y condiciones se conservan.</p>

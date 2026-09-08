@@ -6,6 +6,7 @@ import { SessionHistory } from "@/components/routines/SessionHistory";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { cardVariants } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
+import { PatientTabs } from "@/components/patients/PatientTabs";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Field, Input, Select } from "@/components/ui/Field";
 import { FilterForm } from "@/components/ui/FilterForm";
@@ -54,6 +55,13 @@ export default async function Page({
         </EmptyState>
       ) : (
         <>
+          {/*
+            Con un paciente elegido, esta pantalla es una de sus seis vistas y
+            se comporta como tal: la banda lleva a las otras cinco sin volver a
+            la lista.
+          */}
+          {patient && <PatientTabs patientId={patient.id} active="sessions" />}
+
           {/*
             Formulario `GET` sin JavaScript: el paciente elegido y los filtros
             van en la URL, así que la consulta se puede compartir y el botón de

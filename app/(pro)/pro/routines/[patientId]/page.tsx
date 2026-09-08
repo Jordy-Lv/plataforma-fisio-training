@@ -21,6 +21,7 @@ import {
   ReplaceRoutineItemButton,
   RoutineItemForm,
 } from "@/components/routines/RoutineItems";
+import { PatientTabs } from "@/components/patients/PatientTabs";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/ButtonLink";
@@ -195,6 +196,13 @@ export default async function Page({
         </ButtonLink>
       }
     >
+      {/*
+        Las pestañas van antes del formulario de asignación, que sigue siendo el
+        primero de la pantalla con `name="patientId"` —el marcador de
+        `verify-routine-assignment`—: son enlaces, no un `<form>`.
+      */}
+      <PatientTabs patientId={patientId} active="routine" />
+
       {patient.is_active && <AssignmentForm patientId={patientId} />}
 
       {conditions.length > 0 && (
