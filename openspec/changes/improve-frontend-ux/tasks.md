@@ -167,7 +167,8 @@ total pero no la altura de la página. Con los filtros de las secciones 1–4 ya
 esto es lo que hace que una lista quepa.
 
 - [x] 14.1 Añadir `vista` (`tarjetas` | `lista`) a `createListParams`, con `tarjetas` por defecto y el valor en la URL como un parámetro más
-- [ ] 14.2 Crear `components/ui/DataRow.tsx`: fila de 64 px con miniatura de 48 px, título, dos campos secundarios y un objetivo táctil de 44 px, tomando como referencia la tarjeta de `/pro/routines`, que hoy mide 66 px
+- [x] 14.2 Crear `components/ui/DataRow.tsx`: fila de 64 px con miniatura de 48 px, título, dos campos secundarios y un objetivo táctil de 44 px, tomando como referencia la tarjeta de `/pro/routines`, que hoy mide 66 px
+  - Creada junto con 17.2. `DataRow` recibe `media`/`icon` (48 px), `title` —lo pinta quien llama para no perder el `<h2>` de contrato del catálogo—, `secondary`, `trailing` y siempre un chevron. La adoptan los listados en sus propias secciones; aquí sólo se estrena en `ExerciseRow`.
 - [x] 14.3 Montar el conmutador tarjetas/lista en `/exercises` como dos enlaces (**no** un `<form method="get">`: la pantalla no admite otro formulario antes del de filtros), y subir `pageSize` cuando la vista es lista (quedó en 60, no en 48: medida la fila, 60 caben en las mismas pantallas que 24 tarjetas)
 - [x] 14.4 Verificar que en vista de tarjetas `/exercises` conserva el `<h2 class="text-base font-semibold leading-6">` que lee `verify-catalog-list.test.mjs`, y que en vista de lista el mismo `<h2>` sigue siendo el primer elemento con el nombre del ejercicio
 - [ ] 14.5 Plegar la evidencia de cada alerta en `/pro/alerts`: la primera sesión visible, el resto tras un `<details>` con el rótulo «Ver las otras N sesiones». La alerta baja de 658 px a unos 240
@@ -212,8 +213,10 @@ Sale de comparar la aplicación con la de Smart Fit sobre seis capturas
 (`docs/13-referencia-smart-fit.md`). No cambia la identidad visual: cambia tres decisiones de
 manejo que ahí están resueltas y aquí no.
 
-- [ ] 17.1 Crear `components/ui/Carousel.tsx`: colección con desplazamiento horizontal, `scroll-snap`, la tarjeta siguiente asomando por el borde, control por teclado y `overflow-x: auto` propio, de modo que el cuerpo de la página nunca se desplace en horizontal
-- [ ] 17.2 Añadir el chevron y el patrón de icono a `ExerciseRow`, y extraerlo a `components/ui/DataRow.tsx` para que lo usen los demás listados
+- [x] 17.1 Crear `components/ui/Carousel.tsx`: colección con desplazamiento horizontal, `scroll-snap`, la tarjeta siguiente asomando por el borde, control por teclado y `overflow-x: auto` propio, de modo que el cuerpo de la página nunca se desplace en horizontal
+  - `Carousel` + `CarouselItem`. La pista lleva el `overflow-x`, `snap-x snap-mandatory` y la barra de desplazamiento oculta; `CarouselItem` ocupa `min(78%,20rem)` para que la siguiente asome. Cliente sólo por el teclado (flechas ← →); sin JavaScript se arrastra igual. Aún sin montar en ninguna pantalla —lo harán las secciones 9 y siguientes—.
+- [x] 17.2 Añadir el chevron y el patrón de icono a `ExerciseRow`, y extraerlo a `components/ui/DataRow.tsx` para que lo usen los demás listados
+  - `ExerciseRow` ahora compone `DataRow`: chevron a la derecha como señal de «lleva a otro sitio» y un icono de mancuerna de reserva cuando el ejercicio no tiene miniatura. El `<h2 class="text-base font-semibold leading-6">` sigue pintándose en `ExerciseRow`, no en `DataRow`, porque es contrato de `verify-catalog-list.test.mjs`.
 - [x] 17.3 Convertir `/patient/profile` en resumen de lectura —objetivo, nivel, entorno, equipamiento y condiciones como pares etiqueta/valor— con la edición detrás de un enlace por bloque; **conservar los formularios existentes en su ruta y en su orden**, que es lo que recorre `test:people`
 - [x] 17.4 Verificar que `/patient/profile` sigue conteniendo el primer formulario con `name="goal"` y el primero con `name="conditionId"` donde los espera la suite, o mover la suite en el mismo PR y decirlo en su descripción
 - [x] 17.5 Sustituir las cuatro tarjetas de `/patient` —que hoy duplican la barra inferior— por la tira de la semana con el día de hoy marcado, la racha de sesiones y la sesión en curso si la hay, reutilizando la agregación de 5.1
