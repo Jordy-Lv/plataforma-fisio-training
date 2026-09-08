@@ -1,8 +1,12 @@
 import { Workspace } from "@/components/auth/Workspace";
 import { BusinessOverview } from "@/components/progress/BusinessOverview";
+import { StaffWorkboard } from "@/components/progress/StaffWorkboard";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Card, CardDescription, CardTitle } from "@/components/ui/Card";
-import { getBusinessOverview } from "@/lib/progress/overview-queries";
+import {
+  getBusinessOverview,
+  getStaffWorkboard,
+} from "@/lib/progress/overview-queries";
 
 /**
  * El panel de inicio del equipo. Antes montaba el directorio de personas y el
@@ -10,8 +14,10 @@ import { getBusinessOverview } from "@/lib/progress/overview-queries";
  * a la sección de personas, que es donde se crea un paciente o se da de baja a
  * alguien.
  *
- * Las cifras salen de `getBusinessOverview`, que RLS acota: el administrador
- * las ve de todo el negocio y el profesional, de los pacientes que acompaña.
+ * Las cifras salen de `getBusinessOverview` y `getStaffWorkboard`, que RLS
+ * acota: el administrador las ve de todo el negocio y el profesional, de los
+ * pacientes que acompaña. El panorama es el resumen del mes; el panel de
+ * trabajo, lo que hay que atender hoy.
  */
 export async function StaffHome({
   role,
@@ -20,7 +26,10 @@ export async function StaffHome({
   role: "admin" | "professional";
   name: string | null;
 }) {
-  const overview = await getBusinessOverview();
+  const [overview, workboard] = await Promise.all([
+    getBusinessOverview(),
+    getStaffWorkboard(),
+  ]);
 
   return (
     <Workspace
@@ -34,6 +43,10 @@ export async function StaffHome({
       }
     >
       <BusinessOverview overview={overview} />
+
+      {/* El panel de trabajo solo aparece cuando hay de quién ocuparse: sin
+          pacientes activos, el panorama ya explica qué hacer primero. */}
+      {overview.activePatients > 0 && <StaffWorkboard workboard={workboard} />}
 
       <Card
         padding="lg"
