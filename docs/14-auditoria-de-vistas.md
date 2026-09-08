@@ -66,7 +66,7 @@ Estado: ⬜ pendiente · 🟡 parcial · ✅ hecho. Los números son del 2026-09
 
 | Ruta | kB | li | det | filtro | pag | Defectos | Qué hacer | Estado |
 |---|---|---|---|---|---|---|---|---|
-| `/exercises` | 64 | 37 | 0 | sí | sí | E | Ya tiene vista lista/tarjetas, filtros y paginación. Falta el **detalle en modal** (15.2) y ordenar (14.7) | 🟡 |
+| `/exercises` | 64 | 37 | 0 | sí | sí | — | Vista lista/tarjetas, filtros, paginación y **la ficha en diálogo** (15.2): el nombre abre el detalle sin salir del listado y sigue llevando a `/exercises/[id]` sin JavaScript. Queda ordenar (14.7) | ✅ |
 | `/exercises/new`, `/exercises/[id]` | 41–47 | 13 | **1** | — | — | — | Los tres etiquetados obligatorios a dos columnas; el nivel y las contraindicaciones plegados. No se pliega lo obligatorio: un campo que Zod exige y no se ve produce un error sin origen visible | ✅ |
 | `/templates` | 35 | 17 | 0 | sí | **sí** | — | Filtros y paginación montados. Queda ordenar (14.7) | ✅ |
 | `/templates/[id]` | 180 | 31 | 15 | no | no | A, B, C | Prescripción y cabecera de día ya plegadas. **Falta el buscador embebido con paginación** (12.1) y medir la altura resultante | 🟡 |
@@ -80,8 +80,8 @@ Estado: ⬜ pendiente · 🟡 parcial · ✅ hecho. Los números son del 2026-09
 | `/pro/routines` | 24 | 18 | 0 | **sí** | **sí** | — | Buscador, estado del paciente y de la rutina, paginación, insignia de rutina y «Ver ficha» en cada tarjeta (3.5) | ✅ |
 | `/pro/routines/[id]` | 91 | 27 | 9 | no | — | A | Prescripción de cada ejercicio plegada y banda de pestañas montada. Falta la **banda de avance** y plegar los días | 🟡 |
 | `/pro/sessions` | 24 | 13 | 0 | **sí** | **sí** | — | Filtro de estado y rango de fechas, paginación; el `.limit(50)` fijo se retiró (3.6). Con paciente elegido monta su banda de pestañas | ✅ |
-| `/pro/sessions/[id]` | 28 | 13 | 0 | — | — | — | Informe de una sesión; revisar densidad | ⬜ |
-| `/pro/alerts` | 22 | 13 | sí | **sí** | **sí** | — | Evidencia plegada (14.5), filtros de lectura/prioridad/motivo/paciente, páginas de 20 y el conteo sin leer resuelto en la base (3.7, 3.8) | ✅ |
+| `/pro/sessions/[id]` | 28 | 13 | 0 | — | — | — | Informe de una sesión. Desde `/pro/sessions` se lee en diálogo (15.4) y esta ruta sigue siendo la de compartir; queda revisar densidad | 🟡 |
+| `/pro/alerts` | 22 | 13 | sí | **sí** | **sí** | — | Filtros de lectura/prioridad/motivo/paciente, páginas de 20 y el conteo sin leer resuelto en la base (3.7, 3.8). La evidencia pasó del `<details>` de 14.5 a un **diálogo con el informe completo de cada sesión** (15.3, 15.4): leer una alerta ya no empuja las otras diecinueve | ✅ |
 
 ### Seguimiento
 
@@ -106,11 +106,11 @@ Estado: ⬜ pendiente · 🟡 parcial · ✅ hecho. Los números son del 2026-09
 | Ruta | kB | li | det | filtro | pag | Defectos | Qué hacer | Estado |
 |---|---|---|---|---|---|---|---|---|
 | `/patient` (portada) | 19 | 12 | 0 | — | — | — | Semana + racha + sesión en curso (17.5). OK | ✅ |
-| `/routine` | 29 | 23 | **0** | — | — | A, B | 23 elementos, los dos días abiertos. **Plegar los días** con el botón de iniciar en la cabecera (9.2); subir la sesión en curso arriba (9.1) | ⬜ |
+| `/routine` | 122 | 23 | **2** | — | — | — | Un bloque por día con el botón de iniciar en la cabecera y los ejercicios plegados (9.2), y la sesión a medias arriba del todo (9.1). El bloque de la rutina baja de 1.382 px a **482** (doc 12) | ✅ |
 | `/patient/profile` | 29 | 5 | 2 | — | — | — | Resumen de lectura + edición plegada (17.3). OK | ✅ |
 | `/attendance/me` | 18 | 13 | 0 | — | — | H | Revisar que el vacío explique qué hacer | ⬜ |
 | `/memberships/me` | 16 | 5 | 0 | — | — | — | OK | ✅ |
-| `/routine/sessions/[id]` | — | — | `<details>` | — | — | E | Registro de sesión: el formulario de cada ejercicio mide ~968 px (doc 12). Acotar (8.x) | ⬜ |
+| `/routine/sessions/[id]` | 234 | 9 | **12** | — | — | — | **Banda de avance fija** con la barra, el acceso a cada ejercicio y el cierre; el primer pendiente abre solo; zona, motivo y sustitución plegados hasta que hacen falta. El formulario baja de 968 px a **598** y el documento de 402 kB a 234 (8.1–8.7, doc 12) | ✅ |
 
 ### Sin sesión
 
@@ -146,8 +146,29 @@ change dejó preparado y nunca se ejecutó.
    `components/patients/PatientTabs.tsx` en las seis vistas, con el subrayado de 2 px de la
    tarea 17.6. Falta la cabecera de 5.3 (membresía y condiciones), que necesita la agregación
    de 5.1.
-6. **Detalle en modal** (15.x) donde una lectura no necesita cambiar de pantalla.
-7. **Vistas del paciente**: plegar los días de `/routine`, acotar el registro de sesión.
+6. ~~**Detalle en modal** (15.x) donde una lectura no necesita cambiar de pantalla~~ —
+   **hecho** (2026-09-08). `components/ui/DetailDialog.tsx` —`DetailPanel`, el diálogo de
+   solo lectura, y `DetailDialog`, el mismo con su disparador— montado en tres sitios: la
+   ficha del ejercicio desde `/exercises`, la evidencia de una alerta y el informe de una
+   sesión desde `/pro/alerts` y `/pro/sessions`. Tres cosas que conviene no deshacer:
+   - **No usa portal**, como `SheetModal`. Lo que hay dentro sigue en el HTML del servidor,
+     que es lo que lee `verify-routine-sessions` en la evidencia de una alerta.
+   - **La ruta propia no desaparece.** El enlace del listado sigue apuntando a
+     `/exercises/[id]` o a `/pro/sessions/[id]`: es lo que se comparte, lo que abre `Cmd`+clic
+     y lo que funciona sin JavaScript. El diálogo intercepta el clic; no sustituye el enlace.
+   - **Al diálogo se le pasa el dato, no la fila ya pintada.** Un componente de cliente
+     serializa sus props en el documento y un árbol de React pesa unas veinte veces más que
+     los datos: pasar `children` desde el servidor llevó `/exercises` de 64 kB a 623.
+     Pasando el ejercicio, la pantalla acabó **más ligera que antes** (doc 12, punto 3 quater).
+7. ~~**Vistas del paciente**: plegar los días de `/routine`, acotar el registro de sesión~~ —
+   **hecho** (2026-09-08). Las dos mitades comparten la misma idea: la pantalla enseña lo que
+   hace falta para decidir y esconde lo demás a un toque, sin sacarlo del HTML del servidor.
+   - `/routine` (9.1, 9.2): un bloque por día, con el título, el número de ejercicios y el
+     botón de empezar siempre a la vista; la lista, detrás de «Ver los ejercicios». El botón
+     va en la cabecera y **no dentro del `<summary>`**: un `<button>` ahí alterna el
+     `<details>` al pulsarlo, y ese `<form>` es contrato.
+   - `/routine/sessions/[id]` (sección 8): banda de avance fija, el primer pendiente abierto,
+     y zona, motivo y sustitución plegados **hasta que Zod los exige**.
 8. ~~**Paginar `/plans`**~~ — **hecho** (2026-09-07). Al hacerlo salió un fallo que afectaba a
    **seis listados**: cuando la página pedida empieza más allá de la última fila, PostgREST
    devuelve un `416 PGRST103` y la pantalla entera se caía —`?page=99` a mano, o quedarse en

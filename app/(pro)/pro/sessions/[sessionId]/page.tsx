@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getActiveProfile } from "@/lib/auth/session";
 import { Workspace } from "@/components/auth/Workspace";
-import { SessionReport } from "@/components/routines/SessionHistory";
+import { SessionReport } from "@/components/routines/SessionReport";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { sessionDetails } from "@/lib/routines/session-queries";
 import { closeSessionSchema } from "@/lib/routines/schemas";

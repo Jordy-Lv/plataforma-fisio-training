@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { Workspace } from "@/components/auth/Workspace";
+import { OpenSessionCard } from "@/components/routines/OpenSessionCard";
 import { RoutineSummary } from "@/components/routines/RoutineSummary";
 import { SessionHistory } from "@/components/routines/SessionHistory";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -20,6 +21,13 @@ export default async function Page() {
     // recientes. El historial completo vive en la ficha del paciente.
     patientSessions(actor.id),
   ]);
+  /*
+    La sesión a medias, arriba del todo (9.1). Sale del historial que esta
+    pantalla ya consulta —no cuesta una consulta más—: una sesión en curso está
+    por definición entre las veinte más recientes, y si no lo estuviera el botón
+    de cada día la reanuda igual.
+  */
+  const abierta = sessions.find((session) => session.status === "in_progress");
 
   return (
     <Workspace
@@ -28,6 +36,19 @@ export default async function Page() {
       role="patient"
       description="Abre el día que vas a entrenar y registra cada ejercicio al terminarlo."
     >
+      {abierta && (
+        <div className="mb-6">
+          <OpenSessionCard
+            session={{
+              id: abierta.id,
+              performedOn: abierta.performed_on,
+              routineName: abierta.routines?.name ?? "Tu rutina",
+              dayTitle: abierta.routine_days?.title ?? "sesión en curso",
+            }}
+          />
+        </div>
+      )}
+
       {routines.length === 0 ? (
         <EmptyState title="Tu profesional está preparando tu rutina">
           Cuando esté lista podrás consultar aquí los ejercicios y sus

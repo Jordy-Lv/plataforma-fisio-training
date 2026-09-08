@@ -369,3 +369,90 @@ integrado suspende el cálculo de estilo y devuelve todas las alturas a cero
 (`visibilityState: "hidden"`, ventana de 0×0), y no hay ninguna ventana de Chrome real
 conectada a esta sesión. El recuento de arriba sí es una medición; el alto en píxeles de
 estas siete pantallas queda pendiente (tarea 18.4).
+
+## 3 quater. El detalle en diálogo y el registro de sesión (2026-09-08)
+
+Puntos 6 y 7 del orden de ejecución del [doc 14](14-auditoria-de-vistas.md): leer un detalle
+sin cambiar de pantalla, y acortar el registro de un ejercicio.
+
+**Cómo se midió.** Peso del HTML del servidor pedido por HTTP con el cliente de las propias
+suites, contra `next dev` recién arrancado en dos pasadas —la rama tal cual y con los cambios
+puestos, con `git stash` de por medio y el servidor reiniciado entre ambas, porque el
+compilador incremental contamina la medida—. Las alturas en píxeles, en el navegador
+integrado a 375×812; hay que forzar un repintado antes de leerlas (una captura basta) o
+devuelve ceros.
+
+### Peso del documento
+
+| Ruta | Antes | Después | |
+|---|---|---|---|
+| `/exercises` (24 tarjetas) | 298,9 kB | **195,8 kB** | −34 % |
+| `/exercises?vista=lista` (60 filas) | 533,8 kB | **295,8 kB** | −45 % |
+| `/routine/sessions/[id]` (4 ejercicios) | 402,1 kB | **234,2 kB** | −42 % |
+| `/pro/sessions?patient=…` (16 sesiones) | 154,6 kB | 170,3 kB | +10 % |
+| `/pro/alerts` (1 alerta, 3 sesiones) | 128,1 kB | 151,8 kB | +19 % |
+
+**El catálogo adelgaza al abrir la ficha en un diálogo, que es lo contrario de lo que
+parece.** La razón no es la ficha: es que la fila y la tarjeta pasaron de renderizarse en el
+servidor a construirse en el cliente a partir del ejercicio. Las props de un componente de
+cliente viajan serializadas en el documento, y **el árbol de React de una tarjeta pesa unas
+veinte veces más que los datos con los que se construye**. La primera versión pasaba la fila
+ya pintada como `children` y llevó `/exercises` a 623 kB; pasando el dato, a 195.
+
+Lo mismo explica las dos subidas: son datos que antes no viajaban —los informes de las
+sesiones de la página—, y compran leer una sesión sin abandonar la lista. Un kilobyte por
+sesión.
+
+### La sesión en curso, a 375 px
+
+Un día de cuatro ejercicios, el mismo del punto 5.
+
+| Estado | Antes | Después |
+|---|---|---|
+| Al entrar en la pantalla | 1.493 px (los cuatro plegados) | 2.482 px (el primer pendiente **abierto**) |
+| Los cuatro abiertos | 5.365 px | **4.276 px** |
+| **Un formulario de registro** | **968 px** | **598 px** |
+| El mismo, con zona, motivo y sustitución | — | 1.122 px |
+| `<option>` en el documento | 1.486 | **637** |
+
+Las tres cosas que lo acortan:
+
+1. **Zona del dolor, motivo y sustitución esperan plegados.** No son opcionales siempre —Zod
+   exige la zona con dolor o al saltar, el motivo al saltar—, así que el bloque **se abre
+   solo** en cuanto pasan a hacer falta, y también cuando la validación falla. Sin JavaScript
+   está a un toque. Es la regla del punto 4 llevada un paso más allá: no «obligatorio u
+   opcional», sino *cuándo* es obligatorio.
+2. **El catálogo de sustitución llega acotado.** `replacementExercises` recibe los grupos
+   musculares del día y filtra en la base con `overlaps`, con tope de 200. Las 868 filas del
+   catálogo eran 1.486 `<option>` viajando al teléfono a mitad de entrenamiento.
+3. **La zona del dolor arranca en las cinco del grupo muscular** del ejercicio, no en las
+   doce. La lista completa sigue a un toque.
+
+La pantalla es más alta al entrar porque ahora trae dos cosas que antes no: la banda de
+avance (197 px, fija) y el primer ejercicio pendiente ya abierto. Ese es el intercambio: se
+entra viendo lo que se viene a hacer, en vez de una lista de cuatro bloques cerrados.
+
+**Lo que no se puede medir en píxeles aquí.** El desplazamiento que uno se ahorra. Antes,
+cerrar la sesión estaba al final de la pantalla —2.500 px abajo— y no había forma de saltar
+al tercer ejercicio sin recorrer el segundo. Ahora las dos cosas están en la banda.
+
+### `/routine`, con los días plegados (punto 7a)
+
+Mismo teléfono, la misma rutina de dos días con cuatro ejercicios cada uno, y el mismo
+historial de sesiones debajo (1.022 px en las dos medidas).
+
+| | Antes | Después |
+|---|---|---|
+| El bloque de la rutina | 1.382 px | **482 px** |
+| La pantalla entera | 2.787 px | **2.057 px** |
+| Peso del documento | 163,4 kB | **121,8 kB** |
+| Con los dos días abiertos | — | 3.049 px |
+
+**La rutina cabe ahora en media pantalla de teléfono.** Cada día es un bloque con lo que hace
+falta para decidir —título, cuántos ejercicios y el botón de empezar— y la lista de ejercicios
+detrás de «Ver los ejercicios». Antes había que recorrer nueve ejercicios para llegar al
+botón del segundo día.
+
+Los 2.057 px de la pantalla entera incluyen algo que antes no estaba: la tarjeta de la sesión
+a medias, arriba del todo. Quien dejó una sesión abierta la reanuda desde la primera línea, en
+vez de descubrir al pulsar «Iniciar» que ya tenía una empezada.

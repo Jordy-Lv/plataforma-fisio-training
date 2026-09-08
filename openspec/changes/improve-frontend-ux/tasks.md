@@ -107,23 +107,38 @@ final, después de la 16.
 
 ## 8. La sesión en curso — rama `ui/paciente-sesion`
 
-- [ ] 8.1 Crear `components/ui/Progress.tsx` sobre la primitiva de `@base-ui/react`
-- [ ] 8.2 Banda de avance fija con la barra, el conteo de ejercicios registrados y accesos por ancla a cada ejercicio
-- [ ] 8.3 Abrir el bloque de registro del primer ejercicio pendiente, resuelto en el servidor
-- [ ] 8.4 Subir «Terminar sesión» a la banda con aviso de los ejercicios sin registrar; **el texto del aviso no puede contener la cadena `Terminar sesión`**
-- [ ] 8.5 Añadir `bodyPartsByMuscleGroup` a `lib/catalog/body-parts.ts` y acotar la zona del dolor al grupo muscular del ejercicio, con salida a la lista completa
-- [ ] 8.6 Cambiar `replacementExercises()` a `(muscleGroups?, limit = 200)` con `.overlaps()`, y hacer una sola llamada por sesión en vez de una por ejercicio
-- [ ] 8.7 Verificar que el registro sigue enviándose con `name="itemId"` y que el catálogo completo sigue alcanzable
-- [ ] 8.8 `npm run test:routines:sessions` en verde, más los cuatro de CI
+- [x] 8.1 Crear `components/ui/Progress.tsx` sobre la primitiva de `@base-ui/react`
+  - Sin `"use client"`: no tiene estado, así que la pinta el servidor. La primitiva pone el `role="progressbar"` con su valor y su máximo, que es lo que hace que un lector de pantalla anuncie «1 de 4».
+- [x] 8.2 Banda de avance fija con la barra, el conteo de ejercicios registrados y accesos por ancla a cada ejercicio
+  - `components/routines/SessionProgress.tsx`, `sticky top-16` bajo la cabecera del shell. Los accesos son anclas `#ejercicio-<id>`, no un componente de cliente: sin JavaScript funcionan igual. El destino lleva `scroll-mt-72 sm:scroll-mt-56` para no quedar tapado por la propia banda.
+- [x] 8.3 Abrir el bloque de registro del primer ejercicio pendiente, resuelto en el servidor
+  - La página calcula `primeroPendiente` y se lo pasa a `SessionItemForm` como `defaultOpen`. Al guardar uno, la revalidación abre el siguiente: la sesión avanza sola.
+- [x] 8.4 Subir «Terminar sesión» a la banda con aviso de los ejercicios sin registrar; **el texto del aviso no puede contener la cadena `Terminar sesión`**
+  - El aviso dice lo que de verdad ocurre: la base **rechaza** cerrar con ejercicios sin marcar («Quedan 3 ejercicios por marcar —hechos, saltados o modificados— antes de poder cerrar»), en vez de dejar que el usuario descubra la regla al chocar con ella. El `<form>` de cierre pasa a estar antes que los de registro; anotado en `docs/11`.
+- [x] 8.5 Añadir `bodyPartsByMuscleGroup` a `lib/catalog/body-parts.ts` y acotar la zona del dolor al grupo muscular del ejercicio, con salida a la lista completa
+  - Con `bodyPartsFor(grupos)`, que siempre añade «Otra zona» y devuelve la lista entera si el ejercicio no tiene grupos etiquetados: acortar a ciegas escondería la zona que duele. De 12 opciones a 6, con «Ver todas las zonas» al lado.
+- [x] 8.6 Cambiar `replacementExercises()` a `(muscleGroups?, limit = 200)` con `.overlaps()`, y hacer una sola llamada por sesión en vez de una por ejercicio
+  - Los `<option>` del documento bajan de **1.486 a 637** y la pantalla de 402 kB a 234. Una sustitución ya guardada que quede fuera de la consulta acotada se añade a mano al desplegable: si no estuviera, reguardar el registro la borraría.
+- [x] 8.7 Verificar que el registro sigue enviándose con `name="itemId"` y que el catálogo completo sigue alcanzable
+  - `test:routines:sessions` recorre el envío por HTTP (18/18). «Ver más ejercicios» abre los 200 que trajo la sesión; el catálogo entero ya no viaja al teléfono, y es una decisión, no un descuido.
+- [x] 8.8 `npm run test:routines:sessions` en verde, más los cuatro de CI
+  - 18/18. También `test:catalog` 9/9, `test:catalog:custom` 12/12, `test:people` 10/10, `test:overview` 5/5, `test:routines:items` 9/9 y `test:templates` 19/19.
 
 ## 9. Rutina y portada del paciente — rama `ui/paciente-inicio`
 
-- [ ] 9.1 Subir la sesión en curso al principio de `/routine` con acceso para reanudarla
-- [ ] 9.2 Colapsar los días en bloques plegables, con el botón de iniciar visible en la cabecera de cada uno
-- [ ] 9.3 Verificar que `/routine` conserva el formulario con `value="<dayId>"` por día, el vacío «Tu profesional está preparando tu rutina» y la ausencia de «Pendiente de revisión»
-- [ ] 9.4 Dar dato propio a las cuatro tarjetas de `/patient`, reutilizando la agregación de la sección 5
-- [ ] 9.5 Añadir `loading.tsx` a `/routine` y a `/routine/sessions/[sessionId]`
-- [ ] 9.6 Revisar las cinco pantallas del paciente a 375 px, en claro y en oscuro
+- [x] 9.1 Subir la sesión en curso al principio de `/routine` con acceso para reanudarla
+  - La tarjeta de la portada se extrajo a `components/routines/OpenSessionCard.tsx` y ahora la pintan las dos pantallas. En `/routine` sale del historial que ya se consulta —**sin una consulta más**—: una sesión en curso está por definición entre las veinte más recientes, y si no lo estuviera el botón de cada día la reanuda igual.
+- [x] 9.2 Colapsar los días en bloques plegables, con el botón de iniciar visible en la cabecera de cada uno
+  - Cabecera con el título, cuántos ejercicios tiene y el botón; la lista detrás de «Ver los ejercicios». **El botón no puede ir dentro del `<summary>`**: un `<button>` ahí alterna el `<details>` al pulsarlo, y ese `<form>` es el que `verify-routine-sessions` localiza por `value="<dayId>"` y envía sin JavaScript.
+  - El bloque de la rutina baja de 1.382 px a **482** y el documento de 163 kB a 122 (doc 12).
+- [x] 9.3 Verificar que `/routine` conserva el formulario con `value="<dayId>"` por día, el vacío «Tu profesional está preparando tu rutina» y la ausencia de «Pendiente de revisión»
+  - Dos formularios con `value="<uuid>"` y `$ACTION_` (uno por día), el vacío intacto y ni rastro de «Pendiente de revisión». Los ejercicios siguen en el HTML del servidor con el día cerrado. `test:routines:sessions` 18/18, `test:auth:screens` 10/10, `test:people` 10/10.
+- [x] 9.4 Dar dato propio a las cuatro tarjetas de `/patient`, reutilizando la agregación de la sección 5
+  - Superada por 17.5: las cuatro tarjetas —que duplicaban la barra inferior— ya no existen. `/patient` es ahora la tira de la semana con «hoy» marcado, la racha por semanas y la sesión en curso, todo servido por `patientOverview` de `lib/progress/patient-overview.ts` (la agregación de 5.1 con lo que la portada necesita). No queda ninguna tarjeta a la que dar dato propio.
+- [x] 9.5 Añadir `loading.tsx` a `/routine` y a `/routine/sessions/[sessionId]`
+  - Mismo patrón que los `loading.tsx` ya existentes: `Skeleton`/`SkeletonCard` sobre tokens, `role="status"` con su `aria-label`, y el contenedor con el ancho y los márgenes del shell. Cada esqueleto repite la forma real de su pantalla —`/routine`: tarjeta de sesión en curso, días plegables e historial; la sesión: banda de avance y bloques de registro—. `test:design` 4/4 (incluye «cada grupo de rutas define sus estados de carga y de error»).
+- [x] 9.6 Revisar las cinco pantallas del paciente a 375 px, en claro y en oscuro
+  - `/patient`, `/routine`, `/routine/sessions/[id]` (en curso y completada), `/patient/profile` y `/attendance/me` revisadas en Chrome a 375 px con `prefers-color-scheme` claro y oscuro. Sin desplazamiento horizontal, objetivos táctiles ≥ 44 px y los tokens resuelven en los dos temas. La tarjeta de sesión en curso (9.1) aparece en la portada y en `/routine`; los días plegables (9.2) y la banda de avance (8.2) se ven bien en ambos temas. Único detalle de redacción, preexistente: el informe de la sesión mezcla fecha ISO (`2026-09-03`) y fecha local (`3/9/2026, 8:30:00 a. m.`) en la misma línea.
 - [ ] 9.7 `npm run test:routines:sessions` y `test:auth:screens` en verde, más los cuatro de CI
 
 ## 10. Estados pendientes y avisos — rama `ui/estados-pendientes`
@@ -197,12 +212,23 @@ Las tres lecturas de aquí son territorio libre: ninguna suite las recorre, porq
 ningún `<form>` dentro. **Ninguna de estas tareas mueve un formulario a un diálogo**
 (ADR-0008).
 
-- [ ] 15.1 Crear `components/ui/DetailDialog.tsx`: diálogo de solo lectura con su disparador, cierre por `Esc` y por clic fuera, y foco devuelto al disparador
-- [ ] 15.2 Ficha del ejercicio desde `/exercises` en `DetailDialog` —nombre, imagen, indicaciones, músculos, equipo, entorno, nivel—, **conservando** el enlace a `/exercises/[id]` como ruta propia para compartir y para quien no tenga JavaScript
-- [ ] 15.3 Evidencia completa de una alerta en `DetailDialog`, encadenada con el plegado de 14.5
-- [ ] 15.4 Detalle de una sesión desde `/pro/alerts` y desde `/pro/sessions` en `DetailDialog`, conservando `/pro/sessions/[sessionId]` como ruta
-- [ ] 15.5 Comprobar con `curl` que las tres pantallas no han perdido ningún `<form>` del HTML del servidor, y a mano que con JavaScript desactivado los enlaces siguen llevando a la ruta completa
-- [ ] 15.6 `npm run test:catalog`, `test:routines:sessions` y `test:overview` en verde, más los cuatro de CI
+- [x] 15.1 Crear `components/ui/DetailDialog.tsx`: diálogo de solo lectura con su disparador, cierre por `Esc` y por clic fuera, y foco devuelto al disparador
+  - Dos piezas: `DetailPanel` —el panel, con la trampa de foco, el bloqueo del desplazamiento del cuerpo y el foco devuelto— y `DetailDialog`, el mismo con un botón que lo abre. **Sin portal**, como `SheetModal`, que se reescribió encima para no tener dos veces la misma mecánica (`test:people` 10/10).
+  - `keepMounted` decide si el contenido se emite siempre (lo que necesita cualquier texto que lea una suite) o se monta al abrir (listados largos).
+- [x] 15.2 Ficha del ejercicio desde `/exercises` en `DetailDialog` —nombre, imagen, indicaciones, músculos, equipo, entorno, nivel—, **conservando** el enlace a `/exercises/[id]` como ruta propia para compartir y para quien no tenga JavaScript
+  - `ExerciseSummary` (la ficha) y `ExerciseQuickView` (el `<li>` que intercepta el clic del nombre). `description` entra en las columnas del listado: cuesta poco —41 de 868 ejercicios tienen indicaciones— y ahorra una consulta por ficha.
+  - **El envoltorio recibe el ejercicio, no la fila ya pintada.** Pasar `children` desde el servidor llevó `/exercises` de 64 kB a 623; con el dato plano la pantalla acabó en 195 kB, **más ligera que antes** (doc 12).
+  - `next/link` navega desde su propio `onClick` sin mirar si alguien llamó a `preventDefault`: el interceptor necesita además `stopPropagation`.
+- [x] 15.3 Evidencia completa de una alerta en `DetailDialog`, encadenada con el plegado de 14.5
+  - `components/routines/AlertEvidence.tsx`. La tarjeta enseña la última sesión; el resto se lee encima de la lista. El `<details>` de 14.5 empujaba las otras diecinueve alertas hacia abajo al abrirlo.
+  - `keepMounted` activado: `verify-routine-sessions` lee del HTML del servidor la nota de la tercera sesión del camino 5.
+- [x] 15.4 Detalle de una sesión desde `/pro/alerts` y desde `/pro/sessions` en `DetailDialog`, conservando `/pro/sessions/[sessionId]` como ruta
+  - `sessionReports(ids)` trae los informes de la página **en una sola consulta con `in`**, nunca uno por fila. `SessionReport` se extrajo a su propio archivo porque ahora lo pintan tres pantallas y un diálogo.
+  - Cuesta ~1 kB por sesión (`/pro/sessions` +10 %, `/pro/alerts` +19 %) y ahorra una navegación por cada sesión que se quiere mirar.
+- [x] 15.5 Comprobar con `curl` que las tres pantallas no han perdido ningún `<form>` del HTML del servidor, y a mano que con JavaScript desactivado los enlaces siguen llevando a la ruta completa
+  - `/exercises` 2 formularios (sesión + filtros), `/pro/alerts` 3 (sesión + filtros + marcar leída), `/pro/sessions` 2. Los `href` a `/exercises/[id]` y `/pro/sessions/[id]` siguen en el HTML del servidor: 61 en la vista de lista del catálogo, 11 en el historial.
+- [x] 15.6 `npm run test:catalog`, `test:routines:sessions` y `test:overview` en verde, más los cuatro de CI
+  - 9/9, 18/18 y 5/5.
 
 ## 16. Llegar al paciente sin recorrer una lista — rama `ui/acceso-directo`
 
@@ -257,9 +283,9 @@ estados, resumen en modal).
 
 - [x] 18.1 Escribir `docs/14-auditoria-de-vistas.md`: método de medición, la rúbrica de nueve defectos, la tabla con las ~38 rutas y sus defectos, y el orden de ejecución. Enlazado desde el README.
 - [x] 18.2 Filtro por año en el historial de `/screenings/[patientId]` (`components/progress/ScreeningHistory.tsx`): arranca en el año más reciente, «Todos los años» en el `<select>`; sin JavaScript se ven todos. `test:screenings` 8/8 —los `<h3>` con la fecha y su orden no cambian—.
-- [x] 18.3 Trabajar la tabla del doc 14 por orden de prioridad: primero los cimientos (sección 1), luego filtros y paginación en las listas del personal, luego los historiales de un paciente, luego los formularios largos que siguen abiertos. — *cerrados los puntos 1 a 5 y el 8 del orden de ejecución (2026-09-07). Quedan el 6 (detalle en modal) y el 7 (vistas del paciente).*
+- [x] 18.3 Trabajar la tabla del doc 14 por orden de prioridad: primero los cimientos (sección 1), luego filtros y paginación en las listas del personal, luego los historiales de un paciente, luego los formularios largos que siguen abiertos. — *cerrados los puntos 1 a 5 y el 8 del orden de ejecución (2026-09-07), y el 6 (detalle en modal, sección 15) y el 7 entero —el registro de sesión (sección 8) y los días de `/routine` (9.1–9.3)— el 2026-09-08. En la tabla del doc 14 solo quedan en ⬜ `/attendance/me` (revisar su estado vacío) y el wizard de onboarding a 375 px.*
 - [x] 18.5 Acotar por fecha los historiales de un paciente (punto 3): `components/ui/PeriodFilter.tsx` —el filtro de `ScreeningHistory` generalizado—, `AttendanceHistory` por mes en `/attendance/[patientId]` y `ScreeningHistory` reescrito encima. Arrancan en el periodo más reciente y sin JavaScript se ve el historial entero. `test:attendance` 8/8, `test:screenings` 8/8.
 - [x] 18.6 Plegar los formularios largos que seguían abiertos (punto 4): las nueve medidas opcionales del tamizaje, las dos altas de `/plans`, el alta de `/memberships`, el nivel y las contraindicaciones de `/exercises/new` y la edad de `/rules/*`. **Se pliega lo opcional, nunca lo obligatorio**: un campo que Zod exige y el usuario no ve produce un error del que no se ve el origen. Lo obligatorio y largo —los tres etiquetados del ejercicio, los seis criterios de la regla— se compacta a dos columnas. `test:catalog:custom` 12/12, `test:rules:panel` 12/12, `test:plans` 7/7, `test:memberships` 11/11.
 - [x] 18.7 Paginar `/plans` (punto 8): dos claves en la URL —`page` para los planes, `spage` para los servicios—, doce por lista, porque las dos colecciones comparten pantalla y crecen sin relación. `createListParams.range` acepta la clave de página, y `spage` va en `notFilters`: es navegación, no un filtro.
 - [x] 18.8 Corregir la caída por página fuera de rango en los seis listados que paginan contra la base (`/plans`, `/rules`, `/templates`, `/pro/alerts`, `/pro/routines`, `/pro/sessions`). PostgREST devuelve `416 PGRST103` en vez de una lista vacía y la pantalla entera se caía. `readPage` (`lib/shared/read-pages.ts`) lo trata como página vacía y relee el rango `0-0` solo para saber el total. Verificado: cero errores en el registro del servidor donde antes había cinco. Toca consultas de tres slices —catálogo, rutinas y negocio— porque el fallo era el mismo en los seis.
-- [ ] 18.4 Cada vez que se cierre una fila de la tabla, medir el antes/después en Chrome y anotarlo en `docs/12-medicion-de-densidad.md`. — *el punto «3 ter» recoge el recuento antes/después de las siete pantallas de los puntos 3, 4 y 5, medido con dos compilaciones. Sigue faltando el alto en píxeles: el navegador integrado devuelve `visibilityState: "hidden"` y una ventana de 0×0, y no hay ninguna ventana de Chrome real conectada.*
+- [ ] 18.4 Cada vez que se cierre una fila de la tabla, medir el antes/después en Chrome y anotarlo en `docs/12-medicion-de-densidad.md`. — *el punto «3 ter» recoge el recuento antes/después de las siete pantallas de los puntos 3, 4 y 5; el «3 quater» (2026-09-08) añade el peso del documento de seis pantallas y, **por fin, alturas en píxeles**: el formulario de registro baja de 968 px a 598 y el bloque de la rutina de 1.382 px a 482. El navegador integrado sí mide si se le fuerza un repintado antes de leer (basta una captura); sin eso devuelve ceros y una ventana de 0×0. Queda por medir en píxeles el resto de las pantallas del punto 3 ter.*
