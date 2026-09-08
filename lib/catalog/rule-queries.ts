@@ -1,5 +1,5 @@
 import { ruleList, type RuleFilters } from "@/lib/catalog/rule-list";
-import { readPages } from "@/lib/shared/read-pages";
+import { readPage, readPages } from "@/lib/shared/read-pages";
 import { sanitizeSearch } from "@/lib/shared/search";
 import "server-only";
 
@@ -85,9 +85,9 @@ export async function listRules(filters: RuleFilters = ruleList.empty) {
     const matches = candidates.map(toRule).filter((rule) => rule.conditions === null);
     return { rules: matches.slice(from, to + 1), total: matches.length, pages: ruleList.pages(matches.length), activeTotal: activeTotal ?? 0 };
   }
-  const { data, error, count } = await query().range(from, to);
-  if (error) throw new Error(`No se pudieron consultar las reglas: ${error.message}`);
-  return { rules: (data ?? []).map(toRule), total: count ?? 0, pages: ruleList.pages(count ?? 0), activeTotal: activeTotal ?? 0 };
+  const { rows, total } = await readPage((start, end) => query().range(start, end),
+    { from, to }, "No se pudieron consultar las reglas");
+  return { rules: rows.map(toRule), total, pages: ruleList.pages(total), activeTotal: activeTotal ?? 0 };
 }
 
 export async function getRule(id: string): Promise<RuleListItem | null> {

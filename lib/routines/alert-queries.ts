@@ -2,6 +2,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 import { alertList, type AlertFilters } from "@/lib/routines/alert-list";
+import { readPage } from "@/lib/shared/read-pages";
 const evidenceSchema = z.object({ session_id: z.string(), performed_on: z.string(), pain_level: z.number().nullable(), pain_location: z.string().nullable(), notes: z.string().nullable() });
 
 /**
@@ -18,16 +19,19 @@ const evidenceSchema = z.object({ session_id: z.string(), performed_on: z.string
 export async function clinicalAlerts(filters: AlertFilters = alertList.empty, recipientId?: string) {
   const supabase = await createClient();
   const { from, to } = alertList.range(filters);
-  let query = supabase.from("alerts").select(`id, type, severity, read_at, created_at, patient_id, recipient_id, payload,
-    patient:profiles!alerts_patient_id_fkey(full_name), recipient:profiles!alerts_recipient_id_fkey(full_name)`, { count: "exact" })
-    .order("created_at", { ascending: false });
-  if (filters.read === "unread") query = query.is("read_at", null);
-  if (filters.read === "read") query = query.not("read_at", "is", null);
-  if (filters.type) query = query.eq("type", filters.type);
-  if (filters.severity) query = query.eq("severity", filters.severity);
-  if (filters.patient) query = query.eq("patient_id", filters.patient);
-  const { data, error, count } = await query.range(from, to);
-  if (error) throw new Error(`No se pudieron consultar las alertas: ${error.message}`);
+  const query = () => {
+    let request = supabase.from("alerts").select(`id, type, severity, read_at, created_at, patient_id, recipient_id, payload,
+      patient:profiles!alerts_patient_id_fkey(full_name), recipient:profiles!alerts_recipient_id_fkey(full_name)`, { count: "exact" })
+      .order("created_at", { ascending: false });
+    if (filters.read === "unread") request = request.is("read_at", null);
+    if (filters.read === "read") request = request.not("read_at", "is", null);
+    if (filters.type) request = request.eq("type", filters.type);
+    if (filters.severity) request = request.eq("severity", filters.severity);
+    if (filters.patient) request = request.eq("patient_id", filters.patient);
+    return request;
+  };
+  const { rows: data, total: count } = await readPage((start, end) => query().range(start, end),
+    { from, to }, "No se pudieron consultar las alertas");
 
   // El conteo sin leer sale de la base, no de la página: con veinte alertas a
   // la vista y doscientas guardadas, contarlo sobre la lista mentía.

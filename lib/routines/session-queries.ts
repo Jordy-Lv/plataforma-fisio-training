@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { sessionList, type SessionListFilters } from "@/lib/routines/session-list";
+import { readPage } from "@/lib/shared/read-pages";
 
 export async function sessionDetails(sessionId: string) {
   const supabase = await createClient();
@@ -25,15 +26,18 @@ export type SessionLog = SessionDetails["session_logs"][number];
 export async function patientSessions(patientId: string, filters: SessionListFilters = sessionList.empty) {
   const supabase = await createClient();
   const { from, to } = sessionList.range(filters);
-  let query = supabase.from("sessions")
-    .select("id, routine_day_id, performed_on, status, routines(name), routine_days(day_number, title)", { count: "exact" })
-    .eq("patient_id", patientId).order("performed_on", { ascending: false }).order("created_at", { ascending: false });
-  if (filters.status) query = query.eq("status", filters.status);
-  if (filters.from) query = query.gte("performed_on", filters.from);
-  if (filters.to) query = query.lte("performed_on", filters.to);
-  const { data, error, count } = await query.range(from, to);
-  if (error) throw new Error(`No se pudo consultar el historial: ${error.message}`);
-  return { sessions: data ?? [], total: count ?? 0, pages: sessionList.pages(count ?? 0) };
+  const query = () => {
+    let request = supabase.from("sessions")
+      .select("id, routine_day_id, performed_on, status, routines(name), routine_days(day_number, title)", { count: "exact" })
+      .eq("patient_id", patientId).order("performed_on", { ascending: false }).order("created_at", { ascending: false });
+    if (filters.status) request = request.eq("status", filters.status);
+    if (filters.from) request = request.gte("performed_on", filters.from);
+    if (filters.to) request = request.lte("performed_on", filters.to);
+    return request;
+  };
+  const { rows, total } = await readPage((start, end) => query().range(start, end),
+    { from, to }, "No se pudo consultar el historial");
+  return { sessions: rows, total, pages: sessionList.pages(total) };
 }
 export type PatientSession = Awaited<ReturnType<typeof patientSessions>>["sessions"][number];
 export async function executionExercises(dayId: string) {

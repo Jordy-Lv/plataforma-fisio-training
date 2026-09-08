@@ -1,7 +1,11 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
+import { readPage } from "@/lib/shared/read-pages";
 import { sanitizeSearch } from "@/lib/shared/search";
+
+/** Sin rango se piden todas las filas; es el tope de PostgREST, no un tamaño de página. */
+const maxRows = 999;
 
 /**
  * Las consultas del directorio de personas, en un solo sitio. Antes vivían
@@ -97,35 +101,39 @@ export async function listPatientProfiles(
     withActiveRoutine = [...new Set((data ?? []).map((row) => row.patient_id))];
   }
 
-  let query = supabase
-    .from("profiles")
-    .select("id, full_name, is_active, routines!routines_patient_id_fkey(status, created_at)", {
-      count: "exact",
-    })
-    .eq("role", "patient")
-    .order("full_name")
-    .order("created_at", { referencedTable: "routines", ascending: false })
-    .limit(1, { referencedTable: "routines" });
+  const query = () => {
+    let request = supabase
+      .from("profiles")
+      .select("id, full_name, is_active, routines!routines_patient_id_fkey(status, created_at)", {
+        count: "exact",
+      })
+      .eq("role", "patient")
+      .order("full_name")
+      .order("created_at", { referencedTable: "routines", ascending: false })
+      .limit(1, { referencedTable: "routines" });
 
-  const term = sanitizeSearch(filters.q ?? "");
-  if (term) query = query.ilike("full_name", `%${term}%`);
-  if (filters.state) query = query.eq("is_active", filters.state === "active");
-  if (withActiveRoutine !== null) {
-    // Sin ninguna rutina activa, «con rutina» no puede devolver nada y `in.()`
-    // es sintaxis inválida en PostgREST: se fuerza el conjunto vacío aparte.
-    if (withActiveRoutine.length === 0) {
-      if (filters.routine === "with") return { patients: [], total: 0 };
-    } else if (filters.routine === "with") {
-      query = query.in("id", withActiveRoutine);
-    } else {
-      query = query.not("id", "in", `(${withActiveRoutine.join(",")})`);
+    const term = sanitizeSearch(filters.q ?? "");
+    if (term) request = request.ilike("full_name", `%${term}%`);
+    if (filters.state) request = request.eq("is_active", filters.state === "active");
+    if (withActiveRoutine !== null && withActiveRoutine.length > 0) {
+      if (filters.routine === "with") {
+        request = request.in("id", withActiveRoutine);
+      } else {
+        request = request.not("id", "in", `(${withActiveRoutine.join(",")})`);
+      }
     }
-  }
-  if (filters.range) query = query.range(filters.range.from, filters.range.to);
+    return request;
+  };
+  // Sin ninguna rutina activa, «con rutina» no puede devolver nada y `in.()`
+  // es sintaxis inválida en PostgREST: se fuerza el conjunto vacío aparte.
+  if (withActiveRoutine?.length === 0 && filters.routine === "with")
+    return { patients: [], total: 0 };
 
-  const { data, error, count } = await query;
-  if (error)
-    throw new Error(`No se pudieron consultar los pacientes: ${error.message}`);
+  const { rows: data, total: count } = await readPage(
+    (from, to) => query().range(from, to),
+    filters.range ?? { from: 0, to: maxRows },
+    "No se pudieron consultar los pacientes",
+  );
 
   const patients = (data ?? []).map((patient) => {
     const status = patient.routines[0]?.status;
@@ -137,5 +145,5 @@ export async function listPatientProfiles(
         status === "active" ? "active" : status ? "review" : ("none" as const),
     } as PatientProfile;
   });
-  return { patients, total: count ?? patients.length };
+  return { patients, total: count };
 }

@@ -1,5 +1,5 @@
 import { templateList, type TemplateFilters } from "@/lib/catalog/template-list";
-import { readPages } from "@/lib/shared/read-pages";
+import { readPage, readPages } from "@/lib/shared/read-pages";
 import { sanitizeSearch } from "@/lib/shared/search";
 import "server-only";
 
@@ -53,9 +53,9 @@ export async function listTemplates(filters: TemplateFilters = templateList.empt
     const matches = candidates.map(toItem).filter((template) => template.days < template.days_per_week);
     return { templates: matches.slice(from, to + 1), total: matches.length, pages: templateList.pages(matches.length) };
   }
-  const { data, error, count } = await query().range(from, to);
-  if (error) throw new Error(`No se pudieron consultar las plantillas: ${error.message}`);
-  return { templates: (data ?? []).map(toItem), total: count ?? 0, pages: templateList.pages(count ?? 0) };
+  const { rows, total } = await readPage((start, end) => query().range(start, end),
+    { from, to }, "No se pudieron consultar las plantillas");
+  return { templates: rows.map(toItem), total, pages: templateList.pages(total) };
 }
 
 export type TemplateItem = {
