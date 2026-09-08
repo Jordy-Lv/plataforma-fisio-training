@@ -25,31 +25,31 @@ final, después de la 16.
 
 ## 1. Cimientos y `/exercises` — rama `ui/listados-cimientos`
 
-- [ ] 1.1 Crear `lib/shared/list-params.ts` con `pageParam`, `searchParam`, `optionalEnum`, `optionalId` y `createListParams({ path, schema, pageSize })` que devuelva `schema`, `pageSize`, `parse`, `href`, `hasActiveFilters`, `empty`, `range` y `pages`; todos los miembros como funciones flecha del closure, para que se puedan desestructurar
-- [ ] 1.2 Crear `components/ui/FilterForm.tsx`: `<form method="get">` renderizado en el servidor, autoenvío inmediato al cambiar `<select>`/casilla y con 300 ms de retardo al escribir, `router.push` para lo primero y `router.replace` para lo segundo, `preventDefault` + `FormData` + `startTransition`, `aria-busy` mientras navega, `data-enhanced="true"` tras hidratar y limpieza del temporizador al desmontar
-- [ ] 1.3 Verificar con `curl` que el `<form method="get">` y su botón siguen en el HTML del servidor, y a mano que `/exercises` filtra con JavaScript desactivado
-- [ ] 1.4 Crear `components/ui/Pagination.tsx` (Server Component) con `{ page, pages, hrefFor, label }`, conservando `Anterior`, `Siguiente`, `rel="prev"/"next"` y `<p aria-live="polite">Página X de Y</p>`; `null` con una sola página y extremos desde cinco
-- [ ] 1.5 Crear `components/ui/Chip.tsx` (píldora de filtro activo que enlaza al listado sin ese filtro), `components/ui/Skeleton.tsx` y `components/ui/DataList.tsx`
-- [ ] 1.6 Reescribir `lib/catalog/schemas.ts` sobre `createListParams` conservando `exerciseFiltersSchema`, `exercisesHref` y `hasActiveFilters`; comprobar que `exerciseFiltersSchema.parse({ q })` con un subconjunto de claves sigue devolviendo el resto en `undefined`
-- [ ] 1.7 Añadir `options?: { pageSize?: number }` a `listExercises`
-- [ ] 1.8 Migrar `ExerciseFilters` a `FilterForm` sin cambiar ningún `name`, y añadir la fila de `Chip` de filtros activos
-- [ ] 1.9 Migrar `ExercisePagination` a `Pagination` con `label="Páginas del catálogo"`
-- [ ] 1.10 Verificar que `/exercises` conserva el `<h2 class="text-base font-semibold leading-6">` de la tarjeta, la frase `N ejercicios encontrados`, y los textos `Ningún ejercicio coincide con estos filtros` y `Ver todo el catálogo` del estado vacío filtrado
-- [ ] 1.11 Migrar los `loading.tsx` existentes a `Skeleton` sin cambiar su forma
-- [ ] 1.12 `npm run test:catalog` y `npm run test:catalog:custom` en verde, más los cuatro de CI
+- [x] 1.1 Crear `lib/shared/list-params.ts` con `pageParam`, `searchParam`, `optionalEnum`, `optionalId` y `createListParams({ path, schema, pageSize })` que devuelva `schema`, `pageSize`, `parse`, `href`, `hasActiveFilters`, `empty`, `range` y `pages`; todos los miembros como funciones flecha del closure, para que se puedan desestructurar
+- [x] 1.2 Crear `components/ui/FilterForm.tsx`: `<form method="get">` renderizado en el servidor, autoenvío inmediato al cambiar `<select>`/casilla y con 300 ms de retardo al escribir, `router.push` para lo primero y `router.replace` para lo segundo, `preventDefault` + `FormData` + `startTransition`, `aria-busy` mientras navega, `data-enhanced="true"` tras hidratar y limpieza del temporizador al desmontar
+- [x] 1.3 Verificar con `curl` que el `<form method="get">` y su botón siguen en el HTML del servidor, y a mano que `/exercises` filtra con JavaScript desactivado
+- [x] 1.4 Crear `components/ui/Pagination.tsx` (Server Component) con `{ page, pages, hrefFor, label }`, conservando `Anterior`, `Siguiente`, `rel="prev"/"next"` y `<p aria-live="polite">Página X de Y</p>`; `null` con una sola página y extremos desde cinco
+- [x] 1.5 Crear `components/ui/Chip.tsx` (píldora de filtro activo que enlaza al listado sin ese filtro), `components/ui/Skeleton.tsx` y `components/ui/DataList.tsx`
+- [x] 1.6 Reescribir `lib/catalog/schemas.ts` sobre `createListParams` conservando `exerciseFiltersSchema`, `exercisesHref` y `hasActiveFilters`; comprobar que `exerciseFiltersSchema.parse({ q })` con un subconjunto de claves sigue devolviendo el resto en `undefined`
+- [x] 1.7 Añadir `options?: { pageSize?: number }` a `listExercises`
+- [x] 1.8 Migrar `ExerciseFilters` a `FilterForm` sin cambiar ningún `name`, y añadir la fila de `Chip` de filtros activos
+- [x] 1.9 Migrar `ExercisePagination` a `Pagination` con `label="Páginas del catálogo"`
+- [x] 1.10 Verificar que `/exercises` conserva el `<h2 class="text-base font-semibold leading-6">` de la tarjeta, la frase `N ejercicios encontrados`, y los textos `Ningún ejercicio coincide con estos filtros` y `Ver todo el catálogo` del estado vacío filtrado
+- [x] 1.11 Migrar los `loading.tsx` existentes a `Skeleton` sin cambiar su forma
+- [x] 1.12 `npm run test:catalog` y `npm run test:catalog:custom` en verde, más los cuatro de CI
 
 ## 2. Catálogo: plantillas, reglas, planes — rama `ui/listados-catalogo`
 
-- [ ] 2.1 Crear `lib/catalog/template-list.ts` con `q`, `kind`, `goal`, `level`, `environment`, `status` e `incomplete`, todos nacidos en «todas»
-- [ ] 2.2 Extender `listTemplates(filters?)` para devolver `{ templates, total, pages }`; sin argumento, primera página sin filtro
-- [ ] 2.3 Montar filtros y paginación en `/templates`, conservando el `?eliminada=1` que ya se lee
-- [ ] 2.4 Crear `lib/catalog/rule-list.ts` con `q`, `status`, `state=broken` y `template`; **sin ninguna clave de ordenación**
-- [ ] 2.5 Extender `listRules(filters?)` **sin tocar** `.order("priority").order("created_at")`
-- [ ] 2.6 Ocultar los controles de mover en `/rules` cuando hay filtros activos o página mayor que uno, con un aviso que explique por qué
-- [ ] 2.7 Sacar el error de mover del atributo `title` del botón a un mensaje visible bajo el par de botones, conservando los dos formularios separados con su `name="direction"`
-- [ ] 2.8 Añadir `filters?` a `listAllPlans` y `listAllServices` con `q` y estado; agrupación de `/offer` intacta
-- [ ] 2.9 Verificar que `/rules` sin filtros sigue conteniendo el formulario de mover con `value="<ruleId>"` y `value="up"`
-- [ ] 2.10 `npm run test:templates`, `test:templates:seed`, `test:rules:panel`, `test:rules:seed` y `test:plans` en verde, más los cuatro de CI
+- [x] 2.1 Crear `lib/catalog/template-list.ts` con `q`, `kind`, `goal`, `level`, `environment`, `status` e `incomplete`, todos nacidos en «todas»
+- [x] 2.2 Extender `listTemplates(filters?)` para devolver `{ templates, total, pages }`; sin argumento, primera página sin filtro
+- [x] 2.3 Montar filtros y paginación en `/templates`, conservando el `?eliminada=1` que ya se lee
+- [x] 2.4 Crear `lib/catalog/rule-list.ts` con `q`, `status`, `state=broken` y `template`; **sin ninguna clave de ordenación**
+- [x] 2.5 Extender `listRules(filters?)` **sin tocar** `.order("priority").order("created_at")`
+- [x] 2.6 Ocultar los controles de mover en `/rules` cuando hay filtros activos o página mayor que uno, con un aviso que explique por qué
+- [x] 2.7 Sacar el error de mover del atributo `title` del botón a un mensaje visible bajo el par de botones, conservando los dos formularios separados con su `name="direction"`
+- [x] 2.8 Añadir `filters?` a `listAllPlans` y `listAllServices` con `q` y estado; agrupación de `/offer` intacta
+- [x] 2.9 Verificar que `/rules` sin filtros sigue conteniendo el formulario de mover con `value="<ruleId>"` y `value="up"`
+- [x] 2.10 `npm run test:templates`, `test:templates:seed`, `test:rules:panel`, `test:rules:seed` y `test:plans` en verde, más los cuatro de CI
 
 ## 3. Personas y atención — rama `ui/listados-personas`
 
@@ -253,5 +253,5 @@ estados, resumen en modal).
 
 - [x] 18.1 Escribir `docs/14-auditoria-de-vistas.md`: método de medición, la rúbrica de nueve defectos, la tabla con las ~38 rutas y sus defectos, y el orden de ejecución. Enlazado desde el README.
 - [x] 18.2 Filtro por año en el historial de `/screenings/[patientId]` (`components/progress/ScreeningHistory.tsx`): arranca en el año más reciente, «Todos los años» en el `<select>`; sin JavaScript se ven todos. `test:screenings` 8/8 —los `<h3>` con la fecha y su orden no cambian—.
-- [ ] 18.3 Trabajar la tabla del doc 14 por orden de prioridad: primero los cimientos (sección 1), luego filtros y paginación en las listas del personal, luego los historiales de un paciente, luego los formularios largos que siguen abiertos.
+- [x] 18.3 Trabajar la tabla del doc 14 por orden de prioridad: primero los cimientos (sección 1), luego filtros y paginación en las listas del personal, luego los historiales de un paciente, luego los formularios largos que siguen abiertos. — *cerrados los puntos 1 y 2 del orden de ejecución (2026-09-07): las nueve listas del personal tienen filtro y ocho de ellas paginación. Quedan los puntos 3, 4 y 5.*
 - [ ] 18.4 Cada vez que se cierre una fila de la tabla, medir el antes/después en Chrome y anotarlo en `docs/12-medicion-de-densidad.md`.

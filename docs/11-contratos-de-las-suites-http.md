@@ -257,6 +257,20 @@ o tras un retardo al escribir: el formulario sigue en el HTML, y sin JavaScript 
 Lo que **no** se puede hacer es emitir uuids en ese formulario dentro de `/admin`, `/pro`,
 `/templates/[id]` o `/pro/routines/[patientId]`.
 
+**Dónde sí se pueden emitir uuids, y por qué.** El peligro no son los uuids: es que el
+marcador de una suite sea *un uuid cualquiera*. Cuando el marcador es un uuid **concreto**, un
+uuid distinto en un formulario anterior no lo captura:
+
+- `/pro/alerts` filtra por paciente con un `<select name="patient">` lleno de uuids. El
+  marcador de «marcar leída» es `value="<alertId>"` —el uuid de la alerta—, que nunca coincide
+  con el de un paciente.
+- `/memberships` filtra por plan con un `<select name="plan">` lleno de uuids. Ninguna suite
+  envía formularios en esa pantalla; solo lee texto.
+- `/pro/sessions` elige paciente con un `<select name="patient">`, como ya hacía antes de
+  tener filtros.
+
+La regla sigue siendo la de `/people`: donde el marcador es «un uuid», no metas otro delante.
+
 ### Mostrar un acuse que sobreviva a la revalidación
 
 Si al completar la acción el componente que muestra el acuse deja de renderizarse, el acuse no
