@@ -17,7 +17,7 @@ import { TemplateStatusForm } from "@/components/catalog/TemplateStatus";
 import { bodyPartLabels } from "@/lib/catalog/body-parts";
 import { requireStaff } from "@/lib/catalog/access";
 import { listExercises } from "@/lib/catalog/queries";
-import { exerciseFiltersSchema } from "@/lib/catalog/schemas";
+import { exerciseFiltersSchema, exercisesHref } from "@/lib/catalog/schemas";
 import {
   getTemplate,
   listRulesUsingTemplate,
@@ -36,6 +36,7 @@ import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Field, Input } from "@/components/ui/Field";
+import { SectionHeader, SeeAllLink } from "@/components/ui/SectionHeader";
 import { cn } from "cn";
 import { cardVariants } from "@/components/ui/Card";
 
@@ -376,27 +377,46 @@ export default async function Page({
                             con otra palabra del nombre.
                           </p>
                         ) : (
-                          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-                            {resultados.map((ejercicio) => (
-                              <li
-                                key={ejercicio.id}
-                                className={cn(
-                                  cardVariants({ padding: "none" }),
-                                  "grid gap-2 rounded-xl p-3",
-                                )}
-                              >
-                                <p className="text-sm font-medium">
-                                  {ejercicio.name}
-                                </p>
-                                <AddItemButton
-                                  templateId={template.id}
-                                  dayId={dia.id}
-                                  exerciseId={ejercicio.id}
-                                  exerciseName={ejercicio.name}
-                                />
-                              </li>
-                            ))}
-                          </ul>
+                          <div className="mt-4">
+                            {/*
+                              El buscador corta en `maxResultados`, así que
+                              cuando llega al tope el «Ver el catálogo» es lo
+                              único que dice que hay más y adónde ir a verlo.
+                            */}
+                            <SectionHeader
+                              as="h3"
+                              title="Ejercicios encontrados"
+                              count={resultados.length}
+                              action={
+                                resultados.length === maxResultados && (
+                                  <SeeAllLink href={exercisesHref(filtros)}>
+                                    Ver el catálogo
+                                  </SeeAllLink>
+                                )
+                              }
+                            />
+                            <ul className="grid gap-3 sm:grid-cols-2">
+                              {resultados.map((ejercicio) => (
+                                <li
+                                  key={ejercicio.id}
+                                  className={cn(
+                                    cardVariants({ padding: "none" }),
+                                    "grid gap-2 rounded-xl p-3",
+                                  )}
+                                >
+                                  <p className="text-sm font-medium">
+                                    {ejercicio.name}
+                                  </p>
+                                  <AddItemButton
+                                    templateId={template.id}
+                                    dayId={dia.id}
+                                    exerciseId={ejercicio.id}
+                                    exerciseName={ejercicio.name}
+                                  />
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
                         )}
                       </>
                     ) : (

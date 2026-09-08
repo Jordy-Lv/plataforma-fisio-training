@@ -8,6 +8,10 @@ import { cn } from "cn";
  *
  * `description` se limita a `max-w-2xl` para que el texto no supere las ~75
  * caracteres por línea en pantallas anchas.
+ *
+ * Las acciones van en píldoras a la derecha del título: el contenedor lleva
+ * `data-slot="header-actions"` y la forma la aplica `buttonVariants`, así que
+ * la pantalla sigue pasando sus `ButtonLink` como siempre.
  */
 export function PageHeader({
   title,
@@ -27,7 +31,12 @@ export function PageHeader({
           {title}
         </h1>
         {actions && (
-          <div className="flex flex-wrap items-center gap-3">{actions}</div>
+          <div
+            data-slot="header-actions"
+            className="flex flex-wrap items-center gap-2"
+          >
+            {actions}
+          </div>
         )}
       </div>
       {description && (

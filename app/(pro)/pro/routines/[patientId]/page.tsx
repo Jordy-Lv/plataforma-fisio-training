@@ -5,7 +5,7 @@ import { getActiveProfile } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { bodyPartLabels } from "@/lib/catalog/body-parts";
 import { listExercises } from "@/lib/catalog/queries";
-import { exerciseFiltersSchema } from "@/lib/catalog/schemas";
+import { exerciseFiltersSchema, exercisesHref } from "@/lib/catalog/schemas";
 import { labelFor } from "@/lib/catalog/vocabulary";
 import { assignmentSchema } from "@/lib/routines/assignment";
 import {
@@ -27,6 +27,7 @@ import { ButtonLink } from "@/components/ui/ButtonLink";
 import { cardVariants } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Field, Input } from "@/components/ui/Field";
+import { SectionHeader, SeeAllLink } from "@/components/ui/SectionHeader";
 
 const statusLabels = {
   active: "Activa",
@@ -147,20 +148,39 @@ export default async function Page({
           del nombre.
         </p>
       ) : (
-        <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-          {resultados.map((ejercicio) => (
-            <li
-              key={ejercicio.id}
-              className={cn(
-                cardVariants({ padding: "none" }),
-                "grid gap-2 rounded-xl p-3",
-              )}
-            >
-              <p className="text-sm font-medium">{ejercicio.name}</p>
-              {accion(ejercicio)}
-            </li>
-          ))}
-        </ul>
+        <div className="mt-4">
+          {/*
+            El buscador corta en `maxResultados`, así que cuando llega al tope
+            el «Ver el catálogo» es lo único que dice que hay más y adónde ir a
+            verlo.
+          */}
+          <SectionHeader
+            as="h3"
+            title="Ejercicios encontrados"
+            count={resultados.length}
+            action={
+              resultados.length === maxResultados && (
+                <SeeAllLink href={exercisesHref(filtros)}>
+                  Ver el catálogo
+                </SeeAllLink>
+              )
+            }
+          />
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {resultados.map((ejercicio) => (
+              <li
+                key={ejercicio.id}
+                className={cn(
+                  cardVariants({ padding: "none" }),
+                  "grid gap-2 rounded-xl p-3",
+                )}
+              >
+                <p className="text-sm font-medium">{ejercicio.name}</p>
+                {accion(ejercicio)}
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </>
   );

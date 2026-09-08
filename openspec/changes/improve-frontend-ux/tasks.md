@@ -219,6 +219,9 @@ manejo que ahí están resueltas y aquí no.
 - [x] 17.5 Sustituir las cuatro tarjetas de `/patient` —que hoy duplican la barra inferior— por la tira de la semana con el día de hoy marcado, la racha de sesiones y la sesión en curso si la hay, reutilizando la agregación de 5.1
   - La racha se cuenta **por semanas** y no por días: quien entrena tres veces por semana nunca pasaría de una racha de un día. La agregación quedó en `lib/progress/patient-overview.ts` con la forma que pide 5.1, pero solo con lo que la portada necesita; la ficha del profesional le añadirá membresía, condiciones y tamizaje.
 - [ ] 17.6 Marcar la pestaña activa de `PatientTabs` (5.2) con subrayado de 2 px del color de marca, no con fondo
-- [ ] 17.7 Llevar las acciones de cabecera a píldoras en `PageHeader` y añadir «Ver todas» junto al título de cada colección que tenga listado propio
+- [x] 17.7 Llevar las acciones de cabecera a píldoras en `PageHeader` y añadir «Ver todas» junto al título de cada colección que tenga listado propio
+  - La forma de píldora vive en `components/ui/button.tsx`: el contenedor de acciones —tanto el de `PageHeader` como el de la nueva `SectionHeader`— lleva `data-slot="header-actions"`, y `buttonVariants` responde con `rounded-full` y, en `ghost`, `border-border`. Ninguna pantalla tiene que pedir la forma.
+  - `components/ui/SectionHeader.tsx` (nueva) es la cabecera de una colección dentro de una pantalla: título + `SeeAllLink` alineado a la derecha. Se aplicó a los dos buscadores de catálogo recortados —`/templates/[id]` y `/pro/routines/[patientId]`— con «Ver el catálogo» hacia `/exercises` cuando el resultado llega al tope. No es un `<form>`, así que no altera el orden de formularios de `docs/11`.
+  - Falta correr `test:templates` y `test:routines:items` contra un build vivo (Supabase local estaba parado en esta sesión); los cuatro de CI —typecheck, lint, test:design, build— pasan.
 - [x] 17.8 Medir de nuevo `/patient`, `/patient/profile` y `/exercises` en Chrome y registrar el antes y el después en `docs/12-medicion-de-densidad.md`
 - [x] 17.9 `npm run test:people`, `test:auth:screens` y `test:catalog` en verde, más los cuatro de CI
