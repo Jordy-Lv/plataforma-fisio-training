@@ -59,9 +59,12 @@ export function BusinessOverview({ overview }: { overview: Overview }) {
       </div>
 
       {activePatients === 0 ? (
-        <EmptyState title="Todavía no hay clientes activos">
+        <EmptyState
+          title="Todavía no hay clientes activos"
+          action={<ButtonLink href="/people">Ir a Personas</ButtonLink>}
+        >
           El panorama se llena cuando haya pacientes entrenando. Registra el
-          primero desde el panel de personas de aquí abajo.
+          primero desde el panel de personas.
         </EmptyState>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

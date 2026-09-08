@@ -172,6 +172,7 @@ test(
           "/patient",
           "/admin",
           "/pro",
+          "/people",
           "/patient/profile",
           `/people/${patient.id}`,
         ])
@@ -541,8 +542,10 @@ test(
       }),
       "/admin",
     );
+    // El alta de personas y el directorio viven en `/people`; `/admin` y `/pro`
+    // son ahora el panorama del negocio (change improve-frontend-ux, tarea 16).
     const professional = await adminBrowser.submit(
-      "/admin",
+      "/people",
       {
         fullName: `Profesional ${marker}`,
         email: proEmail,
@@ -561,14 +564,14 @@ test(
     const proId = (await proApi.auth.getUser()).data.user.id;
     ids.push(proId);
     assert.ok(
-      (await adminBrowser.request("/admin")).html.includes("Personas y equipo"),
+      (await adminBrowser.request("/people")).html.includes("Personas y equipo"),
     );
     expectRedirect(
       await proBrowser.submit("/login", { email: proEmail, password }),
       "/pro",
     );
     const patient = await proBrowser.submit(
-      "/pro",
+      "/people",
       {
         fullName: `Paciente ${marker}`,
         email: patientEmail,
@@ -586,7 +589,7 @@ test(
     const patientId = (await patientApi.auth.getUser()).data.user.id;
     ids.push(patientId);
     assert.ok(
-      (await proBrowser.request("/pro")).html.includes(`Paciente ${marker}`),
+      (await proBrowser.request("/people")).html.includes(`Paciente ${marker}`),
     );
     expectRedirect(
       await patientBrowser.submit("/login", { email: patientEmail, password }),
@@ -676,13 +679,13 @@ test(
       false,
     );
     const noConfirmation = await adminBrowser.submit(
-      "/admin",
+      "/people",
       { personId: proId, expectedAssignments: 1 },
       `value="${proId}"`,
     );
     assert.ok(noConfirmation.html.includes("Confirma la baja para continuar."));
     const deactivate = await adminBrowser.submit(
-      "/admin",
+      "/people",
       { personId: proId, expectedAssignments: 1, confirmation: "yes" },
       `value="${proId}"`,
     );

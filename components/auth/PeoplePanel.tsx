@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import { cn } from "cn";
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth/session";
@@ -15,17 +14,13 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { specialtyLabels } from "@/lib/auth/people-schemas";
 
 /**
- * `overview` se pinta dentro del shell, antes de la lista. Antes el panel de
- * administración lo montaba fuera y repetía a mano el ancho del contenedor;
- * con la navegación de la fase 2 eso habría dejado el panorama por encima de
- * la cabecera.
+ * El directorio de personas y el alta. Vive en `/people`: el panel de inicio
+ * (`/admin`, `/pro`) es ahora solo el panorama del negocio.
  */
 export async function PeoplePanel({
   role,
-  overview,
 }: {
   role: "admin" | "professional";
-  overview?: ReactNode;
 }) {
   const profile = await requireRole(role);
   const supabase = await createClient();
@@ -57,7 +52,6 @@ export async function PeoplePanel({
           : "Consulta a las personas que acompañas y actualiza su perfil de entrenamiento."
       }
     >
-      {overview}
       {/*
         La lista y el formulario se parten en dos columnas a partir de `xl`
         (1280px). Antes lo hacían en `lg` (1024px) y entre ~1024 y ~1200, con la

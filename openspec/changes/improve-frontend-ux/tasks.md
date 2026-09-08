@@ -208,12 +208,17 @@ resuelve llegar hasta él.
 - [ ] 16.1 Crear `lib/auth/patient-search.ts` con `searchPatients(term, limit = 8)`, acotado por RLS y sin `select("*")`
 - [ ] 16.2 Buscador de paciente en la cabecera de `AppShell` para `admin` y `professional`: `<form method="get">` que apunta a `/people`, con sugerencias tras dos caracteres y salto directo a la ficha
 - [ ] 16.3 **Antes de montarlo**, verificar que el formulario nuevo queda *después* del de cerrar sesión en el HTML del servidor: `auth-http.mjs` toma el primer `<form>` que contiene el marcador y `AppShell` documenta que solo puede haber uno
-- [ ] 16.4 Crear `app/(people)/people/page.tsx` con el directorio completo —la consulta de `listPeople` de 3.1, con sus filtros y su paginación— y mover ahí la lista y el alta que hoy viven en `PeoplePanel`
-- [ ] 16.5 Convertir `/admin` en panel de trabajo: alertas sin leer, sesiones de hoy, membresías por vencer y tamizajes pendientes, reutilizando `getBusinessOverview` y la agregación de 5.1
-- [ ] 16.6 Adaptar `scripts/verify-people.test.mjs` a la ruta nueva: es el único punto de todo el change donde un contrato de suite se cambia a propósito, y el PR tiene que decirlo en su descripción
-- [ ] 16.7 Verificar que en `/people` el primer formulario con `value="<uuid de la persona>"` sigue siendo el de la baja y que el del alta conserva `name="fullName"`
+- [x] 16.4 Crear `app/(people)/people/page.tsx` con el directorio completo —la consulta de `listPeople` de 3.1, con sus filtros y su paginación— y mover ahí la lista y el alta que hoy viven en `PeoplePanel`
+  - Hecho tras la revisión de Yordy («no siento que sea la sección para crear un paciente»). `/people/page.tsx` = `PeoplePanel` (lista + alta + asignación + baja), rol resuelto con `requireStaff`. Filtros y paginación (3.1) aún no; el `PeoplePanel` se movió tal cual. `nav-items.ts` gana «Personas» (admin) y «Pacientes» (professional) apuntando a `/people`.
+- [~] 16.5 Convertir `/admin` en panel de trabajo: alertas sin leer, sesiones de hoy, membresías por vencer y tamizajes pendientes, reutilizando `getBusinessOverview` y la agregación de 5.1
+  - Parcial: `/admin` y `/pro` son ahora `components/progress/StaffHome.tsx` = `BusinessOverview` (clientes activos, cumplimiento, asistencia del mes) + una tarjeta hacia `/people`. **Falta** alertas sin leer, sesiones de hoy, membresías por vencer y tamizajes pendientes — necesitan la agregación de 5.1, aún sin construir.
+- [x] 16.6 Adaptar `scripts/verify-people.test.mjs` a la ruta nueva: es el único punto de todo el change donde un contrato de suite se cambia a propósito, y el PR tiene que decirlo en su descripción
+  - El archivo real es `scripts/verify-people-onboarding.test.mjs`. Movidas a `/people` las seis operaciones de personas (alta admin, alta profesional, «Personas y equipo», el paciente listado, baja sin confirmar y baja); añadido `/people` a la lista de rutas que rebotan a un paciente sin onboarding. Las redirecciones de login siguen a `/admin` y `/pro`. `test:people` 10/10.
+- [x] 16.7 Verificar que en `/people` el primer formulario con `value="<uuid de la persona>"` sigue siendo el de la baja y que el del alta conserva `name="fullName"`
+  - `test:people` «Camino 1» lo recorre en `/people` y pasa: la baja se localiza por `value="<proId>"` y el alta por `name="fullName"`.
 - [ ] 16.8 Comprobar a mano que desde cualquier pantalla del personal se llega a un paciente escribiendo su nombre, sin pasar por ningún listado
 - [ ] 16.9 `npm run test:people` y `test:overview` en verde, más los cuatro de CI
+  - `test:people` 10/10 y `test:overview` 5/5 contra la app viva; typecheck, lint, test:design y build en verde.
 
 ## 17. El estándar de manejo — rama `ui/estandar-de-manejo`
 
