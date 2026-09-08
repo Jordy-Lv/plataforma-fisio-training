@@ -328,3 +328,44 @@ a ~240— y el paciente de `/pro/routines`, que ganó la insignia de estado de l
 enlace «Ver ficha». La medición hay que tomarla en una ventana de Chrome real: el navegador
 integrado suspende el cálculo de estilo cuando emula un viewport mayor que su propio panel y
 devuelve todas las alturas a cero.
+
+## 3 ter. Los formularios largos y los historiales (2026-09-07)
+
+Puntos 3, 4 y 5 del orden de ejecución del [doc 14](14-auditoria-de-vistas.md): los
+historiales de un paciente, los formularios que seguían abiertos y la banda de pestañas.
+
+**Cómo se midió.** Recuento sobre el HTML del servidor, con sesión de `admin@demo.local` y
+el paciente «Laura Pérez (demo)», contra el build de producción en el 3000; primero con la
+rama tal como estaba y después con los cambios puestos (`git stash` de por medio, dos
+compilaciones). `plegado` cuenta los `<summary>`: uno por bloque que espera a que lo abran.
+
+| Ruta | kB | `<form>` | campos | casillas | plegado | `<li>` |
+|---|---|---|---|---|---|---|
+| `/attendance/[id]` | 30 → 31 | 2 | 2 → 3 | 0 | 0 | 21 → 27 |
+| `/screenings/[id]` | 37 | 2 | 11 | 0 | **0 → 1** | 17 → 23 |
+| `/plans` | 106 | 24 | 56 | 0 | **10 → 12** | 37 |
+| `/memberships` | 61 | 9 | 39 | 0 | **4 → 5** | 17 |
+| `/exercises/new` | 41 | 2 | 4 | 39 | **0 → 1** | 13 |
+| `/rules/new` | 40 | 2 | 5 | 32 | **0 → 1** | 13 |
+| `/people/[id]` | 36 → 38 | 3 | 3 | 19 | 2 | 13 → 19 |
+
+**Cómo se lee.** El peso del documento casi no cambia y no debe cambiar: un `<details>`
+cerrado **emite igual su contenido**, que es justo lo que permite plegar sin romper las
+dieciocho suites. Lo que cambia es cuánto hay delante del usuario al entrar:
+
+| Pantalla | Lo que deja de verse al entrar |
+|---|---|
+| `/screenings/[id]` | 9 campos de 11: la grasa corporal y las ocho medidas de cinta métrica. Quedan la fecha, el peso, la talla y las observaciones |
+| `/exercises/new` | 12 casillas de contraindicación y el selector de nivel; los tres etiquetados obligatorios pasan a dos columnas |
+| `/rules/new` | Los dos campos de edad; los seis criterios pasan a dos columnas |
+| `/plans` | Los dos formularios de alta —plan y servicio—, que estaban abiertos al final de cada sección |
+| `/memberships` | El formulario de alta del final |
+
+Los seis `<li>` que ganan `/attendance/[id]`, `/screenings/[id]` y `/people/[id]` son la
+banda de pestañas del paciente: seis enlaces, ningún `<form>`.
+
+**Lo que sigue sin medirse en píxeles.** Igual que en el punto 3 bis: el navegador
+integrado suspende el cálculo de estilo y devuelve todas las alturas a cero
+(`visibilityState: "hidden"`, ventana de 0×0), y no hay ninguna ventana de Chrome real
+conectada a esta sesión. El recuento de arriba sí es una medición; el alto en píxeles de
+estas siete pantallas queda pendiente (tarea 18.4).

@@ -77,7 +77,8 @@ final, después de la 16.
 ## 5. Ficha del paciente: agregación y banda — rama `ui/ficha-paciente`
 
 - [ ] 5.1 Crear `lib/progress/patient-overview.ts` con `patientOverview(patientId)`: membresía, condiciones activas, último tamizaje, asistencia del mes, rutina activa, sesión abierta y alertas sin leer, en un `Promise.all` y sin ninguna consulta dentro de un `map`
-- [ ] 5.2 Crear `components/patients/PatientTabs.tsx` (Server Component, activo por props) con desplazamiento horizontal a 375 px, objetivos de 44 px, `aria-current` y **sin ningún `<form>` dentro**
+- [x] 5.2 Crear `components/patients/PatientTabs.tsx` (Server Component, activo por props) con desplazamiento horizontal a 375 px, objetivos de 44 px, `aria-current` y **sin ningún `<form>` dentro**
+  - Seis pestañas: ficha, rutina, sesiones, tamizajes, asistencia y evolución. Son enlaces: ni un `<form method="get">` —se colaría delante de los formularios de server action— ni ningún `value="<uuid>"`; el identificador viaja en el `href`, que ningún marcador de las suites mira.
 - [ ] 5.3 Crear `components/patients/PatientHeader.tsx` con nombre, estado, membresía y condiciones, reutilizando `membershipBadgeVariant`
 - [ ] 5.4 Añadir el resumen a `/people/[id]` **antes** del contenido actual, dejando los formularios de perfil y de condición en su sitio y en su orden
 - [ ] 5.5 Añadir `app/(people)/people/[id]/loading.tsx` con la forma real de la ficha
@@ -86,10 +87,13 @@ final, después de la 16.
 
 ## 6. Ficha del paciente: montaje y enlaces — rama `ui/ficha-paciente-enlaces`
 
-- [ ] 6.1 Montar cabecera y pestañas en `/pro/routines/[patientId]`, **antes** del formulario de asignación, que sigue siendo el primero con `name="patientId"`
-- [ ] 6.2 Montarlas en `/pro/sessions` cuando hay paciente seleccionado, `/attendance/[patientId]`, `/screenings/[patientId]` y `/evolution/[patientId]`
+- [x] 6.1 Montar cabecera y pestañas en `/pro/routines/[patientId]`, **antes** del formulario de asignación, que sigue siendo el primero con `name="patientId"`
+  - Solo las pestañas: la cabecera de 5.3 necesita la agregación de 5.1, que sigue abierta. `test:routines` 12/12 y `test:routines:items` 9/9 contra el build vivo.
+- [x] 6.2 Montarlas en `/pro/sessions` cuando hay paciente seleccionado, `/attendance/[patientId]`, `/screenings/[patientId]` y `/evolution/[patientId]`
+  - También en `/people/[id]`, y **solo para el personal**: `PatientProfile` es la misma pantalla que `/patient/profile`, y el paciente no entra en las otras cinco vistas. Los botones sueltos de cabecera —«Ver su asistencia», «Ver su evolución»— se retiran: los sustituye la banda.
 - [ ] 6.3 Verificar que `/evolution/[patientId]` conserva `<option value="weight">Peso</option>` e `<option value="bmi">IMC</option>`, y que la gráfica sigue sin montarse cuando no hay datos
-- [ ] 6.4 Enlazar a la ficha desde `PeoplePanel`, `/pro/routines`, `/attendance` y `/screenings`
+- [x] 6.4 Enlazar a la ficha desde `PeoplePanel`, `/pro/routines`, `/attendance` y `/screenings`
+  - Los dos primeros ya enlazaban. En las tarjetas de `/attendance` y `/screenings` el enlace «Ver ficha» lleva `relative`: sin eso queda debajo del `after:inset-0` que hace clicable toda la tarjeta.
 - [ ] 6.5 Comprobar a mano que desde cualquier sección de un paciente se llega a las otras cinco en un toque
 - [ ] 6.6 `npm run test:routines`, `test:routines:items`, `test:attendance`, `test:screenings` y `test:evolution` en verde, más los cuatro de CI
 
@@ -235,7 +239,7 @@ manejo que ahí están resueltas y aquí no.
 - [x] 17.4 Verificar que `/patient/profile` sigue conteniendo el primer formulario con `name="goal"` y el primero con `name="conditionId"` donde los espera la suite, o mover la suite en el mismo PR y decirlo en su descripción
 - [x] 17.5 Sustituir las cuatro tarjetas de `/patient` —que hoy duplican la barra inferior— por la tira de la semana con el día de hoy marcado, la racha de sesiones y la sesión en curso si la hay, reutilizando la agregación de 5.1
   - La racha se cuenta **por semanas** y no por días: quien entrena tres veces por semana nunca pasaría de una racha de un día. La agregación quedó en `lib/progress/patient-overview.ts` con la forma que pide 5.1, pero solo con lo que la portada necesita; la ficha del profesional le añadirá membresía, condiciones y tamizaje.
-- [ ] 17.6 Marcar la pestaña activa de `PatientTabs` (5.2) con subrayado de 2 px del color de marca, no con fondo
+- [x] 17.6 Marcar la pestaña activa de `PatientTabs` (5.2) con subrayado de 2 px del color de marca, no con fondo
 - [x] 17.7 Llevar las acciones de cabecera a píldoras en `PageHeader` y añadir «Ver todas» junto al título de cada colección que tenga listado propio
   - La forma de píldora vive en `components/ui/button.tsx`: el contenedor de acciones —tanto el de `PageHeader` como el de la nueva `SectionHeader`— lleva `data-slot="header-actions"`, y `buttonVariants` responde con `rounded-full` y, en `ghost`, `border-border`. Ninguna pantalla tiene que pedir la forma.
   - `components/ui/SectionHeader.tsx` (nueva) es la cabecera de una colección dentro de una pantalla: título + `SeeAllLink` alineado a la derecha. Se aplicó a los dos buscadores de catálogo recortados —`/templates/[id]` y `/pro/routines/[patientId]`— con «Ver el catálogo» hacia `/exercises` cuando el resultado llega al tope. No es un `<form>`, así que no altera el orden de formularios de `docs/11`.
@@ -253,5 +257,7 @@ estados, resumen en modal).
 
 - [x] 18.1 Escribir `docs/14-auditoria-de-vistas.md`: método de medición, la rúbrica de nueve defectos, la tabla con las ~38 rutas y sus defectos, y el orden de ejecución. Enlazado desde el README.
 - [x] 18.2 Filtro por año en el historial de `/screenings/[patientId]` (`components/progress/ScreeningHistory.tsx`): arranca en el año más reciente, «Todos los años» en el `<select>`; sin JavaScript se ven todos. `test:screenings` 8/8 —los `<h3>` con la fecha y su orden no cambian—.
-- [x] 18.3 Trabajar la tabla del doc 14 por orden de prioridad: primero los cimientos (sección 1), luego filtros y paginación en las listas del personal, luego los historiales de un paciente, luego los formularios largos que siguen abiertos. — *cerrados los puntos 1 y 2 del orden de ejecución (2026-09-07): las nueve listas del personal tienen filtro y ocho de ellas paginación. Quedan los puntos 3, 4 y 5.*
-- [ ] 18.4 Cada vez que se cierre una fila de la tabla, medir el antes/después en Chrome y anotarlo en `docs/12-medicion-de-densidad.md`. — *el punto «3 bis» de ese doc ya recoge la proyección con el tope de página de cada listado; falta la medición en una ventana de Chrome real de la alerta plegada y de la tarjeta de `/pro/routines`, que cambiaron de alto.*
+- [x] 18.3 Trabajar la tabla del doc 14 por orden de prioridad: primero los cimientos (sección 1), luego filtros y paginación en las listas del personal, luego los historiales de un paciente, luego los formularios largos que siguen abiertos. — *cerrados los puntos 1 a 5 del orden de ejecución (2026-09-07). Quedan el 6 (detalle en modal), el 7 (vistas del paciente) y el 8 nuevo: paginar `/plans`, la última lista del personal sin tope.*
+- [x] 18.5 Acotar por fecha los historiales de un paciente (punto 3): `components/ui/PeriodFilter.tsx` —el filtro de `ScreeningHistory` generalizado—, `AttendanceHistory` por mes en `/attendance/[patientId]` y `ScreeningHistory` reescrito encima. Arrancan en el periodo más reciente y sin JavaScript se ve el historial entero. `test:attendance` 8/8, `test:screenings` 8/8.
+- [x] 18.6 Plegar los formularios largos que seguían abiertos (punto 4): las nueve medidas opcionales del tamizaje, las dos altas de `/plans`, el alta de `/memberships`, el nivel y las contraindicaciones de `/exercises/new` y la edad de `/rules/*`. **Se pliega lo opcional, nunca lo obligatorio**: un campo que Zod exige y el usuario no ve produce un error del que no se ve el origen. Lo obligatorio y largo —los tres etiquetados del ejercicio, los seis criterios de la regla— se compacta a dos columnas. `test:catalog:custom` 12/12, `test:rules:panel` 12/12, `test:plans` 7/7, `test:memberships` 11/11.
+- [ ] 18.4 Cada vez que se cierre una fila de la tabla, medir el antes/después en Chrome y anotarlo en `docs/12-medicion-de-densidad.md`. — *el punto «3 ter» recoge el recuento antes/después de las siete pantallas de los puntos 3, 4 y 5, medido con dos compilaciones. Sigue faltando el alto en píxeles: el navegador integrado devuelve `visibilityState: "hidden"` y una ventana de 0×0, y no hay ninguna ventana de Chrome real conectada.*

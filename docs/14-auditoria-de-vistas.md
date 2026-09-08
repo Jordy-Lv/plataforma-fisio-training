@@ -60,26 +60,26 @@ Estado: ⬜ pendiente · 🟡 parcial · ✅ hecho. Los números son del 2026-09
 |---|---|---|---|---|---|---|---|---|
 | `/admin`, `/pro` | 29 | 13 | 0 | — | — | — | Panorama + tarjeta a `/people`. Falta 16.5: alertas sin leer, sesiones de hoy, vencimientos, tamizajes pendientes | 🟡 |
 | `/people` | 62 | 20 | 7 | sí | no | D | Cuatro tarjetas con modal, buscador y filtro. **Falta paginación** en el modal de pacientes cuando pasen de ~30 | 🟡 |
-| `/people/[id]` (ficha) | 36 | 13 | 2 | no | — | F | Cabecera con «Volver / asistencia / evolución». Falta la **banda de pestañas** (5.2) para moverse entre las seis vistas del paciente sin volver atrás | ⬜ |
+| `/people/[id]` (ficha) | 38 | 19 | 2 | no | — | — | **Banda de pestañas** montada (5.2): las seis vistas del paciente a un toque. Falta la cabecera con membresía y condiciones (5.3), que necesita la agregación de 5.1 | 🟡 |
 
 ### Catálogo
 
 | Ruta | kB | li | det | filtro | pag | Defectos | Qué hacer | Estado |
 |---|---|---|---|---|---|---|---|---|
 | `/exercises` | 64 | 37 | 0 | sí | sí | E | Ya tiene vista lista/tarjetas, filtros y paginación. Falta el **detalle en modal** (15.2) y ordenar (14.7) | 🟡 |
-| `/exercises/new`, `/exercises/[id]` | 41–47 | 13 | 0 | — | — | B | Formulario de alta/edición largo; agrupar y plegar el etiquetado clínico | ⬜ |
+| `/exercises/new`, `/exercises/[id]` | 41–47 | 13 | **1** | — | — | — | Los tres etiquetados obligatorios a dos columnas; el nivel y las contraindicaciones plegados. No se pliega lo obligatorio: un campo que Zod exige y no se ve produce un error sin origen visible | ✅ |
 | `/templates` | 35 | 17 | 0 | sí | **sí** | — | Filtros y paginación montados. Queda ordenar (14.7) | ✅ |
 | `/templates/[id]` | 180 | 31 | 15 | no | no | A, B, C | Prescripción y cabecera de día ya plegadas. **Falta el buscador embebido con paginación** (12.1) y medir la altura resultante | 🟡 |
 | `/rules` | 55 | 19 | 0 | sí | **sí** | — | Filtros, paginación y ocultación de los controles de mover cuando hay filtro (2.6) | ✅ |
-| `/rules/[id]`, `/rules/new`, `/rules/simulador` | 36–46 | 13 | 0 | — | — | B | Formularios de regla; revisar agrupación | ⬜ |
+| `/rules/[id]`, `/rules/new`, `/rules/simulador` | 36–46 | 13 | **1** | — | — | — | Los seis criterios a dos columnas, el equipamiento junto a su modo, y la edad —el criterio que menos se usa— plegada | ✅ |
 
 ### Atención
 
 | Ruta | kB | li | det | filtro | pag | Defectos | Qué hacer | Estado |
 |---|---|---|---|---|---|---|---|---|
 | `/pro/routines` | 24 | 18 | 0 | **sí** | **sí** | — | Buscador, estado del paciente y de la rutina, paginación, insignia de rutina y «Ver ficha» en cada tarjeta (3.5) | ✅ |
-| `/pro/routines/[id]` | 91 | 21 | 9 | no | — | A, B | Prescripción de cada ejercicio ya plegada. Falta la **banda de avance** y plegar los días | 🟡 |
-| `/pro/sessions` | 24 | 13 | 0 | **sí** | **sí** | — | Filtro de estado y rango de fechas, paginación; el `.limit(50)` fijo se retiró (3.6) | ✅ |
+| `/pro/routines/[id]` | 91 | 27 | 9 | no | — | A | Prescripción de cada ejercicio plegada y banda de pestañas montada. Falta la **banda de avance** y plegar los días | 🟡 |
+| `/pro/sessions` | 24 | 13 | 0 | **sí** | **sí** | — | Filtro de estado y rango de fechas, paginación; el `.limit(50)` fijo se retiró (3.6). Con paciente elegido monta su banda de pestañas | ✅ |
 | `/pro/sessions/[id]` | 28 | 13 | 0 | — | — | — | Informe de una sesión; revisar densidad | ⬜ |
 | `/pro/alerts` | 22 | 13 | sí | **sí** | **sí** | — | Evidencia plegada (14.5), filtros de lectura/prioridad/motivo/paciente, páginas de 20 y el conteo sin leer resuelto en la base (3.7, 3.8) | ✅ |
 
@@ -88,17 +88,17 @@ Estado: ⬜ pendiente · 🟡 parcial · ✅ hecho. Los números son del 2026-09
 | Ruta | kB | li | det | filtro | pag | Defectos | Qué hacer | Estado |
 |---|---|---|---|---|---|---|---|---|
 | `/screenings` | 25 | 18 | 0 | **sí** | **sí** | — | Buscador, filtro «con tamizaje»/«sin tamizaje» y paginación (4.3) | ✅ |
-| `/screenings/[id]` | 36 | 17 | **0** | **no** | **no** | A, B, C | **El historial de tamizajes es una pila de tarjetas sin filtro ni rango de fechas.** El formulario de registro está entero abierto (11 campos, casi todos opcionales). → **selector de año/rango en el historial**; plegar las medidas corporales opcionales del formulario tras un `<details>` | ⬜ |
+| `/screenings/[id]` | 37 | 23 | **1** | **sí** | — | — | Filtro por año en el historial (18.2) y las nueve medidas opcionales plegadas: el registro abre con cuatro campos en vez de once. Banda de pestañas montada | ✅ |
 | `/attendance` | 25 | 18 | 0 | **sí** | **sí** | — | Selector de mes con «Mes anterior»/«Mes siguiente», buscador, filtro «sin asistencias» y paginación (4.1, 4.2) | ✅ |
-| `/attendance/[id]` | 30 | 21 | **0** | **no** | **no** | A, C | Historial de asistencia de un paciente sin acotar por fecha. Selector de mes | ⬜ |
-| `/evolution/[id]` | 26 | 13 | 0 | — | — | — | Gráfica; revisar que el selector de métrica y el vacío estén bien | ⬜ |
+| `/attendance/[id]` | 31 | 27 | 0 | **sí** | — | — | Selector de mes en el historial, arrancando en el más reciente; sin JavaScript se ve entero. Banda de pestañas montada | ✅ |
+| `/evolution/[id]` | 26 | 19 | 0 | — | — | — | Gráfica, con la banda de pestañas montada. Queda revisar el selector de métrica y el vacío | 🟡 |
 
 ### Negocio
 
 | Ruta | kB | li | det | filtro | pag | Defectos | Qué hacer | Estado |
 |---|---|---|---|---|---|---|---|---|
-| `/plans` | 106 | 37 | 10 | sí | no | A, B | 24 formularios y 18 campos numéricos: cada plan y cada servicio con su formulario. **Plegar la edición** de cada plan/servicio tras un `<details>` o llevarla a un modal; paginar | ⬜ |
-| `/memberships` | 58 | 17 | 4 | **sí** | **sí** | B | Buscador y filtros de estado y plan, con las tres secciones intactas (4.5). Falta plegar el formulario de alta del final | 🟡 |
+| `/plans` | 106 | 37 | **12** | sí | no | A | La edición de cada plan y servicio ya estaba plegada; ahora también las dos altas del final. **Falta paginar**: con veinte planes la pantalla vuelve a crecer sin tope | 🟡 |
+| `/memberships` | 61 | 17 | **5** | **sí** | **sí** | — | Buscador y filtros de estado y plan, las tres secciones intactas (4.5) y el alta del final plegada | ✅ |
 | `/offer` (vitrina) | 27 | 34 | 0 | **sí** | no | E | Buscador y filtro por categoría, con la agrupación intacta. No pagina a propósito: la vitrina se lee entera | 🟡 |
 
 ### Paciente (móvil, 375 px)
@@ -133,14 +133,22 @@ change dejó preparado y nunca se ejecutó.
    `/pro/alerts`, `/pro/routines`, `/pro/sessions`, `/screenings`, `/attendance`,
    `/memberships`, `/offer`, `/templates` y `/rules`. Las nueve tienen filtro; ocho paginan
    —`/offer` no, a propósito—.
-3. **Historiales de un paciente** (`/screenings/[id]`, `/attendance/[id]`): selector de
-   año/mes y plegado de lo antiguo.
-4. **Formularios largos que siguen abiertos**: `/plans`, `/memberships`, `/exercises/new`,
-   `/rules/*`, el registro de tamizaje.
-5. **Banda de pestañas del paciente** (5.2) para `/people/[id]` y las cinco vistas de al lado
-   (desbloquea 17.6).
+3. ~~**Historiales de un paciente**~~ — **hecho** (2026-09-07): `/attendance/[id]` acota por
+   mes y `/screenings/[id]` por año, los dos con `components/ui/PeriodFilter.tsx`. No es un
+   `<form>` a propósito: uno `GET` en una pantalla cuyo marcador es un uuid secuestraría el
+   formulario de la server action.
+4. ~~**Formularios largos que siguen abiertos**~~ — **hecho** (2026-09-07): el registro de
+   tamizaje, `/plans`, `/memberships`, `/exercises/new` y `/rules/*`. La regla que salió de
+   aquí: **se pliega lo opcional, nunca lo obligatorio** —un campo que Zod exige y el usuario
+   no ve produce un error del que no se ve el origen—; lo obligatorio y largo se compacta a
+   dos columnas.
+5. ~~**Banda de pestañas del paciente**~~ — **hecho** (2026-09-07):
+   `components/patients/PatientTabs.tsx` en las seis vistas, con el subrayado de 2 px de la
+   tarea 17.6. Falta la cabecera de 5.3 (membresía y condiciones), que necesita la agregación
+   de 5.1.
 6. **Detalle en modal** (15.x) donde una lectura no necesita cambiar de pantalla.
 7. **Vistas del paciente**: plegar los días de `/routine`, acotar el registro de sesión.
+8. **Paginar `/plans`**, que es la última lista del personal sin tope.
 
 ## 5. Regla para las sesiones futuras
 

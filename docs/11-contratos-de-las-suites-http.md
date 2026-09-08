@@ -271,6 +271,48 @@ uuid distinto en un formulario anterior no lo captura:
 
 La regla sigue siendo la de `/people`: donde el marcador es «un uuid», no metas otro delante.
 
+### Plegar un formulario sin que la suite lo pierda
+
+Un `<details>` cerrado **emite igual todo su contenido** en el HTML del servidor, así que un
+formulario plegado se sigue encontrando por su marcador. Es la única forma de acortar una
+pantalla de edición sin tocar los contratos: un diálogo con portal no emitiría nada
+(ADR-0008).
+
+Dos límites que no son de las suites sino del navegador y del usuario:
+
+- **No pliegues un campo obligatorio.** Si Zod lo exige y el usuario no lo ve, el error
+  aparece sin origen visible; y si además lleva `required`, el navegador rechaza el envío
+  apuntando a un campo que no está en pantalla. Lo obligatorio y largo se compacta —dos
+  columnas—, no se esconde.
+- **Cuidado con el orden.** El contenido de un `<details>` sigue contando para el «gana el
+  primero» de la sección 1: plegar no lo mueve al final del documento.
+
+Aplicado en el registro de tamizaje, `/plans`, `/memberships`, `/exercises/{new,[id]}`,
+`/rules/{new,[id]}`, `/templates/[id]`, `/pro/routines/[patientId]` y `/people/[id]`.
+
+**Al medir, cuidado con el streaming.** React difiere el contenido de un Client Component:
+donde va el formulario emite `<template id="P:n">` y el marcado real viaja al final del
+documento dentro de un `<div hidden id="S:n">`. Sigue estando en el HTML —por eso las suites,
+que buscan con una expresión regular sobre todo el documento, lo encuentran— pero cualquier
+recuento que asocie un campo con el `<details>` que lo contiene dará un resultado falso.
+
+### Acotar una lista sin añadir un `<form>`
+
+El filtro por año o por mes de un historial (`components/ui/PeriodFilter.tsx`) **no es un
+formulario**: el servidor pinta todas las tarjetas con un `data-year` o `data-month` y un
+`<select>` de cliente oculta las que no tocan. Tres razones:
+
+1. Un `<form method="get">` en `/screenings/[patientId]` o `/attendance/[patientId]` —cuyo
+   marcador es `name="takenOn"` / `name="attendedOn"`— es exactamente el caso que produce
+   «Falta el formulario de server action».
+2. Sin JavaScript se ve el historial entero: el filtro solo estrecha.
+3. Las tarjetas las sigue renderizando el servidor, así que los `<h3>` con la fecha y su
+   orden —lo que leen `verify-progress-screenings` y `verify-progress-attendance`— no cambian.
+
+La banda de pestañas del paciente (`components/patients/PatientTabs.tsx`) sigue la misma
+idea: son enlaces, no un formulario, y el identificador del paciente viaja en el `href`,
+nunca en un `value`.
+
 ### Mostrar un acuse que sobreviva a la revalidación
 
 Si al completar la acción el componente que muestra el acuse deja de renderizarse, el acuse no
