@@ -315,7 +315,9 @@ export default async function Page({
                                   .join(", ")}
                               </p>
                             )}
-                            {!puedeEditar && <ItemSummary item={item} />}
+                            {/* La prescripción actual se lee siempre; el
+                                formulario para cambiarla espera plegado abajo. */}
+                            <ItemSummary item={item} />
                           </div>
 
                           {puedeEditar && (
@@ -329,9 +331,19 @@ export default async function Page({
                         </div>
 
                         {puedeEditar && (
-                          <div className="mt-4 border-t border-border pt-4">
-                            <ItemForm templateId={template.id} item={item} />
-                          </div>
+                          // Plegado: una plantilla de cinco ejercicios pasa de
+                          // cinco formularios abiertos a cinco líneas. Cerrado,
+                          // el `<details>` sigue emitiendo el formulario en el
+                          // HTML del servidor, así que `verify-catalog-templates`
+                          // encuentra igual su `value="<itemId>"` + `name="targetWeight"`.
+                          <details className="mt-3 rounded-xl border border-border px-4">
+                            <summary className="flex min-h-11 cursor-pointer items-center py-3 font-semibold text-brand">
+                              Ajustar la prescripción
+                            </summary>
+                            <div className="pb-4">
+                              <ItemForm templateId={template.id} item={item} />
+                            </div>
+                          </details>
                         )}
                       </li>
                     ))}
