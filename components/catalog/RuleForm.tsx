@@ -113,84 +113,105 @@ export function RuleForm({
           </p>
         </div>
 
-        <Choices
-          name="goal"
-          title="Objetivo del paciente"
-          labels={goalLabels}
-          selected={conditions?.goal ?? []}
-          multiple
-        />
-        <Choices
-          name="level"
-          title="Nivel"
-          labels={difficultyLabels}
-          selected={conditions?.level ?? []}
-          multiple
-        />
-        <Choices
-          name="environment"
-          title="Entorno"
-          labels={environmentLabels}
-          selected={conditions?.environment ?? []}
-          multiple
-        />
-        <Choices
-          name="equipment"
-          title="Equipamiento"
-          labels={equipmentLabels}
-          selected={equipment}
-          multiple
-        />
-        <Choices
-          name="equipmentMode"
-          title="Cómo se exige ese equipamiento"
-          labels={{
-            any: "Le basta con tener uno",
-            all: "Tiene que tenerlos todos",
-          }}
-          selected={equipmentMode}
-        />
-        <Choices
-          name="excludesConditions"
-          title="No aplicar si tiene una condición activa en"
-          labels={bodyPartLabels}
-          selected={conditions?.excludes_conditions ?? []}
-          multiple
-        />
-
-        <fieldset className="grid gap-3">
-          <legend className="mb-3 font-semibold">Edad</legend>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Desde (años)">
-              <input
-                className={inputClass}
-                name="ageMin"
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={120}
-                defaultValue={conditions?.age_range?.min ?? ""}
-                placeholder="Sin mínimo"
-              />
-            </Field>
-            <Field label="Hasta (años)">
-              <input
-                className={inputClass}
-                name="ageMax"
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={120}
-                defaultValue={conditions?.age_range?.max ?? ""}
-                placeholder="Sin máximo"
-              />
-            </Field>
+        {/*
+          Seis criterios, uno debajo de otro, hacían de esta la pantalla más
+          larga del catálogo. A dos columnas se ven casi todos de una vez, que
+          es lo que hace falta para entender qué restringe la regla. El
+          equipamiento y su modo van juntos: el segundo no significa nada sin el
+          primero.
+        */}
+        <div className="grid gap-8 lg:grid-cols-2">
+          <Choices
+            name="goal"
+            title="Objetivo del paciente"
+            labels={goalLabels}
+            selected={conditions?.goal ?? []}
+            multiple
+          />
+          <Choices
+            name="level"
+            title="Nivel"
+            labels={difficultyLabels}
+            selected={conditions?.level ?? []}
+            multiple
+          />
+          <Choices
+            name="environment"
+            title="Entorno"
+            labels={environmentLabels}
+            selected={conditions?.environment ?? []}
+            multiple
+          />
+          <Choices
+            name="excludesConditions"
+            title="No aplicar si tiene una condición activa en"
+            labels={bodyPartLabels}
+            selected={conditions?.excludes_conditions ?? []}
+            multiple
+          />
+          <div className="grid gap-8 lg:col-span-2 lg:grid-cols-2">
+            <Choices
+              name="equipment"
+              title="Equipamiento"
+              labels={equipmentLabels}
+              selected={equipment}
+              multiple
+            />
+            <Choices
+              name="equipmentMode"
+              title="Cómo se exige ese equipamiento"
+              labels={{
+                any: "Le basta con tener uno",
+                all: "Tiene que tenerlos todos",
+              }}
+              selected={equipmentMode}
+            />
           </div>
-          <p className="text-sm leading-7 text-muted-foreground">
-            Si indicas una edad, la regla no se aplicará a quien no tenga fecha
-            de nacimiento registrada.
-          </p>
-        </fieldset>
+        </div>
+
+        {/*
+          La edad es el criterio que menos se usa y el único que no son
+          casillas: va plegado. Un `<details>` cerrado emite igual sus dos
+          campos, y ninguno es obligatorio.
+        */}
+        <details className="rounded-xl border border-border px-4">
+          <summary className="flex min-h-11 cursor-pointer items-center py-3 font-semibold text-brand">
+            Acotar por edad · opcional
+          </summary>
+          <fieldset className="grid gap-3 pb-4">
+            <legend className="sr-only">Edad</legend>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Desde (años)">
+                <input
+                  className={inputClass}
+                  name="ageMin"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={120}
+                  defaultValue={conditions?.age_range?.min ?? ""}
+                  placeholder="Sin mínimo"
+                />
+              </Field>
+              <Field label="Hasta (años)">
+                <input
+                  className={inputClass}
+                  name="ageMax"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={120}
+                  defaultValue={conditions?.age_range?.max ?? ""}
+                  placeholder="Sin máximo"
+                />
+              </Field>
+            </div>
+            <p className="text-sm leading-7 text-muted-foreground">
+              Si indicas una edad, la regla no se aplicará a quien no tenga
+              fecha de nacimiento registrada.
+            </p>
+          </fieldset>
+        </details>
       </div>
 
       <FormMessage

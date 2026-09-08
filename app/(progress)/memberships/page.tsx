@@ -207,8 +207,8 @@ async function AdminView({ name, filters }: { name?: string | null; filters: Mem
         </EmptyState>
       ) : memberships.length === 0 ? (
         <EmptyState title="Todavía no hay membresías registradas">
-          Registra la primera con el formulario de abajo. Necesitas un plan y
-          un paciente dado de alta.
+          Ábrelo con «Registrar una membresía», al final de la pantalla.
+          Necesitas un plan y un paciente dado de alta.
         </EmptyState>
       ) : (
         <div className="grid gap-10">
@@ -233,19 +233,30 @@ async function AdminView({ name, filters }: { name?: string | null; filters: Mem
         label="Páginas de membresías" />
 
       <section className="mt-12 grid gap-4">
-        <h2 className="text-xl font-semibold">Registrar una membresía</h2>
         {plans.length === 0 ? (
-          <p className="leading-7 text-muted-foreground">
-            Antes de registrar una membresía necesitas al menos un plan.{" "}
-            <ButtonLink variant="ghost" href="/plans">
-              Crea uno aquí
-            </ButtonLink>
-            .
-          </p>
+          <>
+            <h2 className="text-xl font-semibold">Registrar una membresía</h2>
+            <p className="leading-7 text-muted-foreground">
+              Antes de registrar una membresía necesitas al menos un plan.{" "}
+              <ButtonLink variant="ghost" href="/plans">
+                Crea uno aquí
+              </ButtonLink>
+              .
+            </p>
+          </>
         ) : (
-          <article className={cardClass}>
+          /*
+            El alta se abre a demanda: quien entra a esta pantalla viene casi
+            siempre a revisar vencimientos, no a dar de alta. Ninguna suite
+            recorre este formulario por HTTP, y un `<details>` cerrado lo emite
+            igual en el HTML del servidor.
+          */
+          <details className={cardClass}>
+            <summary className="flex min-h-11 cursor-pointer items-center text-xl font-semibold text-brand">
+              Registrar una membresía
+            </summary>
             <MembershipForm patients={patientOptions} plans={planOptions} />
-          </article>
+          </details>
         )}
       </section>
     </Workspace>

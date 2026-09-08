@@ -57,8 +57,8 @@ export default async function Page({ searchParams }: {
 
         {plans.length === 0 ? (
           <EmptyState title={offerList.hasActiveFilters(filters) ? "Ningún plan coincide con estos filtros" : "Todavía no hay planes"}>
-            Crea el primer plan con el formulario de abajo. Aparecerá en la
-            vitrina en cuanto esté activo.
+            Ábrelo con «Crear un plan», al final de esta sección. Aparecerá en
+            la vitrina en cuanto esté activo.
           </EmptyState>
         ) : (
           <ul className="grid gap-4 lg:grid-cols-2">
@@ -111,10 +111,18 @@ export default async function Page({ searchParams }: {
           </ul>
         )}
 
-        <article className={cardClass}>
-          <h3 className="text-base font-semibold">Nuevo plan</h3>
+        {/*
+          El alta no es lo que trae al admin a esta pantalla —viene a revisar la
+          oferta—, así que va plegada. Ni `test:plans` ni `test:memberships`
+          recorren este formulario por HTTP, y un `<details>` cerrado lo emite
+          igual en el HTML del servidor.
+        */}
+        <details className={cardClass}>
+          <summary className="flex min-h-11 cursor-pointer items-center text-base font-semibold text-brand">
+            Crear un plan
+          </summary>
           <PlanForm />
-        </article>
+        </details>
       </section>
 
       <section className="mt-12 grid gap-6">
@@ -123,7 +131,7 @@ export default async function Page({ searchParams }: {
         {services.length === 0 ? (
           <EmptyState title={offerList.hasActiveFilters(filters) ? "Ningún servicio coincide con estos filtros" : "Todavía no hay servicios"}>
             Nutrición, fisioterapia, artes marciales o talleres. Crea el
-            primero con el formulario de abajo.
+            primero con «Crear un servicio», al final de esta sección.
           </EmptyState>
         ) : (
           <ul className="grid gap-4 lg:grid-cols-2">
@@ -167,10 +175,12 @@ export default async function Page({ searchParams }: {
           </ul>
         )}
 
-        <article className={cardClass}>
-          <h3 className="text-base font-semibold">Nuevo servicio</h3>
+        <details className={cardClass}>
+          <summary className="flex min-h-11 cursor-pointer items-center text-base font-semibold text-brand">
+            Crear un servicio
+          </summary>
           <ServiceForm />
-        </article>
+        </details>
       </section>
     </Workspace>
   );
