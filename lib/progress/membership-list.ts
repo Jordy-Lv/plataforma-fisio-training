@@ -8,7 +8,7 @@ import { membershipStatuses } from "@/lib/progress/membership-vocabulary";
  * contrato de `test:memberships`.
  */
 export const membershipList = createListParams({
-  path: "/memberships", pageSize: 60, schema: z.object({
+  path: "/memberships", pageSize: 24, schema: z.object({
     q: searchParam(),
     status: optionalEnum(membershipStatuses),
     plan: optionalId,

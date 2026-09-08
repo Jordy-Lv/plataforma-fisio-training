@@ -297,3 +297,34 @@ fixture—. Conviene decidir si se elimina.
 **Un teléfono real de 375 px.** Chrome no sirve ventanas más estrechas que 500 px, y la
 rejilla del catálogo cambia de columnas justo en ese tramo. Es la tarea 13.5 del change y el
 día 10 del plan de verificación.
+
+## 3 bis. La misma proyección con la fase 1 puesta (2026-09-07)
+
+Cerradas las secciones 1 a 4, las nueve listas del personal tienen filtro y ocho paginan.
+Esta tabla repite la proyección del punto 3 —doscientos pacientes, un año de alertas— con
+el tope por página que impone cada listado, usando las mismas alturas de fila medidas en el
+punto 2.
+
+| Ruta | Filas por página | Antes | Después | Pantallas |
+|---|---|---|---|---|
+| `/pro/alerts` | 20 | 136.000 px · 151 | ≈ 5.100 px | 5,7 |
+| `/memberships` | 24 | 43.600 px · 48 | ≈ 5.100 px | 5,7 |
+| `/screenings`, `/attendance` | 24 | 23.600 px · 26 | ≈ 2.550 px | 2,8 |
+| `/pro/routines` | 24 (2 por fila) | 8.450 px · 9,4 | ≈ 900 px | 1,0 |
+| `/templates` | 24 (2 por fila) | — | ≈ 2.800 px | 3,1 |
+| `/pro/sessions` | 20 | sin tope (`.limit(50)` fijo) | acotado y con total | — |
+| `/offer` | sin tope, a propósito | — | — | — |
+
+Lo que cambia no es solo la altura: **antes ninguna de estas pantallas tenía un tope**. Con
+doscientos pacientes, `/pro/alerts` medía ciento cincuenta y una pantallas y no había forma
+de acortarla; ahora son veinte alertas por página con cuatro filtros encima. `/pro/sessions`
+traía las cincuenta últimas sesiones sin decirlo: ahora trae veinte, dice cuántas hay en
+total y deja acotarlas por estado y por fechas.
+
+**Lo que falta medir aquí.** Las cifras de «después» son la proyección del punto 3 aplicada
+al tope de página, no una medición nueva en Chrome, y hay dos filas que cambiaron de alto y
+habría que volver a medir: la alerta clínica —la evidencia se pliega desde 14.5, de ~658 px
+a ~240— y el paciente de `/pro/routines`, que ganó la insignia de estado de la rutina y el
+enlace «Ver ficha». La medición hay que tomarla en una ventana de Chrome real: el navegador
+integrado suspende el cálculo de estilo cuando emula un viewport mayor que su propio panel y
+devuelve todas las alturas a cero.
