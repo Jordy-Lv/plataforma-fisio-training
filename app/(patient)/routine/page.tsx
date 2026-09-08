@@ -14,8 +14,10 @@ export const metadata: Metadata = {
 
 export default async function Page() {
   const actor = await requireRole("patient");
-  const [routines, sessions] = await Promise.all([
+  const [routines, { sessions }] = await Promise.all([
     patientRoutines(actor.id, true),
+    // Sin filtros: la primera página, que son las veinte sesiones más
+    // recientes. El historial completo vive en la ficha del paciente.
     patientSessions(actor.id),
   ]);
 

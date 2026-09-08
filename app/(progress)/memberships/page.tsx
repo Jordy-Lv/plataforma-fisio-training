@@ -21,6 +21,9 @@ import {
   formatCurrency,
 } from "@/lib/progress/plan-vocabulary";
 import { formatDate } from "@/lib/progress/vocabulary";
+import { membershipList, type MembershipFilters } from "@/lib/progress/membership-list";
+import { ListFilters } from "@/components/ui/ListFilters";
+import { Pagination } from "@/components/ui/Pagination";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge, membershipBadgeVariant } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/ButtonLink";
@@ -83,13 +86,21 @@ function AdminCard({
   );
 }
 
-async function AdminView({ name }: { name?: string | null }) {
-  const [memberships, patients, plans, noticeDays] = await Promise.all([
-    listMembershipsWithPatient(),
+async function AdminView({ name, filters }: { name?: string | null; filters: MembershipFilters }) {
+  const [matches, patients, oferta, noticeDays] = await Promise.all([
+    listMembershipsWithPatient(filters),
     listPatients(),
-    listAllPlans(),
+    // El `<select>` del alta necesita todos los planes, no la primera página
+    // de `/plans`.
+    listAllPlans(undefined, { paginate: false }),
     getMembershipNoticeDays(),
   ]);
+  const plans = oferta.plans;
+  // Las tres secciones se conservan siempre —son contrato de `test:memberships`—
+  // y agrupan lo que hay en esta página, no todo el histórico.
+  const { from, to } = membershipList.range(filters);
+  const memberships = matches.slice(from, to + 1);
+  const pages = membershipList.pages(matches.length);
 
   const patientOptions: Option[] = patients.map((patient) => ({
     id: patient.id,
@@ -101,6 +112,29 @@ async function AdminView({ name }: { name?: string | null }) {
       plan.is_active ? "" : " (inactivo)"
     }`,
   }));
+
+  const chips = [
+    filters.q ? { key: "q", label: filters.q, removeLabel: "Quitar la búsqueda" } : null,
+    filters.status
+      ? { key: "status", label: membershipStatusLabels[filters.status], removeLabel: "Quitar el estado" }
+      : null,
+    filters.plan
+      ? {
+          key: "plan",
+          label: plans.find((plan) => plan.id === filters.plan)?.name ?? "Plan",
+          removeLabel: "Quitar el plan",
+        }
+      : null,
+  ].flatMap((chip) =>
+    chip
+      ? [{ label: chip.label, removeLabel: chip.removeLabel,
+           href: membershipList.href(filters, { [chip.key]: undefined, page: 1 }) }]
+      : [],
+  );
+  const choices = [
+    { name: "status", label: "Estado", options: membershipStatusLabels },
+    { name: "plan", label: "Plan", options: Object.fromEntries(plans.map((plan) => [plan.id, plan.name])) },
+  ];
 
   const expiringSoon = memberships.filter((m) => m.status === "expiring_soon");
   const expired = memberships.filter((m) => m.status === "expired");
@@ -162,10 +196,22 @@ async function AdminView({ name }: { name?: string | null }) {
         </div>
       </section>
 
-      {memberships.length === 0 ? (
+      <ListFilters action="/memberships" label="Filtros de membresías" values={filters}
+        choices={choices} chips={chips}
+        search={{ label: "Buscar paciente", placeholder: "Escribe un nombre…" }} />
+      <p className="mb-4 text-sm text-muted-foreground" aria-live="polite">
+        {matches.length === 1 ? "1 membresía encontrada" : `${matches.length} membresías encontradas`}
+      </p>
+
+      {memberships.length === 0 && membershipList.hasActiveFilters(filters) ? (
+        <EmptyState title="Ninguna membresía coincide con estos filtros"
+          action={<ButtonLink href="/memberships">Ver todas las membresías</ButtonLink>}>
+          Prueba con menos filtros o vuelve a la primera página.
+        </EmptyState>
+      ) : memberships.length === 0 ? (
         <EmptyState title="Todavía no hay membresías registradas">
-          Registra la primera con el formulario de abajo. Necesitas un plan y
-          un paciente dado de alta.
+          Ábrelo con «Registrar una membresía», al final de la pantalla.
+          Necesitas un plan y un paciente dado de alta.
         </EmptyState>
       ) : (
         <div className="grid gap-10">
@@ -185,28 +231,51 @@ async function AdminView({ name }: { name?: string | null }) {
         </div>
       )}
 
+      <Pagination page={filters.page} pages={pages}
+        hrefFor={(page) => membershipList.href(filters, { page })}
+        label="Páginas de membresías" />
+
       <section className="mt-12 grid gap-4">
-        <h2 className="text-xl font-semibold">Registrar una membresía</h2>
         {plans.length === 0 ? (
-          <p className="leading-7 text-muted-foreground">
-            Antes de registrar una membresía necesitas al menos un plan.{" "}
-            <ButtonLink variant="ghost" href="/plans">
-              Crea uno aquí
-            </ButtonLink>
-            .
-          </p>
+          <>
+            <h2 className="text-xl font-semibold">Registrar una membresía</h2>
+            <p className="leading-7 text-muted-foreground">
+              Antes de registrar una membresía necesitas al menos un plan.{" "}
+              <ButtonLink variant="ghost" href="/plans">
+                Crea uno aquí
+              </ButtonLink>
+              .
+            </p>
+          </>
         ) : (
-          <article className={cardClass}>
+          /*
+            El alta se abre a demanda: quien entra a esta pantalla viene casi
+            siempre a revisar vencimientos, no a dar de alta. Ninguna suite
+            recorre este formulario por HTTP, y un `<details>` cerrado lo emite
+            igual en el HTML del servidor.
+          */
+          <details className={cardClass}>
+            <summary className="flex min-h-11 cursor-pointer items-center text-xl font-semibold text-brand">
+              Registrar una membresía
+            </summary>
             <MembershipForm patients={patientOptions} plans={planOptions} />
-          </article>
+          </details>
         )}
       </section>
     </Workspace>
   );
 }
 
-async function ProfessionalView({ name }: { name?: string | null }) {
-  const patients = await listPatientsWithMembership();
+async function ProfessionalView({ name, filters }: { name?: string | null; filters: MembershipFilters }) {
+  const patients = await listPatientsWithMembership(filters);
+  const choices = [{ name: "status", label: "Estado", options: membershipStatusLabels }];
+  const chips = Object.entries(filters)
+    .filter(([key, value]) => key !== "page" && key !== "plan" && value)
+    .map(([key, value]) => ({
+      label: key === "status" ? membershipStatusLabels[value as keyof typeof membershipStatusLabels] : String(value),
+      href: membershipList.href(filters, { [key]: undefined, page: 1 }),
+      removeLabel: key === "status" ? "Quitar el estado" : "Quitar la búsqueda",
+    }));
 
   return (
     <Workspace
@@ -214,7 +283,16 @@ async function ProfessionalView({ name }: { name?: string | null }) {
       name={name}
       description="El estado de la mensualidad de cada paciente que tienes a cargo. El control administrativo —altas, fechas y montos— lo lleva el administrador."
     >
-      {patients.length === 0 ? (
+      <ListFilters action="/memberships" label="Filtros de membresías" values={filters}
+        choices={choices} chips={chips}
+        search={{ label: "Buscar paciente", placeholder: "Escribe un nombre…" }} />
+
+      {patients.length === 0 && membershipList.hasActiveFilters(filters) ? (
+        <EmptyState title="Ningún paciente coincide con estos filtros"
+          action={<ButtonLink href="/memberships">Ver todos tus pacientes</ButtonLink>}>
+          Prueba con menos filtros.
+        </EmptyState>
+      ) : patients.length === 0 ? (
         <EmptyState title="Aún no tienes pacientes que seguir">
           Aquí verás a los pacientes que tengas asignados. Pídele al
           administrador que te asigne alguno.
@@ -270,11 +348,16 @@ async function ProfessionalView({ name }: { name?: string | null }) {
   );
 }
 
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const profile = await requireStaff();
+  const filters = membershipList.parse(await searchParams);
   return profile.role === "admin" ? (
-    <AdminView name={profile.fullName} />
+    <AdminView name={profile.fullName} filters={filters} />
   ) : (
-    <ProfessionalView name={profile.fullName} />
+    <ProfessionalView name={profile.fullName} filters={filters} />
   );
 }

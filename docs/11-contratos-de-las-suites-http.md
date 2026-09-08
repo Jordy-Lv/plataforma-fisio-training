@@ -96,16 +96,21 @@ suite los exige **todos en el mismo formulario**.
 |---|---|---|
 | `/login` | `name="email"` (implícito, único formulario) | casi todas |
 | `/patient/onboarding` | `name="step"` | `test:people`, `test:auth:resilience` |
-| `/admin` · alta de persona | `name="fullName"` | `test:people` |
-| `/pro` · alta de persona | `name="fullName"` | `test:people` |
-| `/admin` · baja de persona | **`value="<uuid de la persona>"`** | `test:people` |
+| `/people` · registrar persona | `name="fullName"` | `test:people` |
+| `/people` · baja de persona | **`value="<uuid de la persona>"`** | `test:people` |
 | `/people/[id]` · perfil | `name="goal"` | `test:people` |
 | `/people/[id]` · condición | `name="conditionId"` | `test:people` |
 
-> `/admin` y `/pro` son las pantallas más frágiles del proyecto: su marcador es un uuid suelto.
-> Cualquier `<select>`, `<input>` u `<option>` con `value="<uuid>"` que aparezca **antes** de
-> la lista de personas se convierte en «el formulario» y la suite falla con
-> «Falta el formulario de server action».
+> `/people` es de las pantallas más frágiles del proyecto: el marcador de la baja es un uuid
+> suelto. Cualquier `<select>`, `<input>` u `<option>` con `value="<uuid>"` que aparezca
+> **antes** del formulario de baja —el de asignar acompañamiento tiene un `<option>` por cada
+> profesional— se convierte en «el formulario» y la suite falla con «Falta el formulario de
+> server action». Por eso las tarjetas van en el orden registrar → pacientes → equipo →
+> asignar: las bajas quedan antes que la asignación. Los modales de `SheetModal` no usan
+> portal, así que su contenido —listas y formularios— sí está en el HTML del servidor.
+>
+> `/admin` y `/pro` ya no montan formularios de personas: son el panorama del negocio. El
+> login sigue redirigiendo el personal a `/admin` y `/pro`, y `test:people` lo comprueba.
 
 ### Catálogo
 
@@ -251,6 +256,62 @@ o tras un retardo al escribir: el formulario sigue en el HTML, y sin JavaScript 
 
 Lo que **no** se puede hacer es emitir uuids en ese formulario dentro de `/admin`, `/pro`,
 `/templates/[id]` o `/pro/routines/[patientId]`.
+
+**Dónde sí se pueden emitir uuids, y por qué.** El peligro no son los uuids: es que el
+marcador de una suite sea *un uuid cualquiera*. Cuando el marcador es un uuid **concreto**, un
+uuid distinto en un formulario anterior no lo captura:
+
+- `/pro/alerts` filtra por paciente con un `<select name="patient">` lleno de uuids. El
+  marcador de «marcar leída» es `value="<alertId>"` —el uuid de la alerta—, que nunca coincide
+  con el de un paciente.
+- `/memberships` filtra por plan con un `<select name="plan">` lleno de uuids. Ninguna suite
+  envía formularios en esa pantalla; solo lee texto.
+- `/pro/sessions` elige paciente con un `<select name="patient">`, como ya hacía antes de
+  tener filtros.
+
+La regla sigue siendo la de `/people`: donde el marcador es «un uuid», no metas otro delante.
+
+### Plegar un formulario sin que la suite lo pierda
+
+Un `<details>` cerrado **emite igual todo su contenido** en el HTML del servidor, así que un
+formulario plegado se sigue encontrando por su marcador. Es la única forma de acortar una
+pantalla de edición sin tocar los contratos: un diálogo con portal no emitiría nada
+(ADR-0008).
+
+Dos límites que no son de las suites sino del navegador y del usuario:
+
+- **No pliegues un campo obligatorio.** Si Zod lo exige y el usuario no lo ve, el error
+  aparece sin origen visible; y si además lleva `required`, el navegador rechaza el envío
+  apuntando a un campo que no está en pantalla. Lo obligatorio y largo se compacta —dos
+  columnas—, no se esconde.
+- **Cuidado con el orden.** El contenido de un `<details>` sigue contando para el «gana el
+  primero» de la sección 1: plegar no lo mueve al final del documento.
+
+Aplicado en el registro de tamizaje, `/plans`, `/memberships`, `/exercises/{new,[id]}`,
+`/rules/{new,[id]}`, `/templates/[id]`, `/pro/routines/[patientId]` y `/people/[id]`.
+
+**Al medir, cuidado con el streaming.** React difiere el contenido de un Client Component:
+donde va el formulario emite `<template id="P:n">` y el marcado real viaja al final del
+documento dentro de un `<div hidden id="S:n">`. Sigue estando en el HTML —por eso las suites,
+que buscan con una expresión regular sobre todo el documento, lo encuentran— pero cualquier
+recuento que asocie un campo con el `<details>` que lo contiene dará un resultado falso.
+
+### Acotar una lista sin añadir un `<form>`
+
+El filtro por año o por mes de un historial (`components/ui/PeriodFilter.tsx`) **no es un
+formulario**: el servidor pinta todas las tarjetas con un `data-year` o `data-month` y un
+`<select>` de cliente oculta las que no tocan. Tres razones:
+
+1. Un `<form method="get">` en `/screenings/[patientId]` o `/attendance/[patientId]` —cuyo
+   marcador es `name="takenOn"` / `name="attendedOn"`— es exactamente el caso que produce
+   «Falta el formulario de server action».
+2. Sin JavaScript se ve el historial entero: el filtro solo estrecha.
+3. Las tarjetas las sigue renderizando el servidor, así que los `<h3>` con la fecha y su
+   orden —lo que leen `verify-progress-screenings` y `verify-progress-attendance`— no cambian.
+
+La banda de pestañas del paciente (`components/patients/PatientTabs.tsx`) sigue la misma
+idea: son enlaces, no un formulario, y el identificador del paciente viaja en el `href`,
+nunca en un `value`.
 
 ### Mostrar un acuse que sobreviva a la revalidación
 

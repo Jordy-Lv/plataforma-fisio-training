@@ -1,5 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { sessionList, type SessionListFilters } from "@/lib/routines/session-list";
+import { readPage } from "@/lib/shared/read-pages";
 
 export async function sessionDetails(sessionId: string) {
   const supabase = await createClient();
@@ -15,14 +17,29 @@ export async function sessionDetails(sessionId: string) {
 export type SessionDetails = NonNullable<Awaited<ReturnType<typeof sessionDetails>>>;
 export type SessionLog = SessionDetails["session_logs"][number];
 
-export async function patientSessions(patientId: string) {
+/**
+ * El historial de sesiones de un paciente, de la más reciente a la más
+ * antigua. Antes se recortaba con un `.limit(50)` fijo que no avisaba de nada:
+ * ahora la página y el rango de fechas viajan en la URL y el total sale de la
+ * base, así que se sabe cuántas hay.
+ */
+export async function patientSessions(patientId: string, filters: SessionListFilters = sessionList.empty) {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("sessions")
-    .select("id, routine_day_id, performed_on, status, routines(name), routine_days(day_number, title)")
-    .eq("patient_id", patientId).order("performed_on", { ascending: false }).order("created_at", { ascending: false }).limit(50);
-  if (error) throw new Error(`No se pudo consultar el historial: ${error.message}`);
-  return data ?? [];
+  const { from, to } = sessionList.range(filters);
+  const query = () => {
+    let request = supabase.from("sessions")
+      .select("id, routine_day_id, performed_on, status, routines(name), routine_days(day_number, title)", { count: "exact" })
+      .eq("patient_id", patientId).order("performed_on", { ascending: false }).order("created_at", { ascending: false });
+    if (filters.status) request = request.eq("status", filters.status);
+    if (filters.from) request = request.gte("performed_on", filters.from);
+    if (filters.to) request = request.lte("performed_on", filters.to);
+    return request;
+  };
+  const { rows, total } = await readPage((start, end) => query().range(start, end),
+    { from, to }, "No se pudo consultar el historial");
+  return { sessions: rows, total, pages: sessionList.pages(total) };
 }
+export type PatientSession = Awaited<ReturnType<typeof patientSessions>>["sessions"][number];
 export async function executionExercises(dayId: string) {
   const supabase = await createClient();
   const { data, error } = await supabase.from("routine_items")

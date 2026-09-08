@@ -262,6 +262,18 @@ type DemoPatient = {
   email: string;
   fullName: string;
   heightCm: number;
+  /**
+   * El alta que el paciente completaría en `/patient/onboarding`. Sin ella,
+   * `getActiveProfile` manda a la asistente en cuanto el paciente inicia sesión y
+   * su rutina, sus tamizajes y su membresía quedan inalcanzables: los datos están
+   * sembrados pero no se pueden ver.
+   */
+  details: {
+    goal: Database["public"]["Enums"]["patient_goal"];
+    level: Database["public"]["Enums"]["fitness_level"];
+    environment: Database["public"]["Enums"]["training_environment"];
+    equipment: string[];
+  };
   /** Profesionales que lo atienden y con qué especialidad se registra el vínculo. */
   assignments: { professional: string; kind: Database["public"]["Enums"]["professional_specialty"] }[];
   screeningStart: ScreeningShape;
@@ -276,6 +288,12 @@ const DEMO_PATIENTS: DemoPatient[] = [
     email: "laura.perez.demo@demo.local",
     fullName: "Laura Pérez (demo)",
     heightCm: 165,
+    details: {
+      goal: "gain_muscle",
+      level: "intermediate",
+      environment: "gym",
+      equipment: ["barbell", "dumbbells", "machines"],
+    },
     assignments: [{ professional: BETO, kind: "training" }],
     // Adelgaza y baja grasa a lo largo del trimestre.
     screeningStart: {
@@ -312,6 +330,12 @@ const DEMO_PATIENTS: DemoPatient[] = [
     email: "marcos.rojas.demo@demo.local",
     fullName: "Marcos Rojas (demo)",
     heightCm: 179,
+    details: {
+      goal: "rehab",
+      level: "beginner",
+      environment: "home",
+      equipment: ["none", "bands"],
+    },
     assignments: [
       { professional: BETO, kind: "training" },
       { professional: CARLA, kind: "physio" },
@@ -372,6 +396,31 @@ async function resolveDemoUser(client: Client, patient: DemoPatient): Promise<st
   return id;
 }
 
+/**
+ * Deja el alta del paciente terminada (`onboarding_step = 3`), como si hubiera
+ * recorrido las tres pantallas de `/patient/onboarding`. El CHECK
+ * `onboarding_required_fields` exige objetivo y nivel para el paso 1, y entorno y
+ * al menos un equipo para el paso 2, así que la fila se escribe entera de una vez.
+ */
+async function syncPatientDetails(client: Client, patientId: string, patient: DemoPatient) {
+  fail(
+    `No se pudo completar el alta de ${patient.email}`,
+    (
+      await client.from("patient_details").upsert(
+        {
+          profile_id: patientId,
+          goal: patient.details.goal,
+          level: patient.details.level,
+          environment: patient.details.environment,
+          equipment: patient.details.equipment,
+          onboarding_step: 3,
+        },
+        { onConflict: "profile_id" },
+      )
+    ).error,
+  );
+}
+
 /** Deja las asignaciones de cuidado del paciente exactamente como las pide su config. */
 async function syncAssignments(client: Client, patientId: string, patient: DemoPatient) {
   fail(
@@ -429,8 +478,12 @@ function screeningRows(patient: DemoPatient, patientId: string, takenBy: string)
 // --- Rutina y semanas de sesiones -------------------------------------------------
 
 type ItemPlan = {
-  /** Nombre exacto del catálogo de free-exercise-db. */
-  exercise: string;
+  /**
+   * `external_id` del catálogo de free-exercise-db. No se referencia por
+   * nombre: el nombre está traducido al español y volvería a romperse cada vez
+   * que se retoque la traducción.
+   */
+  externalId: string;
   sets: number;
   reps: number;
   /** Carga de la primera semana; `null` para un ejercicio con el peso del cuerpo. */
@@ -446,10 +499,10 @@ const DAY_PLANS: DayPlan[] = [
     dayNumber: 1,
     title: "Tren superior",
     items: [
-      { exercise: "Barbell Bench Press - Medium Grip", sets: 4, reps: 8, baseWeight: 45, growth: 2.5 },
-      { exercise: "Barbell Shoulder Press", sets: 4, reps: 10, baseWeight: 25, growth: 1.5 },
-      { exercise: "Bent Over Barbell Row", sets: 4, reps: 10, baseWeight: 40, growth: 2.5 },
-      { exercise: "Pullups", sets: 3, reps: 8, baseWeight: null, growth: 0 },
+      { externalId: "Barbell_Bench_Press_-_Medium_Grip", sets: 4, reps: 8, baseWeight: 45, growth: 2.5 },
+      { externalId: "Barbell_Shoulder_Press", sets: 4, reps: 10, baseWeight: 25, growth: 1.5 },
+      { externalId: "Bent_Over_Barbell_Row", sets: 4, reps: 10, baseWeight: 40, growth: 2.5 },
+      { externalId: "Pullups", sets: 3, reps: 8, baseWeight: null, growth: 0 },
     ],
   },
   {
@@ -457,26 +510,31 @@ const DAY_PLANS: DayPlan[] = [
     title: "Tren inferior",
     items: [
       // La sentadilla es la que el paciente con molestia de rodilla termina saltando.
-      { exercise: "Barbell Squat", sets: 5, reps: 5, baseWeight: 60, growth: 5 },
-      { exercise: "Romanian Deadlift", sets: 4, reps: 8, baseWeight: 50, growth: 2.5 },
-      { exercise: "Leg Press", sets: 3, reps: 12, baseWeight: 120, growth: 10 },
-      { exercise: "Standing Calf Raises", sets: 4, reps: 15, baseWeight: 40, growth: 5 },
+      { externalId: "Barbell_Squat", sets: 5, reps: 5, baseWeight: 60, growth: 5 },
+      { externalId: "Romanian_Deadlift", sets: 4, reps: 8, baseWeight: 50, growth: 2.5 },
+      { externalId: "Leg_Press", sets: 3, reps: 12, baseWeight: 120, growth: 10 },
+      { externalId: "Standing_Calf_Raises", sets: 4, reps: 15, baseWeight: 40, growth: 5 },
     ],
   },
 ];
 
-/** Resuelve los nombres de `DAY_PLANS` a identificadores; falla si falta alguno. */
+/** Resuelve los `external_id` de `DAY_PLANS` a identificadores; falla si falta alguno. */
 async function resolveExercises(client: Client): Promise<Map<string, string>> {
-  const names = [...new Set(DAY_PLANS.flatMap((day) => day.items.map((item) => item.exercise)))];
-  const { data, error } = await client.from("exercises").select("id, name").in("name", names);
+  const externalIds = [
+    ...new Set(DAY_PLANS.flatMap((day) => day.items.map((item) => item.externalId))),
+  ];
+  const { data, error } = await client
+    .from("exercises")
+    .select("id, external_id")
+    .in("external_id", externalIds);
   fail("No se pudieron leer los ejercicios de la rutina", error);
-  const idByName = new Map((data ?? []).map((row) => [row.name, row.id]));
-  const missing = names.filter((name) => !idByName.has(name));
+  const idByExternalId = new Map((data ?? []).map((row) => [row.external_id!, row.id]));
+  const missing = externalIds.filter((externalId) => !idByExternalId.has(externalId));
   if (missing.length > 0)
     throw new Error(
       `Faltan ejercicios (${missing.join(", ")}). Ejecuta antes npm run seed:exercises.`,
     );
-  return idByName;
+  return idByExternalId;
 }
 
 /** Monta una rutina de dos días y diez sesiones de cinco semanas para un paciente. */
@@ -518,7 +576,7 @@ async function seedRoutine(
       .insert(
         day.items.map((item, position) => ({
           routine_day_id: dayRow!.id,
-          exercise_id: exerciseId.get(item.exercise)!,
+          exercise_id: exerciseId.get(item.externalId)!,
           position: position + 1,
           sets: item.sets,
           reps: item.reps,
@@ -699,6 +757,8 @@ async function main() {
     const patientId = await resolveDemoUser(client, patient);
     await wipePatientData(client, patientId);
     await syncAssignments(client, patientId, patient);
+    await syncPatientDetails(client, patientId, patient);
+    console.log("✓ alta terminada: el paciente entra directo a su rutina");
 
     const screenings = screeningRows(patient, patientId, BETO);
     fail(

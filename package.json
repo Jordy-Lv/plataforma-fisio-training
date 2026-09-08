@@ -7,6 +7,7 @@
   },
   "scripts": {
     "dev": "next dev",
+    "dev:turbo": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
@@ -30,6 +31,7 @@
     "test:rules:panel": "node --test scripts/verify-rules-panel.test.mjs",
     "test:rules": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/helpers/alias-hook.mjs --test scripts/verify-rules-engine.test.mjs",
     "seed:exercises": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/seed-exercises.ts",
+    "seed:exercises:textos": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/seed-exercises.ts --solo-textos",
     "seed:templates": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/seed-templates.ts",
     "seed:rules": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/seed-rules.ts",
     "seed:progress-demo": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/seed-progress-demo.ts",

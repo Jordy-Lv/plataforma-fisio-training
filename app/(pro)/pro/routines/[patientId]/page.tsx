@@ -5,7 +5,7 @@ import { getActiveProfile } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { bodyPartLabels } from "@/lib/catalog/body-parts";
 import { listExercises } from "@/lib/catalog/queries";
-import { exerciseFiltersSchema } from "@/lib/catalog/schemas";
+import { exerciseFiltersSchema, exercisesHref } from "@/lib/catalog/schemas";
 import { labelFor } from "@/lib/catalog/vocabulary";
 import { assignmentSchema } from "@/lib/routines/assignment";
 import {
@@ -21,12 +21,14 @@ import {
   ReplaceRoutineItemButton,
   RoutineItemForm,
 } from "@/components/routines/RoutineItems";
+import { PatientTabs } from "@/components/patients/PatientTabs";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { cardVariants } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Field, Input } from "@/components/ui/Field";
+import { SectionHeader, SeeAllLink } from "@/components/ui/SectionHeader";
 
 const statusLabels = {
   active: "Activa",
@@ -147,20 +149,39 @@ export default async function Page({
           del nombre.
         </p>
       ) : (
-        <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-          {resultados.map((ejercicio) => (
-            <li
-              key={ejercicio.id}
-              className={cn(
-                cardVariants({ padding: "none" }),
-                "grid gap-2 rounded-xl p-3",
-              )}
-            >
-              <p className="text-sm font-medium">{ejercicio.name}</p>
-              {accion(ejercicio)}
-            </li>
-          ))}
-        </ul>
+        <div className="mt-4">
+          {/*
+            El buscador corta en `maxResultados`, así que cuando llega al tope
+            el «Ver el catálogo» es lo único que dice que hay más y adónde ir a
+            verlo.
+          */}
+          <SectionHeader
+            as="h3"
+            title="Ejercicios encontrados"
+            count={resultados.length}
+            action={
+              resultados.length === maxResultados && (
+                <SeeAllLink href={exercisesHref(filtros)}>
+                  Ver el catálogo
+                </SeeAllLink>
+              )
+            }
+          />
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {resultados.map((ejercicio) => (
+              <li
+                key={ejercicio.id}
+                className={cn(
+                  cardVariants({ padding: "none" }),
+                  "grid gap-2 rounded-xl p-3",
+                )}
+              >
+                <p className="text-sm font-medium">{ejercicio.name}</p>
+                {accion(ejercicio)}
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </>
   );
@@ -175,6 +196,13 @@ export default async function Page({
         </ButtonLink>
       }
     >
+      {/*
+        Las pestañas van antes del formulario de asignación, que sigue siendo el
+        primero de la pantalla con `name="patientId"` —el marcador de
+        `verify-routine-assignment`—: son enlaces, no un `<form>`.
+      */}
+      <PatientTabs patientId={patientId} active="routine" />
+
       {patient.is_active && <AssignmentForm patientId={patientId} />}
 
       {conditions.length > 0 && (
@@ -249,6 +277,26 @@ export default async function Page({
                     <ol className="mt-4 grid gap-4">
                       {day.routine_items.map((item, indice) => {
                         const choques = clashes(item, conditions);
+                        // La prescripción actual en una línea, para leer el día
+                        // sin abrir cada ejercicio.
+                        const resumen =
+                          [
+                            item.sets != null && item.reps != null
+                              ? `${item.sets} × ${item.reps}`
+                              : item.sets != null
+                                ? `${item.sets} series`
+                                : item.reps != null
+                                  ? `${item.reps} repeticiones`
+                                  : null,
+                            item.target_weight != null
+                              ? `${item.target_weight} kg`
+                              : null,
+                            item.rest_seconds != null
+                              ? `${item.rest_seconds} s de descanso`
+                              : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ") || "Sin prescripción todavía";
                         return (
                           <li
                             key={item.id}
@@ -258,7 +306,7 @@ export default async function Page({
                             )}
                           >
                             <div className="flex flex-wrap items-start justify-between gap-3">
-                              <div className="grid gap-2">
+                              <div className="grid gap-1">
                                 <p className="break-words font-semibold">
                                   {/* El número es el orden de ejecución, no un
                                       adorno: va pegado al nombre. */}
@@ -281,6 +329,9 @@ export default async function Page({
                                     </Badge>
                                   )}
                                 </p>
+                                <p className="text-sm text-muted-foreground">
+                                  {resumen}
+                                </p>
                                 {choques.length > 0 && (
                                   <p className="text-xs text-destructive">
                                     Contraindicado para{" "}
@@ -299,7 +350,8 @@ export default async function Page({
                                 prescripción a propósito:
                                 `scripts/verify-routine-items.test.mjs` toma el
                                 primer formulario del ítem y comprueba que no
-                                arrastra los campos de la prescripción.
+                                arrastra los campos de la prescripción. Queda
+                                fuera del `<details>` para no mover ese orden.
                               */}
                               <RemoveRoutineItemButton
                                 patientId={patientId}
@@ -307,29 +359,47 @@ export default async function Page({
                               />
                             </div>
 
-                            <div className="mt-4 border-t border-border pt-4">
-                              <RoutineItemForm
-                                patientId={patientId}
-                                item={item}
-                              />
-                            </div>
-
-                            <div className="mt-4 border-t border-border pt-4">
-                              {itemAbierto === item.id ? (
-                                buscador("item", item.id, (ejercicio) => (
-                                  <ReplaceRoutineItemButton
-                                    patientId={patientId}
-                                    itemId={item.id}
-                                    exerciseId={ejercicio.id}
-                                    exerciseName={ejercicio.name}
-                                  />
-                                ))
-                              ) : (
-                                <ButtonLink href={`${base}?item=${item.id}`}>
-                                  Sustituir por otro ejercicio
-                                </ButtonLink>
-                              )}
-                            </div>
+                            {/*
+                              La prescripción y la sustitución se pliegan: un día
+                              de cinco ejercicios pasa de cinco formularios
+                              abiertos a cinco líneas. Cerrado, el `<details>`
+                              sigue emitiendo sus formularios en el HTML del
+                              servidor —`verify-routine-items` los encuentra
+                              igual—; se abre solo cuando el profesional llega a
+                              sustituir este ítem por enlace.
+                            */}
+                            <details
+                              className="mt-3 rounded-xl border border-border px-4"
+                              open={itemAbierto === item.id || undefined}
+                            >
+                              <summary className="flex min-h-11 cursor-pointer items-center py-3 font-semibold text-brand">
+                                Ajustar la prescripción o sustituir
+                              </summary>
+                              <div className="grid gap-4 pb-4">
+                                <RoutineItemForm
+                                  patientId={patientId}
+                                  item={item}
+                                />
+                                <div className="border-t border-border pt-4">
+                                  {itemAbierto === item.id ? (
+                                    buscador("item", item.id, (ejercicio) => (
+                                      <ReplaceRoutineItemButton
+                                        patientId={patientId}
+                                        itemId={item.id}
+                                        exerciseId={ejercicio.id}
+                                        exerciseName={ejercicio.name}
+                                      />
+                                    ))
+                                  ) : (
+                                    <ButtonLink
+                                      href={`${base}?item=${item.id}`}
+                                    >
+                                      Sustituir por otro ejercicio
+                                    </ButtonLink>
+                                  )}
+                                </div>
+                              </div>
+                            </details>
                           </li>
                         );
                       })}

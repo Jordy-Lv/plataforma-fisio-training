@@ -1,3 +1,4 @@
+import { CLIENT_NAME } from "@/lib/brand/client";
 import type { Metadata, Viewport } from "next";
 import { Figtree } from "next/font/google";
 
@@ -26,15 +27,15 @@ const figtree = Figtree({
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  applicationName: "Entrenamiento y fisioterapia",
-  title: "Entrenamiento y fisioterapia",
+  applicationName: CLIENT_NAME,
+  title: CLIENT_NAME,
   description:
     "Rutinas, seguimiento y progreso para entrenamiento y fisioterapia en un solo lugar.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Fisio Training",
+    title: CLIENT_NAME,
   },
   icons: {
     icon: [

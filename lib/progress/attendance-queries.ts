@@ -3,6 +3,13 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/db/types";
 import { monthStart } from "@/lib/progress/vocabulary";
+import {
+  attendanceList,
+  currentMonth,
+  shiftMonth,
+  type AttendanceFilters,
+} from "@/lib/progress/attendance-list";
+import { sanitizeSearch } from "@/lib/shared/search";
 
 type AttendanceRow = Database["public"]["Tables"]["attendance"]["Row"];
 
@@ -47,26 +54,57 @@ export function daysThisMonth(records: { attended_on: string }[]) {
  * La asistencia viaja embebida y acotada al mes: son treinta y una filas como
  * mucho por paciente, y pedir el resumen aparte sería una consulta por fila.
  */
-export async function listPatientsWithMonthAttendance(): Promise<
-  PatientAttendanceSummary[]
-> {
+export async function listPatientsWithMonthAttendance(
+  filters: AttendanceFilters = attendanceList.empty,
+  options: { paginate?: boolean } = {},
+): Promise<{
+  patients: PatientAttendanceSummary[];
+  total: number;
+  pages: number;
+  month: string;
+}> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const month = currentMonth(filters);
+  const term = sanitizeSearch(filters.q ?? "");
+  let query = supabase
     .from("profiles")
     .select(`id, full_name, ${porPaciente} (attended_on)`)
     .eq("role", "patient")
     .eq("is_active", true)
-    .gte("attendance.attended_on", monthStart())
+    .gte("attendance.attended_on", `${month}-01`)
+    .lt("attendance.attended_on", `${shiftMonth(month, 1)}-01`)
     .order("full_name")
     .order("attended_on", { referencedTable: "attendance", ascending: false });
+  if (term) query = query.ilike("full_name", `%${term}%`);
+  const { data, error } = await query;
   if (error)
     throw new Error(`No se pudo consultar la asistencia: ${error.message}`);
 
-  return (data ?? []).map(({ attendance, ...patient }) => ({
-    ...patient,
-    days: attendance.length,
-    last: attendance[0]?.attended_on ?? null,
-  }));
+  // «Vino» y «no vino» dependen de las filas embebidas, no de una columna: el
+  // recorte va aquí y no en PostgREST. La lista es la de pacientes activos del
+  // negocio, así que cabe en memoria sin problema.
+  const all = (data ?? [])
+    .map(({ attendance, ...patient }) => ({
+      ...patient,
+      days: attendance.length,
+      last: attendance[0]?.attended_on ?? null,
+    }))
+    .filter((patient) =>
+      filters.attended === "some"
+        ? patient.days > 0
+        : filters.attended === "none"
+          ? patient.days === 0
+          : true,
+    );
+  const { from, to } = attendanceList.range(filters);
+  return {
+    // El panorama del negocio suma sobre todos los pacientes del mes, no sobre
+    // una página: por eso puede pedir la lista entera.
+    patients: options.paginate === false ? all : all.slice(from, to + 1),
+    total: all.length,
+    pages: attendanceList.pages(all.length),
+    month,
+  };
 }
 
 /**

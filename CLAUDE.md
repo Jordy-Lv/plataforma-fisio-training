@@ -206,9 +206,4 @@ Los cinco tienen que pasar. CI los repite y bloquea el merge si fallan.
   suite falla, no la adaptes para que pase: describe un contrato con el usuario.
 - **No inventes columnas.** El esquema vive en `supabase/migrations/` y está descrito en
   `docs/02-modelo-de-datos.md`; léelo antes de escribir una consulta.
-- **Excepción vigente para Antigravity.** Si trabajas en la rama
-  `experimental/antigravity-frontend`, lee primero
-  [`docs/12-excepcion-antigravity-frontend.md`](docs/12-excepcion-antigravity-frontend.md):
-  define qué se relaja, qué sigue siendo obligatorio y que esa rama **no se fusiona a
-  `main`**. Fuera de esa rama, esta excepción no aplica.
 - Al terminar una tarea, marca su casilla en el `tasks.md` del change correspondiente.

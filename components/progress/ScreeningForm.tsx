@@ -72,36 +72,52 @@ export function ScreeningForm({ patientId }: { patientId: string }) {
         </Field>
       </div>
 
-      <Field label="Grasa corporal (%) · opcional">
-        <input
-          className={inputClass}
-          name="bodyFatPct"
-          type="number"
-          inputMode="decimal"
-          step={step}
-          min={1}
-          max={70}
-        />
-      </Field>
+      {/*
+        Fecha, peso y talla son lo único obligatorio, y con eso ya sale el IMC.
+        La grasa corporal y las ocho medidas de cinta métrica se toman de vez en
+        cuando, así que van plegadas: el formulario pasa de once campos a tres.
+        Un `<details>` cerrado sigue emitiendo su contenido en el HTML del
+        servidor, así que `verify-progress-screenings` encuentra igual el
+        formulario por `name="takenOn"`.
+      */}
+      <details className="rounded-xl border border-border px-4">
+        <summary className="flex min-h-11 cursor-pointer items-center py-3 font-semibold text-brand">
+          Añadir medidas corporales · opcional
+        </summary>
 
-      <fieldset className="grid gap-4">
-        <legend className="font-semibold">Medidas corporales · opcionales</legend>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {measurements.map((key) => (
-            <Field key={key} label={`${measurementLabels[key]} (cm)`}>
-              <input
-                className={inputClass}
-                name={key}
-                type="number"
-                inputMode="decimal"
-                step={step}
-                min={10}
-                max={250}
-              />
-            </Field>
-          ))}
+        <div className="grid gap-6 pb-4">
+          <Field label="Grasa corporal (%)">
+            <input
+              className={inputClass}
+              name="bodyFatPct"
+              type="number"
+              inputMode="decimal"
+              step={step}
+              min={1}
+              max={70}
+            />
+          </Field>
+
+          <fieldset className="grid gap-4">
+            <legend className="font-semibold">Medidas con cinta métrica</legend>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {measurements.map((key) => (
+                <Field key={key} label={`${measurementLabels[key]} (cm)`}>
+                  <input
+                    className={inputClass}
+                    name={key}
+                    type="number"
+                    inputMode="decimal"
+                    step={step}
+                    min={10}
+                    max={250}
+                  />
+                </Field>
+              ))}
+            </div>
+          </fieldset>
         </div>
-      </fieldset>
+      </details>
 
       <Field label="Observaciones · opcional">
         <textarea

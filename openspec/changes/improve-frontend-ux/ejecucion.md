@@ -18,13 +18,20 @@ Lee, en este orden:
 4. [`docs/adr/0008-formularios-dentro-de-dialogos.md`](../../../docs/adr/0008-formularios-dentro-de-dialogos.md)
    — por qué un formulario no se muda a un diálogo.
 5. [`proposal.md`](proposal.md) y [`design.md`](design.md) de este change.
-6. La sección de [`tasks.md`](tasks.md) que vas a implementar, entera, antes de empezar.
+6. [`docs/14-auditoria-de-vistas.md`](../../../docs/14-auditoria-de-vistas.md) — el repaso
+   pantalla por pantalla con la rúbrica. Es lo que dice **qué le falta a cada vista** y en qué
+   orden. La sección 18 de `tasks.md` lo convierte en tareas.
+7. La sección de [`tasks.md`](tasks.md) que vas a implementar, entera, antes de empezar.
 
 Levanta el entorno:
 
 ```bash
 npm run db:start && npm run db:reset && npm run dev
 ```
+
+**Si el `next dev` va lento**, `npm run dev:turbo` (Turbopack). Solo funciona con un
+`node_modules` real: en un worktree con `node_modules` como enlace simbólico hay que hacer
+antes `npm install` en el propio worktree, o usar el árbol principal.
 
 Los seeds que las suites esperan:
 
@@ -36,9 +43,11 @@ npm run seed:exercises && npm run seed:templates && npm run seed:rules && npm ru
 
 ## 2. Una sección de `tasks.md` es un pull request
 
-El orden de las secciones **no es negociable**: la 1 crea las piezas que consumen las demás,
-la 5 crea la agregación que usa la 9, y las secciones 11 y 12 tocan las pantallas más
-frágiles, así que van con los patrones ya probados.
+Las secciones 1–17 salen de `design.md`; la **18** salió de la auditoría del 2026-09-07 y es la
+que hay que seguir en la práctica: recorre `docs/14-auditoria-de-vistas.md` por prioridad. El
+orden dentro de la fase 1 (secciones 1–4) **no es negociable**: la 1 crea las piezas que
+consumen las demás, la 5 crea la agregación que usa la 9, y las secciones 11 y 12 tocan las
+pantallas más frágiles, así que van con los patrones ya probados.
 
 ```bash
 git checkout main && git pull

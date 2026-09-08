@@ -17,7 +17,7 @@ import { TemplateStatusForm } from "@/components/catalog/TemplateStatus";
 import { bodyPartLabels } from "@/lib/catalog/body-parts";
 import { requireStaff } from "@/lib/catalog/access";
 import { listExercises } from "@/lib/catalog/queries";
-import { exerciseFiltersSchema } from "@/lib/catalog/schemas";
+import { exerciseFiltersSchema, exercisesHref } from "@/lib/catalog/schemas";
 import {
   getTemplate,
   listRulesUsingTemplate,
@@ -36,6 +36,7 @@ import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Field, Input } from "@/components/ui/Field";
+import { SectionHeader, SeeAllLink } from "@/components/ui/SectionHeader";
 import { cn } from "cn";
 import { cardVariants } from "@/components/ui/Card";
 
@@ -275,9 +276,18 @@ export default async function Page({
                 </h3>
 
                 {puedeEditar && (
-                  <div className="mt-4">
-                    <DayHeaderForms templateId={template.id} day={dia} />
-                  </div>
+                  // Renombrar o eliminar un día es raro; no tiene por qué ocupar
+                  // la cabecera de cada día. Cerrado, el `<details>` deja sus
+                  // formularios («Eliminar día», `value="<dayId>"`) en el HTML
+                  // del servidor, que es lo que recorre `verify-catalog-templates`.
+                  <details className="mt-3 rounded-xl border border-border px-4">
+                    <summary className="flex min-h-11 cursor-pointer items-center py-3 text-sm font-medium text-brand">
+                      Renombrar o eliminar el día
+                    </summary>
+                    <div className="pb-4">
+                      <DayHeaderForms templateId={template.id} day={dia} />
+                    </div>
+                  </details>
                 )}
 
                 {dia.items.length === 0 ? (
@@ -314,7 +324,9 @@ export default async function Page({
                                   .join(", ")}
                               </p>
                             )}
-                            {!puedeEditar && <ItemSummary item={item} />}
+                            {/* La prescripción actual se lee siempre; el
+                                formulario para cambiarla espera plegado abajo. */}
+                            <ItemSummary item={item} />
                           </div>
 
                           {puedeEditar && (
@@ -328,9 +340,19 @@ export default async function Page({
                         </div>
 
                         {puedeEditar && (
-                          <div className="mt-4 border-t border-border pt-4">
-                            <ItemForm templateId={template.id} item={item} />
-                          </div>
+                          // Plegado: una plantilla de cinco ejercicios pasa de
+                          // cinco formularios abiertos a cinco líneas. Cerrado,
+                          // el `<details>` sigue emitiendo el formulario en el
+                          // HTML del servidor, así que `verify-catalog-templates`
+                          // encuentra igual su `value="<itemId>"` + `name="targetWeight"`.
+                          <details className="mt-3 rounded-xl border border-border px-4">
+                            <summary className="flex min-h-11 cursor-pointer items-center py-3 font-semibold text-brand">
+                              Ajustar la prescripción
+                            </summary>
+                            <div className="pb-4">
+                              <ItemForm templateId={template.id} item={item} />
+                            </div>
+                          </details>
                         )}
                       </li>
                     ))}
@@ -376,27 +398,46 @@ export default async function Page({
                             con otra palabra del nombre.
                           </p>
                         ) : (
-                          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-                            {resultados.map((ejercicio) => (
-                              <li
-                                key={ejercicio.id}
-                                className={cn(
-                                  cardVariants({ padding: "none" }),
-                                  "grid gap-2 rounded-xl p-3",
-                                )}
-                              >
-                                <p className="text-sm font-medium">
-                                  {ejercicio.name}
-                                </p>
-                                <AddItemButton
-                                  templateId={template.id}
-                                  dayId={dia.id}
-                                  exerciseId={ejercicio.id}
-                                  exerciseName={ejercicio.name}
-                                />
-                              </li>
-                            ))}
-                          </ul>
+                          <div className="mt-4">
+                            {/*
+                              El buscador corta en `maxResultados`, así que
+                              cuando llega al tope el «Ver el catálogo» es lo
+                              único que dice que hay más y adónde ir a verlo.
+                            */}
+                            <SectionHeader
+                              as="h3"
+                              title="Ejercicios encontrados"
+                              count={resultados.length}
+                              action={
+                                resultados.length === maxResultados && (
+                                  <SeeAllLink href={exercisesHref(filtros)}>
+                                    Ver el catálogo
+                                  </SeeAllLink>
+                                )
+                              }
+                            />
+                            <ul className="grid gap-3 sm:grid-cols-2">
+                              {resultados.map((ejercicio) => (
+                                <li
+                                  key={ejercicio.id}
+                                  className={cn(
+                                    cardVariants({ padding: "none" }),
+                                    "grid gap-2 rounded-xl p-3",
+                                  )}
+                                >
+                                  <p className="text-sm font-medium">
+                                    {ejercicio.name}
+                                  </p>
+                                  <AddItemButton
+                                    templateId={template.id}
+                                    dayId={dia.id}
+                                    exerciseId={ejercicio.id}
+                                    exerciseName={ejercicio.name}
+                                  />
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
                         )}
                       </>
                     ) : (

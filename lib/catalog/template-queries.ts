@@ -1,3 +1,6 @@
+import { templateList, type TemplateFilters } from "@/lib/catalog/template-list";
+import { readPage, readPages } from "@/lib/shared/read-pages";
+import { sanitizeSearch } from "@/lib/shared/search";
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
@@ -23,23 +26,36 @@ export type TemplateListItem = Pick<
  * plantilla lista de un borrador, y pedirlos por separado sería una consulta
  * por fila.
  */
-export async function listTemplates(): Promise<TemplateListItem[]> {
+export async function listTemplates(filters: TemplateFilters = templateList.empty) {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("routine_templates")
-    .select(
-      "id, name, kind, goal, level, environment, days_per_week, is_active, template_days(id, template_items(id))",
-    )
-    .order("kind")
-    .order("name");
-  if (error)
-    throw new Error(`No se pudieron consultar las plantillas: ${error.message}`);
-
-  return (data ?? []).map(({ template_days, ...template }) => ({
-    ...template,
-    days: template_days.length,
+  const query = () => {
+    let request = supabase.from("routine_templates")
+      .select("id, name, kind, goal, level, environment, days_per_week, is_active, template_days(id, template_items(id))", { count: "exact" })
+      .order("kind").order("name").order("id");
+    const term = sanitizeSearch(filters.q ?? "");
+    if (term) request = request.ilike("name", `%${term}%`);
+    if (filters.kind) request = request.eq("kind", filters.kind);
+    if (filters.goal) request = request.eq("goal", filters.goal);
+    if (filters.level) request = request.eq("level", filters.level);
+    if (filters.environment) request = request.eq("environment", filters.environment);
+    if (filters.status) request = request.eq("is_active", filters.status === "active");
+    return request;
+  };
+  type Row = NonNullable<Awaited<ReturnType<typeof query>>["data"]>[number];
+  const toItem = ({ template_days, ...template }: Row): TemplateListItem => ({
+    ...template, days: template_days.length,
     items: template_days.reduce((total, day) => total + day.template_items.length, 0),
-  }));
+  });
+  const { from, to } = templateList.range(filters);
+  if (filters.incomplete) {
+    // El criterio del plan es menos días que los declarados, antes de paginar.
+    const candidates = await readPages((start, end) => query().range(start, end), "No se pudieron consultar las plantillas");
+    const matches = candidates.map(toItem).filter((template) => template.days < template.days_per_week);
+    return { templates: matches.slice(from, to + 1), total: matches.length, pages: templateList.pages(matches.length) };
+  }
+  const { rows, total } = await readPage((start, end) => query().range(start, end),
+    { from, to }, "No se pudieron consultar las plantillas");
+  return { templates: rows.map(toItem), total, pages: templateList.pages(total) };
 }
 
 export type TemplateItem = {

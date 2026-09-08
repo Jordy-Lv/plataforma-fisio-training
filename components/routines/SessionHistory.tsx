@@ -4,7 +4,7 @@ import { Badge, PainBadge, sessionBadgeVariant } from "@/components/ui/Badge";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { bodyPartLabels, bodyParts } from "@/lib/catalog/body-parts";
-import type { patientSessions, SessionDetails } from "@/lib/routines/session-queries";
+import type { PatientSession, SessionDetails } from "@/lib/routines/session-queries";
 
 const statusLabels = {
   completed: "Completada",
@@ -18,7 +18,7 @@ export function SessionHistory({
   sessions,
   staff = false,
 }: {
-  sessions: Awaited<ReturnType<typeof patientSessions>>;
+  sessions: PatientSession[];
   staff?: boolean;
 }) {
   return (

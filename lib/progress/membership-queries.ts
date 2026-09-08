@@ -3,6 +3,12 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/db/types";
 import type { MembershipStatus } from "@/lib/progress/membership-vocabulary";
+import { membershipList, type MembershipFilters } from "@/lib/progress/membership-list";
+import { sanitizeSearch } from "@/lib/shared/search";
+
+/** Compara sin acentos ni mayúsculas, como espera quien escribe deprisa. */
+const normalize = (value: string) =>
+  value.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 
 type MembershipRow = Database["public"]["Tables"]["memberships"]["Row"];
 
@@ -67,19 +73,23 @@ export async function getPatientMembership(
  * antes a la que vence después. RLS decide el alcance: el administrador las ve
  * todas. El panel las separa en próximas a vencer, vencidas y el resto.
  */
-export async function listMembershipsWithPatient(): Promise<
-  MembershipWithPatient[]
-> {
+export async function listMembershipsWithPatient(
+  filters: MembershipFilters = membershipList.empty,
+): Promise<MembershipWithPatient[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("memberships")
     .select(
       `${withPlan}, patient:profiles!memberships_patient_id_fkey (id, full_name)`,
     )
     .order("expires_on", { ascending: true });
+  if (filters.status) query = query.eq("status", filters.status);
+  if (filters.plan) query = query.eq("plan_id", filters.plan);
+  const { data, error } = await query;
   if (error)
     throw new Error(`No se pudieron consultar las membresías: ${error.message}`);
 
+  const term = normalize(sanitizeSearch(filters.q ?? ""));
   return (data ?? []).map((row) => {
     const raw = row as RawMembership & {
       patient: { id: string; full_name: string | null } | null;
@@ -90,7 +100,12 @@ export async function listMembershipsWithPatient(): Promise<
       patient_id: patient?.id ?? "",
       patient_name: patient?.full_name ?? null,
     };
-  });
+  }).filter((membership) =>
+    // El nombre vive en la tabla embebida: buscarlo en PostgREST obligaría a
+    // un `!inner` que cambiaría el conteo. Son las membresías del negocio, no
+    // un catálogo: caben en memoria.
+    term ? normalize(membership.patient_name ?? "").includes(term) : true,
+  );
 }
 
 /** Los pacientes activos, para el desplegable del formulario de membresía. */
@@ -113,9 +128,9 @@ export async function listPatients(): Promise<
  * Los pacientes que el actor puede seguir, con el estado de su membresía
  * vigente. Para el profesional, RLS lo acota a los que tiene asignados.
  */
-export async function listPatientsWithMembership(): Promise<
-  PatientMembershipSummary[]
-> {
+export async function listPatientsWithMembership(
+  filters: MembershipFilters = membershipList.empty,
+): Promise<PatientMembershipSummary[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("profiles")
@@ -132,6 +147,7 @@ export async function listPatientsWithMembership(): Promise<
   if (error)
     throw new Error(`No se pudo consultar la membresía: ${error.message}`);
 
+  const term = normalize(sanitizeSearch(filters.q ?? ""));
   return (data ?? []).map((patient) => {
     const latest = patient.memberships[0];
     const plan = Array.isArray(latest?.plan) ? latest?.plan[0] : latest?.plan;
@@ -142,5 +158,8 @@ export async function listPatientsWithMembership(): Promise<
       expires_on: latest?.expires_on ?? null,
       plan_name: plan?.name ?? null,
     };
-  });
+  }).filter((patient) =>
+    (term ? normalize(patient.full_name ?? "").includes(term) : true) &&
+    (filters.status ? patient.status === filters.status : true),
+  );
 }

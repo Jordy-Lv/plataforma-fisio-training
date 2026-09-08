@@ -1,3 +1,4 @@
+import { CLIENT_NAME } from "@/lib/brand/client";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { LogOut } from "lucide-react";
@@ -60,16 +61,13 @@ export function AppShell({
         <header className="sticky top-0 z-40 border-b border-border bg-surface/90 backdrop-blur">
           <div className="mx-auto flex max-w-[86rem] items-center justify-between gap-3 px-5 py-2 sm:px-8">
             {/*
-              El nombre largo parte en dos líneas a 375 px y empuja los controles
-              fuera de la cabecera, así que en el teléfono se usa el mismo nombre
-              corto con el que la app queda instalada.
+              El nombre del cliente se conserva en móvil y en la app instalada.
             */}
             <Link
               href={rolePaths[role]}
               className="flex min-h-11 items-center rounded-lg text-sm font-semibold text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
-              <span className="sm:hidden">Fisio Training</span>
-              <span className="hidden sm:inline">Entrenamiento y fisioterapia</span>
+              {CLIENT_NAME}
             </Link>
             <div className="flex items-center gap-2">
               {name && (
