@@ -108,11 +108,17 @@ final, después de la 16.
 
 ## 7. Los dos defectos del paciente — rama `fix/sesion-acuses`
 
-- [ ] 7.1 Cambiar la `key` de la tarjeta de ejercicio a `key={item.id}` y comentar por qué no puede volver a depender del registro
-- [ ] 7.2 Comprobar en el navegador que al guardar un registro el bloque sigue abierto y «Registro guardado» permanece a la vista
-- [ ] 7.3 Mover el acuse de cierre al informe de la sesión, que sí se renderiza tras cerrar; **no** usar `redirect()`
-- [ ] 7.4 Verificar que la respuesta del envío de cierre contiene `Sesión completada` o `Completada` y **no** contiene `Terminar sesión`
-- [ ] 7.5 `npm run test:routines:sessions` en verde, más los cuatro de CI
+- [x] 7.1 Cambiar la `key` de la tarjeta de ejercicio a `key={item.id}` y comentar por qué no puede volver a depender del registro
+  - `app/(patient)/routine/sessions/[sessionId]/page.tsx`: la `key` era `` `${item.id}-${JSON.stringify(logs.get(item.id) ?? null)}` ``; ahora es `key={item.id}` con el comentario que explica que al depender del registro cada guardado remontaba el bloque y borraba el «Registro guardado» del `useActionState` (docs/11, §5).
+- [~] 7.2 Comprobar en el navegador que al guardar un registro el bloque sigue abierto y «Registro guardado» permanece a la vista
+  - Pendiente de confirmar en un navegador real. `test:routines:sessions` sí verifica que la respuesta del POST de guardado contiene `Registro guardado` (18/18), y la `key` estable es el arreglo documentado.
+- [x] 7.3 Mover el acuse de cierre al informe de la sesión, que sí se renderiza tras cerrar; **no** usar `redirect()`
+  - `SessionReport` acepta `justClosed?` y pinta un `Notice tone="success"` con «Sesión completada. Tu profesional ya puede consultarla.» —el mismo texto que devuelve `closeSession`—. Lo pasa solo la pantalla del paciente: `recienCerrada(session)` compara `completed_at` (lo fija el trigger de la migración `20260905210000`) con ahora, con una ventana de dos minutos, porque sin `redirect()` el acuse no puede viajar en la URL. `closeSession` sigue sin redirigir.
+  - De paso: `SessionReport` mezclaba `performed_on` en ISO y `completed_at` en formato local en la misma línea (hallazgo de 9.6). Ahora las dos salen de `formatDate`/`formatTime` de `lib/progress/vocabulary.ts`: «Sesión del 3 de septiembre de 2026 · cerrada a las 8:30».
+- [x] 7.4 Verificar que la respuesta del envío de cierre contiene `Sesión completada` o `Completada` y **no** contiene `Terminar sesión`
+  - `test:routines:sessions` lo comprueba en dos caminos (`/Sesión completada|Completada/` tras el POST de cierre, y `!html.includes("Terminar sesión")`). Antes lo satisfacía por casualidad la insignia «Completada»; ahora hay un acuse explícito.
+- [x] 7.5 `npm run test:routines:sessions` en verde, más los cuatro de CI
+  - `test:routines:sessions` 18/18 contra el build de producción (puerto 3210); `typecheck`, `lint` (solo el aviso preexistente de `verify-auth-screens`), `test:design` 4/4 y `build` en verde. Sin migraciones.
 
 ## 8. La sesión en curso — rama `ui/paciente-sesion`
 

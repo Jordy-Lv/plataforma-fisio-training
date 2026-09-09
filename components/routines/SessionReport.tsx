@@ -1,6 +1,8 @@
 import { Badge, PainBadge, sessionBadgeVariant } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Notice } from "@/components/ui/Notice";
 import { bodyPartLabels, bodyParts } from "@/lib/catalog/body-parts";
+import { formatDate, formatTime } from "@/lib/progress/vocabulary";
 import { logLabels, statusLabels } from "@/lib/routines/session-labels";
 import type { SessionDetails } from "@/lib/routines/session-queries";
 
@@ -12,18 +14,38 @@ import type { SessionDetails } from "@/lib/routines/session-queries";
  * Vive en su propio archivo porque lo pinta tanto una pantalla del servidor
  * —`/pro/sessions/[sessionId]`, la ruta de siempre— como el diálogo de lectura
  * de `/pro/sessions` y `/pro/alerts` (15.4).
+ *
+ * `justClosed` lo pasa solo la pantalla del paciente justo después de cerrar:
+ * el acuse de `closeSession` lo pintaría `SessionControls`, que se desmonta al
+ * pasar la sesión a cerrada, así que se muestra aquí, en el árbol que sí se
+ * renderiza después (docs/11, §5).
  */
-export function SessionReport({ session }: { session: SessionDetails }) {
+export function SessionReport({
+  session,
+  justClosed = false,
+}: {
+  session: SessionDetails;
+  justClosed?: boolean;
+}) {
   return (
     <section className="grid gap-4">
+      {justClosed && (
+        <Notice tone="success">
+          Sesión completada. Tu profesional ya puede consultarla.
+        </Notice>
+      )}
+
       <div className="flex flex-wrap items-center gap-3">
         <Badge variant={sessionBadgeVariant(session.status)}>
           {statusLabels[session.status]}
         </Badge>
         <p className="text-sm text-muted-foreground">
-          {session.performed_on}
+          {/* Fecha y hora con el mismo formato en español: antes la fecha
+              venía en ISO y el cierre en formato local, en la misma línea
+              (hallazgo de 9.6). */}
+          Sesión del {formatDate(session.performed_on)}
           {session.completed_at
-            ? ` · Cierre: ${new Date(session.completed_at).toLocaleString("es-CO", { timeZone: "America/Bogota" })}`
+            ? ` · cerrada a las ${formatTime(session.completed_at)}`
             : ""}
         </p>
       </div>
