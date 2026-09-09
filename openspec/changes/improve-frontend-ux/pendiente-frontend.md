@@ -15,16 +15,15 @@ desplegado a Railway. Sin migraciones nuevas en ninguna de esas entregas.
 
 ## Orden recomendado
 
-1. **Sección 5** — la agregación primero: desbloquea 5.3, 5.4, 16.5 y la cabecera
-   de `/pro/routines/[patientId]`.
-2. **Sección 16.5** — encadena con 5.1.
-3. **Sección 7** — corta y aislada.
+1. ~~**Sección 5** — la agregación primero.~~ Hecha (rama `ui/ficha-paciente`).
+2. ~~**Sección 16.5** — encadena con 5.1.~~ Hecha en la misma rama.
+3. **Sección 7** — corta y aislada. ← siguiente
 4. **Sección 10 → 11 → 12** — la 10 monta las primitivas (`SubmitButton`,
    `FlashToast`) que consumen la 11 (`ConfirmSubmit`) y la 12 (`FlashToast`).
 5. **Secciones 14.7–14.8** y **13** al final.
 
-Esfuerzo real de código: 5.1 + 5.3–5.5 · 7.1 + 7.3 · sección 10 entera · sección 11
-entera · 12.1 + 12.3 + 12.5 · 14.7–14.8 · 16.1 + 16.2 + 16.5 · 13.1–13.4.
+Esfuerzo real de código restante: 7.1 + 7.3 · sección 10 entera · sección 11
+entera · 12.1 + 12.3 + 12.5 · 14.7–14.8 · 16.1 + 16.2 · 13.1–13.4.
 
 ---
 
@@ -187,13 +186,14 @@ Rama `ui/acceso-directo`.
   *después* del de cerrar sesión en el HTML del servidor: `auth-http.mjs` toma el
   primer `<form>` que contiene el marcador y `AppShell` documenta que solo puede
   haber uno.
-- **[código] 16.5** — Completar `/admin` (y `/pro`) como panel de trabajo: añadir
-  a `StaffHome` alertas sin leer, sesiones de hoy, membresías por vencer y
-  tamizajes pendientes, reutilizando `getBusinessOverview` y la agregación de 5.1.
-  **Depende de 5.1.** Hoy `StaffHome` = `BusinessOverview` + tarjeta a `/people`.
+- **[hecho] 16.5** — `getStaffWorkboard` + `StaffWorkboard` montados en
+  `StaffHome`: alertas sin leer, sesiones de hoy, membresías por vencer y
+  tamizajes pendientes, con enlace a la pantalla de cada una. `test:overview`
+  5/5, `test:people` 10/10.
 - **[verif.] 16.8** — A mano: desde cualquier pantalla del personal se llega a un
-  paciente escribiendo su nombre, sin pasar por ningún listado.
-- **[verif.] 16.9** — `test:people`, `test:overview` + CI.
+  paciente escribiendo su nombre, sin pasar por ningún listado. *(Depende de
+  16.2, el buscador de la cabecera.)*
+- **[hecho] 16.9** — `test:people`, `test:overview` + CI, en verde.
 
 ## Pendientes a propósito
 

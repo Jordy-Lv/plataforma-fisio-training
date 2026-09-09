@@ -79,14 +79,20 @@ final, después de la 16.
 
 ## 5. Ficha del paciente: agregación y banda — rama `ui/ficha-paciente`
 
-- [ ] 5.1 Crear `lib/progress/patient-overview.ts` con `patientOverview(patientId)`: membresía, condiciones activas, último tamizaje, asistencia del mes, rutina activa, sesión abierta y alertas sin leer, en un `Promise.all` y sin ninguna consulta dentro de un `map`
+- [x] 5.1 Crear `lib/progress/patient-overview.ts` con `patientOverview(patientId)`: membresía, condiciones activas, último tamizaje, asistencia del mes, rutina activa, sesión abierta y alertas sin leer, en un `Promise.all` y sin ninguna consulta dentro de un `map`
+  - Ya existía con lo que necesitaba la portada (`week`, `streakWeeks`, `openSession`, 17.5). Se añadieron al mismo `Promise.all` seis lecturas más: membresía vigente con el nombre del plan, condiciones activas, último tamizaje, conteo de asistencia del mes (`head: true`), rutina activa y conteo de alertas sin leer. `unreadAlerts` es cero para el propio paciente porque RLS no le devuelve alertas.
 - [x] 5.2 Crear `components/patients/PatientTabs.tsx` (Server Component, activo por props) con desplazamiento horizontal a 375 px, objetivos de 44 px, `aria-current` y **sin ningún `<form>` dentro**
   - Seis pestañas: ficha, rutina, sesiones, tamizajes, asistencia y evolución. Son enlaces: ni un `<form method="get">` —se colaría delante de los formularios de server action— ni ningún `value="<uuid>"`; el identificador viaja en el `href`, que ningún marcador de las suites mira.
-- [ ] 5.3 Crear `components/patients/PatientHeader.tsx` con nombre, estado, membresía y condiciones, reutilizando `membershipBadgeVariant`
-- [ ] 5.4 Añadir el resumen a `/people/[id]` **antes** del contenido actual, dejando los formularios de perfil y de condición en su sitio y en su orden
-- [ ] 5.5 Añadir `app/(people)/people/[id]/loading.tsx` con la forma real de la ficha
-- [ ] 5.6 Verificar que en `/people/[id]` el primer formulario con `name="goal"` y el primero con `name="conditionId"` siguen siendo los mismos
-- [ ] 5.7 `npm run test:people` en verde, más los cuatro de CI
+- [x] 5.3 Crear `components/patients/PatientHeader.tsx` con nombre, estado, membresía y condiciones, reutilizando `membershipBadgeVariant`
+  - Solo lectura: sin ningún `<form>` dentro y sin `value="<uuid>"`, la misma condición que `PatientTabs`. La membresía y las condiciones se pintan como `Badge`; el plazo restante sale de `formatDueIn`.
+- [x] 5.4 Añadir el resumen a `/people/[id]` **antes** del contenido actual, dejando los formularios de perfil y de condición en su sitio y en su orden
+  - `PatientProfile` monta `PatientHeader` justo después de `PatientTabs`, solo para el personal (`!esPropio`). Los dos `<details>` con `name="goal"` y `name="conditionId"` no se movieron.
+- [x] 5.5 Añadir `app/(people)/people/[id]/loading.tsx` con la forma real de la ficha
+  - Banda de pestañas + tarjeta de cabecera + dos columnas. Repite el ancho del shell (`mx-auto max-w-[86rem] px-5 py-8 sm:px-8`) porque el shell lo monta la página, no el layout del grupo.
+- [x] 5.6 Verificar que en `/people/[id]` el primer formulario con `name="goal"` y el primero con `name="conditionId"` siguen siendo los mismos
+  - `PatientHeader` no emite ningún `<form>` ni `value="<uuid>"`, así que el orden no se movió. `test:people` recorre `/people/[id]` enviando a los marcadores `name="goal"` y `name="conditionId"` y pasa 10/10.
+- [x] 5.7 `npm run test:people` en verde, más los cuatro de CI
+  - `test:people` 10/10 contra el build de producción. `typecheck`, `lint` (solo el aviso preexistente de `verify-auth-screens`), `test:design` 4/4 y `build` en verde. Sin migraciones.
 
 ## 6. Ficha del paciente: montaje y enlaces — rama `ui/ficha-paciente-enlaces`
 
@@ -245,15 +251,17 @@ resuelve llegar hasta él.
 - [x] 16.4 Crear `app/(people)/people/page.tsx` con el directorio completo —la consulta de `listPeople` de 3.1, con sus filtros y su paginación— y mover ahí la lista y el alta que hoy viven en `PeoplePanel`
   - Hecho tras la revisión de Yordy («no siento que sea la sección para crear un paciente»). `/people/page.tsx` = `PeoplePanel`, rol resuelto con `requireStaff`. `nav-items.ts` gana «Personas» (admin) y «Pacientes» (professional).
   - Segunda pasada, también por revisión de Yordy: `PeoplePanel` se resume en **cuatro tarjetas** que abren un modal —Registrar persona, Pacientes (con buscador), Equipo (con filtro entrenador/fisioterapeuta), Asignar acompañamiento—. El modal es `components/ui/SheetModal.tsx`: **sin portal**, así que las listas y los formularios de baja siguen en el HTML del servidor y `verify-people-onboarding` los encuentra (10/10). `components/auth/PeopleFilter.tsx` filtra en el cliente sobre `<li data-name data-specialty>` ya renderizados; sin JavaScript la lista se ve entera. Orden de tarjetas registrar → pacientes → equipo → asignar para que las bajas queden antes del `<option value="<uuid>">` de la asignación. «Dar de alta» pasó a «Registrar una persona / un paciente»; el botón, a «Registrar paciente/profesional». La paginación y los filtros por URL de 3.1 siguen pendientes.
-- [~] 16.5 Convertir `/admin` en panel de trabajo: alertas sin leer, sesiones de hoy, membresías por vencer y tamizajes pendientes, reutilizando `getBusinessOverview` y la agregación de 5.1
-  - Parcial: `/admin` y `/pro` son ahora `components/progress/StaffHome.tsx` = `BusinessOverview` (clientes activos, cumplimiento, asistencia del mes) + una tarjeta hacia `/people`. **Falta** alertas sin leer, sesiones de hoy, membresías por vencer y tamizajes pendientes — necesitan la agregación de 5.1, aún sin construir.
+- [x] 16.5 Convertir `/admin` en panel de trabajo: alertas sin leer, sesiones de hoy, membresías por vencer y tamizajes pendientes, reutilizando `getBusinessOverview` y la agregación de 5.1
+  - `getStaffWorkboard` (nueva en `lib/progress/overview-queries.ts`), con la misma forma que `patientOverview` de 5.1: un solo `Promise.all` con cuatro conteos —`alerts` sin `read_at`, `sessions` con `performed_on` de hoy, `memberships` en `expiring_soon` (los tres con `head:true`) y pacientes activos sin ninguna fila embebida de `screenings`, como `listPatientsWithLastScreening`—. RLS acota: el admin ve el negocio entero, el profesional solo a los suyos.
+  - `components/progress/StaffWorkboard.tsx` (nueva): cuatro tarjetas con la cifra, su frase y un enlace que cubre la tarjeta hacia `/pro/alerts`, `/pro/sessions`, `/memberships` y `/screenings`. `StaffHome` la monta tras `BusinessOverview` y solo cuando hay pacientes activos —sin ninguno, el panorama ya dice qué hacer—. Sin `<form>`, así que `docs/11` queda intacto.
+  - Verificado: `test:overview` 5/5 y `test:people` 10/10 contra el build de producción (puerto 3210, Supabase local por túnel); `typecheck`, `lint` (solo el aviso preexistente de `verify-auth-screens`), `test:design` 4/4 y `build` en verde. Sin migraciones.
 - [x] 16.6 Adaptar `scripts/verify-people.test.mjs` a la ruta nueva: es el único punto de todo el change donde un contrato de suite se cambia a propósito, y el PR tiene que decirlo en su descripción
   - El archivo real es `scripts/verify-people-onboarding.test.mjs`. Movidas a `/people` las seis operaciones de personas (alta admin, alta profesional, «Personas y equipo», el paciente listado, baja sin confirmar y baja); añadido `/people` a la lista de rutas que rebotan a un paciente sin onboarding. Las redirecciones de login siguen a `/admin` y `/pro`. `test:people` 10/10.
 - [x] 16.7 Verificar que en `/people` el primer formulario con `value="<uuid de la persona>"` sigue siendo el de la baja y que el del alta conserva `name="fullName"`
   - `test:people` «Camino 1» lo recorre en `/people` y pasa: la baja se localiza por `value="<proId>"` y el alta por `name="fullName"`.
 - [ ] 16.8 Comprobar a mano que desde cualquier pantalla del personal se llega a un paciente escribiendo su nombre, sin pasar por ningún listado
-- [ ] 16.9 `npm run test:people` y `test:overview` en verde, más los cuatro de CI
-  - `test:people` 10/10 y `test:overview` 5/5 contra la app viva; typecheck, lint, test:design y build en verde.
+- [x] 16.9 `npm run test:people` y `test:overview` en verde, más los cuatro de CI
+  - `test:people` 10/10 y `test:overview` 5/5 contra el build de producción (puerto 3210); typecheck, lint, test:design 4/4 y build en verde.
 
 ## 17. El estándar de manejo — rama `ui/estandar-de-manejo`
 
