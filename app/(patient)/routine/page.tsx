@@ -5,6 +5,7 @@ import { OpenSessionCard } from "@/components/routines/OpenSessionCard";
 import { RoutineSummary } from "@/components/routines/RoutineSummary";
 import { SessionHistory } from "@/components/routines/SessionHistory";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 import { requireRole } from "@/lib/auth/session";
 import { patientRoutines } from "@/lib/routines/queries";
 import { patientSessions } from "@/lib/routines/session-queries";
@@ -35,6 +36,7 @@ export default async function Page() {
       name={actor.fullName}
       role="patient"
       description="Abre el día que vas a entrenar y registra cada ejercicio al terminarlo."
+      actions={<ButtonLink href="/routine/calendar">Ver calendario</ButtonLink>}
     >
       {abierta && (
         <div className="mb-6">

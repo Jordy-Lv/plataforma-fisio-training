@@ -2,12 +2,14 @@
 
 import { useActionState } from "react";
 import { cn } from "cn";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 import { cardVariants } from "@/components/ui/Card";
 import { ConfirmSubmit } from "@/components/ui/ConfirmSubmit";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { FormMessage } from "@/components/auth/FormParts";
 import { assignRoutine } from "@/lib/routines/assignment-actions";
 import { assignmentSchema } from "@/lib/routines/assignment";
+import { calendarDateLabel } from "@/lib/routines/calendar";
 
 /**
  * Es un `<form>` con aspecto de tarjeta, así que toma las clases de
@@ -23,9 +25,11 @@ import { assignmentSchema } from "@/lib/routines/assignment";
 export function AssignmentForm({
   patientId,
   replacesActive = false,
+  calendarContext,
 }: {
   patientId: string;
   replacesActive?: boolean;
+  calendarContext?: { date: string; returnHref: string };
 }) {
   // `useActionState` se conserva: `verify-routine-assignment.test.mjs` lee la
   // respuesta del envío buscando «Rutina asignada. El paciente ya puede
@@ -36,7 +40,11 @@ export function AssignmentForm({
   return (
     <form
       action={action}
-      className={cn(cardVariants({ padding: "lg" }), "my-6 grid gap-3")}
+      id="assign-routine"
+      className={cn(
+        cardVariants({ padding: "lg" }),
+        "my-6 grid scroll-mt-24 gap-3",
+      )}
       onSubmit={(event) => {
         if (!assignmentSchema.safeParse({ patientId }).success)
           event.preventDefault();
@@ -44,6 +52,18 @@ export function AssignmentForm({
     >
       <input type="hidden" name="patientId" value={patientId} />
       <h2 className="text-xl font-semibold">Asignar según el perfil</h2>
+      {calendarContext && (
+        <p className="text-sm font-medium text-brand">
+          Seleccionaste el{" "}
+          {calendarDateLabel(calendarContext.date, {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })}
+          . Después de asignar la rutina, vuelve al calendario para programar
+          sus ejercicios en esa fecha.
+        </p>
+      )}
       <p className="max-w-2xl leading-7 text-muted-foreground">
         Se aplican las reglas actuales y se retiran los ejercicios
         contraindicados. Una rutina completa reemplaza la activa del mismo tipo
@@ -69,6 +89,15 @@ export function AssignmentForm({
         >
           Evaluar y asignar rutina
         </SubmitButton>
+      )}
+      {calendarContext && (
+        <ButtonLink
+          variant="outline"
+          className="justify-self-start"
+          href={calendarContext.returnHref}
+        >
+          Volver al calendario para programar
+        </ButtonLink>
       )}
     </form>
   );

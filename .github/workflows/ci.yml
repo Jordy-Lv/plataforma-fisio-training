@@ -122,7 +122,7 @@ jobs:
           npm run seed:rules
           npm run seed:progress-demo
 
-      # Comprueba que el estado base de la base esté limpio (867|0|3|7)
+      # Comprueba que la base conserve las semillas y no tenga residuos de pruebas.
       - name: Comprobar base de datos limpia
         if: steps.proyecto.outputs.existe == 'true'
         run: npm run db:clean

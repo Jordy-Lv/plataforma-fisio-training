@@ -212,7 +212,7 @@ test("Asignación transaccional de rutinas por API", { timeout: 120_000 }, async
     const replacement = await copy(pro);
     assert.equal(replacement.error, null);
     assert.equal(sql(`select status from public.routines where id = '${firstId}'`), "completed");
-    assert.equal(sql(`select ends_on = current_date from public.routines where id = '${firstId}'`), "t");
+    assert.equal(sql(`select ends_on = (now() at time zone 'America/Bogota')::date from public.routines where id = '${firstId}'`), "t");
     assert.equal(sql(`select status from public.routines where id = '${rehab.data}'`), "active");
     assert.deepEqual(contents(replacement.data), original);
     const saved = await patient.client.from("session_logs")

@@ -7,18 +7,10 @@
  * dejados por suites de prueba interrumpidas antes de su bloque de limpieza (Ctrl+C,
  * timeout, falta de cuota).
  *
- * Valores esperados en base limpia:
- *   - 867 ejercicios: provienen de scripts/seed-exercises.ts (catálogo base
- *     importado desde free-exercise-db a public.exercises).
- *   - 0 ejercicios personalizados (is_custom = true): el seed oficial solo crea
- *     ejercicios base del catálogo; los personalizados son creados por pruebas o en runtime.
- *   - 3 alertas: generadas por scripts/seed-progress-demo.ts al sembrar la membresía
- *     próxima a vencer del paciente demo Marcos Rojas (una alerta membership_expiring
- *     para Ana Jefa admin, una para Beto entrenador y una para Carla fisio).
- *   - 7 usuarios en auth.users: 5 del seed base en supabase/seed.sql (admin@demo.local,
- *     entrenador@demo.local, fisio@demo.local, paciente@demo.local, paciente2@demo.local)
- *     y 2 pacientes de demostración creados por scripts/seed-progress-demo.ts
- *     (laura.perez.demo@demo.local y marcos.rojas.demo@demo.local).
+ * Una base de prueba limpia contiene el catálogo importado (external_id), los
+ * usuarios oficiales y únicamente alertas de las semillas. El número de
+ * ejercicios depende del catálogo de origen; las alertas dependen de la fecha
+ * y de la ejecución del cron. No se comparan con cantidades fijas.
  *
  * Uso:
  *   node scripts/check-db-clean.mjs         # Solo diagnostica. Exit 0 si limpia, 1 si sucia.
@@ -139,24 +131,32 @@ function verifySupabaseRunning() {
 // --- 3. Diagnóstico del estado de la base ------------------------------------
 
 const BASE_EXPECTED = {
-  exercises: 867, // Semilla de free-exercise-db (scripts/seed-exercises.ts)
-  customExercises: 0, // 0 ejercicios propios; el catálogo inicial no tiene personalizados
-  alerts: 3, // 3 alertas para admin, Beto y Carla por la membresía de Marcos Rojas
-  users: 7, // 5 de seed.sql + 2 de seed-progress-demo.ts
+  customExercises: 0,
+  users: OFFICIAL_EMAILS.size,
 };
+
+function hasSeedCounts(counts) {
+  return (
+    counts.importedExercises > 0 &&
+    counts.exercises === counts.importedExercises &&
+    counts.customExercises === BASE_EXPECTED.customExercises &&
+    counts.users === BASE_EXPECTED.users
+  );
+}
 
 function getCounts() {
   const query = `
     select (select count(*) from public.exercises),
            (select count(*) from public.exercises where is_custom),
            (select count(*) from public.alerts),
-           (select count(*) from auth.users);
+           (select count(*) from auth.users),
+           (select count(*) from public.exercises where external_id is not null and not is_custom);
   `;
   const raw = sql(query).trim();
-  const [exercises, customExercises, alerts, users] = raw
+  const [exercises, customExercises, alerts, users, importedExercises] = raw
     .split("|")
     .map((n) => Number(n.trim()));
-  return { exercises, customExercises, alerts, users };
+  return { exercises, customExercises, alerts, users, importedExercises };
 }
 
 function findOrphanUsers() {
@@ -169,7 +169,11 @@ function findOrphanUsers() {
   for (const line of lines) {
     const [id, email, createdAt] = line.split("|");
     if (!OFFICIAL_EMAILS.has(email)) {
-      orphans.push({ id: id.trim(), email: email.trim(), createdAt: createdAt?.trim() });
+      orphans.push({
+        id: id.trim(),
+        email: email.trim(),
+        createdAt: createdAt?.trim(),
+      });
     }
   }
   return orphans;
@@ -204,7 +208,12 @@ function findOrphanAlerts() {
     .filter(Boolean)
     .map((line) => {
       const [id, type, recipientId, patientId] = line.split("|");
-      return { id: id.trim(), type: type.trim(), recipientId: recipientId.trim(), patientId: patientId.trim() };
+      return {
+        id: id.trim(),
+        type: type.trim(),
+        recipientId: recipientId.trim(),
+        patientId: patientId.trim(),
+      };
     });
 }
 
@@ -297,18 +306,14 @@ function main() {
   const customExercises = findCustomExercises();
   const orphanAlerts = findOrphanAlerts();
 
-  const isExactBase =
-    counts.exercises === BASE_EXPECTED.exercises &&
-    counts.customExercises === BASE_EXPECTED.customExercises &&
-    counts.alerts === BASE_EXPECTED.alerts &&
-    counts.users === BASE_EXPECTED.users;
+  const isSeedBase = hasSeedCounts(counts);
 
   const hasOrphans =
     orphanUsers.length > 0 ||
     customExercises.length > 0 ||
     orphanAlerts.length > 0;
 
-  if (isExactBase && !hasOrphans) {
+  if (isSeedBase && !hasOrphans) {
     console.log("\x1b[32m✓ Base de datos limpia.\x1b[0m");
     console.log(
       `  Conteos: ${counts.exercises} ejercicios | ${counts.customExercises} personalizados | ${counts.alerts} alertas | ${counts.users} usuarios oficiales.`,
@@ -321,13 +326,13 @@ function main() {
     "\x1b[33m⚠ Estado de la base de datos local con desviaciones o residuos:\x1b[0m",
   );
   console.log(
-    `  • Ejercicios: ${counts.exercises} (esperados: ${BASE_EXPECTED.exercises} del catálogo base seed-exercises.ts)`,
+    `  • Ejercicios: ${counts.exercises} (${counts.importedExercises} del catálogo importado; debe haber al menos uno y ningún ejercicio ajeno a la semilla)`,
   );
   console.log(
     `  • Ejercicios personalizados: ${counts.customExercises} (esperados: ${BASE_EXPECTED.customExercises})`,
   );
   console.log(
-    `  • Alertas: ${counts.alerts} (esperadas: ${BASE_EXPECTED.alerts} del demo Marcos Rojas)`,
+    `  • Alertas: ${counts.alerts} (solo se admiten las alertas del demo Marcos Rojas)`,
   );
   console.log(
     `  • Usuarios auth: ${counts.users} (esperados: ${BASE_EXPECTED.users} oficiales)`,
@@ -376,10 +381,7 @@ function main() {
     const postAlerts = findOrphanAlerts();
 
     const postClean =
-      postCounts.exercises === BASE_EXPECTED.exercises &&
-      postCounts.customExercises === BASE_EXPECTED.customExercises &&
-      postCounts.alerts === BASE_EXPECTED.alerts &&
-      postCounts.users === BASE_EXPECTED.users &&
+      hasSeedCounts(postCounts) &&
       postOrphans.length === 0 &&
       postCustom.length === 0 &&
       postAlerts.length === 0;
@@ -400,7 +402,7 @@ function main() {
         `  Conteos actuales: ${postCounts.exercises}|${postCounts.customExercises}|${postCounts.alerts}|${postCounts.users}`,
       );
       console.error(
-        `  Esperados: ${BASE_EXPECTED.exercises}|${BASE_EXPECTED.customExercises}|${BASE_EXPECTED.alerts}|${BASE_EXPECTED.users}`,
+        `  Esperados: catálogo importado, ${BASE_EXPECTED.customExercises} personalizados, alertas de semillas y ${BASE_EXPECTED.users} usuarios oficiales.`,
       );
       process.exit(1);
     }

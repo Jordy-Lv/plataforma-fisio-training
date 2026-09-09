@@ -14,6 +14,8 @@ import {
 import { exerciseFiltersSchema } from "@/lib/catalog/schemas";
 import { labelFor } from "@/lib/catalog/vocabulary";
 import { assignmentSchema } from "@/lib/routines/assignment";
+import { calendarHref } from "@/lib/routines/calendar";
+import { calendarQuerySchema } from "@/lib/routines/schemas";
 import {
   activeConditions,
   editableRoutines,
@@ -90,6 +92,18 @@ export default async function Page({
   // —para sustituirlo—: son las dos URLs que `verify-routine-items` abre
   // literalmente (ver `docs/11`). Sin ninguna, cada resultado elige el día.
   const query = await searchParams;
+  const calendarQuery = calendarQuerySchema.safeParse({
+    date: query.calendarDate,
+    view: query.calendarView,
+  });
+  const calendarContext =
+    calendarQuery.success && calendarQuery.data.date
+      ? {
+          date: calendarQuery.data.date,
+          view: calendarQuery.data.view,
+          returnHref: `${calendarHref(`/pro/routines/${patientId}/calendar`, calendarQuery.data.date, calendarQuery.data.view)}#calendar-schedule`,
+        }
+      : undefined;
   const items = routines.flatMap((routine) =>
     routine.routine_days.flatMap((day) => day.routine_items),
   );
@@ -113,11 +127,17 @@ export default async function Page({
     page: query.page,
   });
   const base = `/pro/routines/${patientId}`;
-  const extra: Record<string, string> = diaAbierto
-    ? { dia: diaAbierto }
-    : itemAbierto
-      ? { item: itemAbierto }
-      : {};
+  const calendarParams: Record<string, string> = calendarContext
+    ? { calendarDate: calendarContext.date, calendarView: calendarContext.view }
+    : {};
+  const extra: Record<string, string> = {
+    ...calendarParams,
+    ...(diaAbierto
+      ? { dia: diaAbierto }
+      : itemAbierto
+        ? { item: itemAbierto }
+        : {}),
+  };
   const mostrarCatalogo =
     Boolean(diaAbierto || itemAbierto) || catalogFiltered(filtros);
   const { exercises: resultados, pages: paginasCatalogo } = mostrarCatalogo
@@ -141,9 +161,19 @@ export default async function Page({
       title={patient.full_name ?? "Rutinas del paciente"}
       name={actor.fullName}
       actions={
-        <ButtonLink variant="ghost" href="/pro/routines">
-          Volver a pacientes
-        </ButtonLink>
+        <div className="flex flex-wrap gap-2">
+          <ButtonLink
+            href={
+              calendarContext?.returnHref ??
+              `/pro/routines/${patientId}/calendar`
+            }
+          >
+            Ver calendario
+          </ButtonLink>
+          <ButtonLink variant="ghost" href="/pro/routines">
+            Volver a pacientes
+          </ButtonLink>
+        </div>
       }
     >
       {/*
@@ -156,6 +186,7 @@ export default async function Page({
       {patient.is_active && (
         <AssignmentForm
           patientId={patientId}
+          calendarContext={calendarContext}
           replacesActive={routines.some(
             (routine) => routine.status === "active",
           )}
@@ -190,7 +221,11 @@ export default async function Page({
                 ? "Los resultados se añaden al final del día enfocado."
                 : "Busca un ejercicio y elige a qué día de la rutina lo añades."
           }
-          closeHref={diaAbierto || itemAbierto ? base : undefined}
+          closeHref={
+            diaAbierto || itemAbierto
+              ? catalogHref(base, calendarParams, {})
+              : undefined
+          }
           closeLabel={itemAbierto ? "Dejar de sustituir" : "Salir del día"}
           chips={catalogChips(base, extra, filtros)}
           clearHref={
@@ -279,7 +314,11 @@ export default async function Page({
               {routine.routine_days.map((day) => (
                 <section
                   key={day.id}
-                  className={cn(cardVariants({ padding: "sm" }), "sm:p-5")}
+                  id={`routine-day-${day.id}`}
+                  className={cn(
+                    cardVariants({ padding: "sm" }),
+                    "scroll-mt-24 sm:p-5",
+                  )}
                 >
                   <h3 className="text-lg font-semibold">
                     Día {day.day_number}
@@ -401,7 +440,7 @@ export default async function Page({
                                 />
                                 <div className="border-t border-border pt-4">
                                   <ButtonLink
-                                    href={`${base}?item=${item.id}#catalogo-buscador`}
+                                    href={`${catalogHref(base, { ...calendarParams, item: item.id }, {})}#catalogo-buscador`}
                                     variant={
                                       itemAbierto === item.id
                                         ? "outline"
@@ -425,7 +464,7 @@ export default async function Page({
                     {/* El buscador vive arriba, único y permanente; este enlace
                         solo lo enfoca en este día (`?dia=`). */}
                     <ButtonLink
-                      href={`${base}?dia=${day.id}#catalogo-buscador`}
+                      href={`${catalogHref(base, { ...calendarParams, dia: day.id }, {})}#catalogo-buscador`}
                       variant={diaAbierto === day.id ? "outline" : "default"}
                     >
                       {diaAbierto === day.id

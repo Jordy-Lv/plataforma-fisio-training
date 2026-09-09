@@ -3,7 +3,6 @@ import { test } from "node:test";
 import { createClient } from "@supabase/supabase-js";
 
 import {
-  appUrl,
   localHosts,
   status,
   sql,

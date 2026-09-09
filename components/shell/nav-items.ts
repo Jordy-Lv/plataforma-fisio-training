@@ -2,6 +2,7 @@ import {
   Activity,
   Bell,
   CalendarCheck,
+  CalendarDays,
   ClipboardList,
   CreditCard,
   Dumbbell,
@@ -117,6 +118,7 @@ export const navGroupsByRole: Record<UserRole, NavGroup[]> = {
           icon: HeartPulse,
           match: ["/routine"],
         },
+        { href: "/routine/calendar", label: "Calendario", icon: CalendarDays },
         { href: "/attendance/me", label: "Asistencia", icon: CalendarCheck },
         { href: "/memberships/me", label: "Membresía", icon: CreditCard },
         { href: "/patient/profile", label: "Mi perfil", icon: User },
@@ -127,8 +129,7 @@ export const navGroupsByRole: Record<UserRole, NavGroup[]> = {
 
 /**
  * Las entradas de la barra inferior del teléfono. Caben cinco objetivos de
- * 44 px en 375 px de ancho, así que el menú del paciente —que tiene cinco
- * secciones justas— entra entero. Cuando hay más, la quinta plaza pasa a ser
+ * 44 px en 375 px de ancho. Cuando hay más secciones, la quinta plaza pasa a ser
  * el botón que despliega el resto.
  */
 export function primaryNavItems(role: UserRole): NavItem[] {

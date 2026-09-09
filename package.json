@@ -35,6 +35,7 @@
     "seed:templates": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/seed-templates.ts",
     "seed:rules": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/seed-rules.ts",
     "seed:progress-demo": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/seed-progress-demo.ts",
+    "seed:calendar-demo": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/seed-calendar-demo.ts",
     "db:types": "supabase gen types typescript --local --schema public > lib/db/types.ts",
     "test:people": "node --test scripts/verify-people-onboarding.test.mjs",
     "test:screenings": "node --test scripts/verify-progress-screenings.test.mjs",
@@ -50,7 +51,9 @@
     "test:attendance:cron": "node --test scripts/verify-progress-attendance-cron.test.mjs",
     "test:routines:sessions": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/helpers/alias-hook.mjs --test scripts/verify-routine-sessions.test.mjs",
     "test:auth:resilience": "node --test scripts/verify-onboarding-resilience.test.mjs",
-    "test:design": "node --test scripts/verify-design-system.test.mjs"
+    "test:design": "node --test scripts/verify-design-system.test.mjs",
+    "test:calendar:dates": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/helpers/alias-hook.mjs --test scripts/verify-calendar-dates.test.mjs",
+    "test:calendar": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/helpers/alias-hook.mjs --test scripts/verify-calendar.test.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

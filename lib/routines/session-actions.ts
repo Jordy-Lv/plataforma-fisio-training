@@ -12,6 +12,7 @@ export async function startSession(_previous: RoutineActionState, form: FormData
   const { data, error } = await supabase.rpc("start_routine_session", { target_day: parsed.data.dayId });
   if (error) return { error: `No se pudo iniciar: ${error.message}` };
   revalidatePath("/routine");
+  revalidatePath("/routine/calendar");
   redirect(`/routine/sessions/${data}`);
 }
 
@@ -35,6 +36,7 @@ export async function logSessionItem(_previous: RoutineActionState, form: FormDa
   if (error) return { error: `No se pudo guardar el ejercicio: ${error.message}` };
   revalidatePath(`/routine/sessions/${value.sessionId}`);
   revalidatePath("/pro/routines", "layout");
+  revalidatePath("/routine/calendar");
   return { success: "Registro guardado. Puedes continuar o cerrar la aplicación." };
 }
 
@@ -47,6 +49,7 @@ export async function closeSession(_previous: RoutineActionState, form: FormData
   if (error) return { error: `No se pudo cerrar la sesión: ${error.message}` };
   if (!data) return { error: "La sesión ya está cerrada o no tienes acceso." };
   revalidatePath("/routine");
+  revalidatePath("/routine/calendar");
   revalidatePath(`/routine/sessions/${parsed.data.sessionId}`);
   revalidatePath("/pro/routines", "layout");
   revalidatePath("/pro/alerts");
