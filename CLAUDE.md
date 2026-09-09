@@ -17,6 +17,11 @@ esté ahí**, aunque parezca una mejora obvia.
 Son **datos de salud**. Una fuga de datos entre pacientes termina el contrato. Cualquier
 duda sobre acceso se resuelve por el lado restrictivo.
 
+Antes de empezar una tarea, mira qué queda abierto en
+[`docs/15-pendiente-del-proyecto.md`](docs/15-pendiente-del-proyecto.md): reúne el código
+pendiente, las verificaciones que solo se cierran a mano y la deuda que está congelada **a
+propósito**, que no hay que «arreglar» sin hablarlo.
+
 ## 2. Idioma
 
 - **Código, identificadores, nombres de tabla y de columna: inglés.** `patient_conditions`, `painLevel`, `getAssignedRoutine`.
