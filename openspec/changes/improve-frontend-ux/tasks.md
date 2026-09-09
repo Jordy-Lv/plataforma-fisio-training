@@ -159,32 +159,38 @@ final, después de la 16.
 
 ## 10. Estados pendientes y avisos — rama `ui/estados-pendientes`
 
-- [ ] 10.1 Crear `components/ui/SubmitButton.tsx` con `useFormStatus`
-- [ ] 10.2 Devolver al servidor los componentes que hoy son de cliente solo para deshabilitar su botón
-- [ ] 10.3 Crear `components/ui/FlashToast.tsx`, que convierte el acuse de la URL en aviso efímero y limpia la URL, conservando el mensaje del servidor debajo
-- [ ] 10.4 Estado optimista al marcar una alerta como leída; **no generalizarlo**
-- [ ] 10.5 Comprobar que ninguna server action queda envuelta en una función de cliente
-- [ ] 10.6 Las veinticinco suites en verde, más los cuatro de CI
+- [x] 10.1 Crear `components/ui/SubmitButton.tsx` con `useFormStatus` — botón de envío que se deshabilita, cambia de rótulo (`pendingLabel`) y marca `aria-busy` mientras el `<form>` que lo contiene tiene un envío en curso; `type="submit"` por defecto porque el `<Button>` de `@base-ui/react` emite `type="button"`
+- [~] 10.2 Devolver al servidor los componentes que hoy son de cliente solo para deshabilitar su botón — *ninguno lo es en el estado actual: todos los `"use client"` con `<form>` también pintan errores en línea con `<FormMessage state={state}>`, y dos casos tienen contrato de suite sobre esa respuesta (`verify-routine-assignment` lee «Rutina asignada. El paciente ya puede consultarla» de `state.success`; `verify-routine-sessions` lee el cierre). Devolverlos al servidor perdería esos mensajes o exigiría un `redirect()` prohibido por la regla 5 de `ejecucion.md`. En su lugar se adoptó `SubmitButton` en `SessionControls`, `AssignmentForm`, `ReadAlertForm` y `MembershipReviewButton`: se elimina la lógica de `disabled`/rótulo a mano y el destructurado de `pending`, conservando `useActionState` solo para el `FormMessage`. Reabrir si un change posterior mueve esos mensajes a acuses de URL.*
+- [x] 10.3 Crear `components/ui/FlashToast.tsx`, que convierte el acuse de la URL en aviso efímero y limpia la URL, conservando el mensaje del servidor debajo — no envuelve ninguna server action (solo lee la URL tras la navegación); un solo aviso por montaje; `router.replace` sin `scroll`. Montado como primera prueba en `/exercises/[id]` (`?nuevo=1`); la sección 12.5 lo extiende a `/templates`, `/rules`, `/plans` y a los `?eliminada=1`
+- [x] 10.4 Estado optimista al marcar una alerta como leída; **no generalizarlo** — `ReadAlertForm` muestra «Alerta marcada como leída para ti.» en cuanto se envía (mientras `pending` y sin error previo); al terminar bien `readAlert` revalida y el formulario desaparece, al fallar vuelve con el motivo. No se usa `useOptimistic`: exigiría envolver la acción en una función de cliente y dejaría el `<form>` sin `$ACTION_ID` (sin funcionar sin JavaScript, que es lo que la suite ejercita)
+- [x] 10.5 Comprobar que ninguna server action queda envuelta en una función de cliente — auditados los 30 `<form action={…}>` de componentes `"use client"`: en todos `action` es el dispatch de `useActionState(serverAction, …)` (patrón sancionado, emite `$ACTION_ID`); `onSubmit={validation.onSubmit}` solo hace `preventDefault` en entrada inválida, no envuelve nada; `OfferControls` usa `onConfirm` del `ConfirmDialog` (ADR-0008). Cero envoltorios
+- [x] 10.6 Las veinticinco suites en verde, más los cuatro de CI — CI: typecheck, lint (solo el aviso preexistente de `verify-auth-screens`), `test:design` 4/4, `build` en verde. 24/25 suites HTTP en verde contra un `next start` propio en el 3215 con Supabase local. `test:memberships:cron` falla 2/7 por **contaminación previa de la base compartida** (un perfil admin de sobra `amador-qa-…@demo.local` duplica el conteo de «una alerta por cada membresía»; mismo modo de fallo documentado en [[qa-backend-2026-09-06]] y [[reparto-codex-claude]]). El cambio es solo de UI y no toca el job de vencimientos; CI corre sobre base limpia
 
 ## 11. Confirmación de acciones destructivas — rama `ui/confirmaciones`
 
-- [ ] 11.1 Crear `components/ui/ConfirmSubmit.tsx`: botón de envío que intercepta su clic, abre el diálogo y confirma con `form.requestSubmit()`, dejando intacto el `<form action>` y su rótulo
-- [ ] 11.2 Aplicarlo a quitar un ejercicio de la rutina, conservando ese formulario como el primero del ítem y sin `name="sets"`
-- [ ] 11.3 Aplicarlo a quitar un ejercicio de una plantilla y a eliminar un día, conservando el rótulo `Eliminar día`
-- [ ] 11.4 Aplicarlo a eliminar una plantilla, conservando el rótulo `Eliminar plantilla`
-- [ ] 11.5 Aplicarlo a eliminar una regla
-- [ ] 11.6 Aplicarlo a asignar una rutina cuando reemplaza a la activa, **sin añadir ningún campo obligatorio** al formulario
-- [ ] 11.7 Comprobar las seis confirmaciones con JavaScript activado y desactivado
-- [ ] 11.8 `npm run test:templates`, `test:rules:panel`, `test:routines` y `test:routines:items` en verde, más los cuatro de CI
+- [x] 11.1 Crear `components/ui/ConfirmSubmit.tsx`: botón de envío que intercepta su clic, abre el diálogo y confirma con `form.requestSubmit()`, dejando intacto el `<form action>` y su rótulo — lee la espera con `useFormStatus` como `SubmitButton` (el `<form>` no se hace de cliente); el `AlertDialog` va controlado y sin `Trigger`; `requestSubmit()` dispara el `submit` nativo que React intercepta; sin JavaScript no hay manejador y el botón envía directo. Bandera `confirmed` como red de seguridad del patrón de `docs/11` §5
+- [x] 11.2 Aplicarlo a quitar un ejercicio de la rutina, conservando ese formulario como el primero del ítem y sin `name="sets"` — `RemoveRoutineItemButton` en `components/routines/RoutineItems.tsx`; `useActionState` se conserva solo para el `FormMessage`. `test:routines:items` 9/9
+- [x] 11.3 Aplicarlo a quitar un ejercicio de una plantilla y a eliminar un día, conservando el rótulo `Eliminar día` — `ItemActions` (icono, `aria-label`) y `DayHeaderForms` en `components/catalog/TemplateDays.tsx`; la descripción del diálogo del día lleva el conteo de ejercicios. `test:templates` 19/19
+- [x] 11.4 Aplicarlo a eliminar una plantilla, conservando el rótulo `Eliminar plantilla` — `DeleteTemplateForm` en `components/catalog/TemplateForm.tsx`
+- [x] 11.5 Aplicarlo a eliminar una regla — `DeleteRuleForm` en `components/catalog/RuleForm.tsx`. `test:rules:panel` 12/12
+- [x] 11.6 Aplicarlo a asignar una rutina cuando reemplaza a la activa, **sin añadir ningún campo obligatorio** al formulario — `AssignmentForm` recibe `replacesActive` (lo calcula la página con `routines.some(r => r.status === "active")`); con rutina activa el botón es `ConfirmSubmit` (`tone="default"`), sin ella sigue siendo `SubmitButton`. Ningún `<input>` nuevo. `test:routines` 12/12
+- [~] 11.7 Comprobar las seis confirmaciones con JavaScript activado y desactivado — *pendiente: los dos navegadores conectados por la extensión son remotos (Windows) y no alcanzan el `next start` local. Verificado por HTTP que las seis pantallas conservan sus `<form action>` con sus marcadores en el HTML del servidor (las cuatro suites recorren esos formularios). Falta el recorrido visual con JS on/off.*
+- [x] 11.8 `npm run test:templates`, `test:rules:panel`, `test:routines` y `test:routines:items` en verde, más los cuatro de CI — las cuatro suites en verde contra un `next start` propio en el 3220 con Supabase local por el túnel ssh del 54321; typecheck, lint (solo el aviso preexistente de `verify-auth-screens`), `test:design` 4/4 y `build` en verde. Sin migraciones
 
 ## 12. Construir una plantilla sin recargar — rama `ui/catalogo-embebido`
 
-- [ ] 12.1 Buscador único y permanente en `/templates/[id]`, con filtros, paginación y `pageSize` reducido, y un `<select name="dayId">` por resultado
-- [ ] 12.2 Verificar que el formulario de añadir sigue conteniendo `value="<exerciseId>"` y que los de eliminar conservan sus rótulos
-- [ ] 12.3 Mismo buscador en `/pro/routines/[patientId]`, **conservando el comportamiento de `?dia=` y `?item=`**, que la suite abre literalmente
-- [ ] 12.4 Comprobar que en esa pantalla el formulario de quitar sigue siendo el primero del ítem
-- [ ] 12.5 Sustituir los acuses de la URL por `FlashToast` en `/templates`, `/rules`, `/exercises` y `/plans`
-- [ ] 12.6 `npm run test:templates`, `test:templates:seed` y `test:routines:items` en verde, más los cuatro de CI
+- [x] 12.1 Buscador único y permanente en `/templates/[id]`, con filtros, paginación y `pageSize` reducido, y un `<select name="dayId">` por resultado
+  - `components/catalog/CatalogPicker.tsx` (server, compartido) = `FilterForm` + `Chip` + `Pagination`, `pageSize` 6 (`lib/catalog/embedded-catalog.ts`). Tres modos: navegación (`<select name="dayId">` por resultado, `AddItemDayPicker`), enfoque de día (`?dia=`, `AddItemButton` con el día oculto) y —en rutinas— enfoque de ítem (`?item=`). Los resultados solo aparecen si hay filtro o modo enfocado, así que en `/templates/[id]` sin `?dia=` no hay ningún uuid en el buscador. El enlace por día pasa a `?dia=<id>#catalogo-buscador`.
+- [x] 12.2 Verificar que el formulario de añadir sigue conteniendo `value="<exerciseId>"` y que los de eliminar conservan sus rótulos
+  - `test:templates` 19/19: en modo `?dia=` el resultado es `AddItemButton` (oculto `exerciseId` + `dayId`); «Eliminar día» y «Eliminar plantilla» intactos (siguen en `TemplateDays`/`TemplateForm`, el buscador no los toca).
+- [x] 12.3 Mismo buscador en `/pro/routines/[patientId]`, **conservando el comportamiento de `?dia=` y `?item=`**, que la suite abre literalmente
+  - `CatalogPicker` único tras el aviso de condiciones. `?dia=` → `AddRoutineItemButton`, `?item=` → `ReplaceRoutineItemButton`, sin parámetro → `AddRoutineItemDayPicker` con los días de todas las rutinas. El `dia`/`item` oculto del `FilterForm` GET es un uuid, pero ningún marcador de `verify-routine-items` es «un uuid cualquiera» (todos son compuestos o piden `$ACTION_`/`name="sets"`), igual que en el buscador anterior. `test:routines:items` 9/9.
+- [x] 12.4 Comprobar que en esa pantalla el formulario de quitar sigue siendo el primero del ítem
+  - `RemoveRoutineItemButton` sigue fuera del `<details>` y primero del ítem; `verify-routine-items` «Quitar…» (marcador `value="<itemId>"` + `$ACTION_`, sin `name="sets"`) pasa. El buscador va antes del listado de rutinas y no contiene ningún `value="<itemId>"`.
+- [x] 12.5 Sustituir los acuses de la URL por `FlashToast` en `/templates`, `/rules`, `/exercises` y `/plans`
+  - `FlashToast` añadido junto al `<p role="status">` en `/templates` (`?eliminada=1`), `/templates/[id]` (`?nueva=1`), `/rules` (`?eliminada=1`) y `/rules/[id]` (`?nueva=1`). `/exercises/[id]` ya lo tenía desde 10.3. **`/exercises` y `/plans` (listados) no emiten ningún acuse en la URL**, así que no hay nada que convertir ahí.
+- [x] 12.6 `npm run test:templates`, `test:templates:seed` y `test:routines:items` en verde, más los cuatro de CI
+  - Contra un `next start` propio en el 3222 con Supabase local por el túnel ssh del 54321: `test:templates` 19/19, `test:templates:seed` 4/4, `test:routines:items` 9/9, y de refuerzo `test:routines` 12/12, `test:catalog` 9/9, `test:catalog:custom` 12/12, `test:rules:panel` 12/12. CI: typecheck, lint (solo el aviso preexistente de `verify-auth-screens`), `test:design` 4/4 y `build` en verde. `openspec validate --strict` OK. Sin migraciones.
 
 ## 13. Cierre — rama `docs/cierre-frontend`
 

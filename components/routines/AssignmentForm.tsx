@@ -2,8 +2,9 @@
 
 import { useActionState } from "react";
 import { cn } from "cn";
-import { Button } from "@/components/ui/button";
 import { cardVariants } from "@/components/ui/Card";
+import { ConfirmSubmit } from "@/components/ui/ConfirmSubmit";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { FormMessage } from "@/components/auth/FormParts";
 import { assignRoutine } from "@/lib/routines/assignment-actions";
 import { assignmentSchema } from "@/lib/routines/assignment";
@@ -13,9 +14,24 @@ import { assignmentSchema } from "@/lib/routines/assignment";
  * `cardVariants` en vez de envolverse en `<Card>`. No puede mudarse a un
  * diálogo: `scripts/verify-routine-assignment.test.mjs` lo busca por
  * `name="patientId"` en el HTML del servidor (ADR-0008).
+ *
+ * `replacesActive` lo pasa la página cuando el paciente ya tiene una rutina
+ * activa: entonces asignar la reemplaza, así que el envío pide confirmación
+ * con `ConfirmSubmit` (sin añadir ningún campo al formulario). Sin rutina
+ * activa el botón es el de siempre.
  */
-export function AssignmentForm({ patientId }: { patientId: string }) {
-  const [state, action, pending] = useActionState(assignRoutine, {});
+export function AssignmentForm({
+  patientId,
+  replacesActive = false,
+}: {
+  patientId: string;
+  replacesActive?: boolean;
+}) {
+  // `useActionState` se conserva: `verify-routine-assignment.test.mjs` lee la
+  // respuesta del envío buscando «Rutina asignada. El paciente ya puede
+  // consultarla», que sale de `state.success`. La espera del botón la lleva
+  // `SubmitButton` con `useFormStatus`.
+  const [state, action] = useActionState(assignRoutine, {});
 
   return (
     <form
@@ -35,9 +51,25 @@ export function AssignmentForm({ patientId }: { patientId: string }) {
         revisión por el equipo.
       </p>
       <FormMessage state={state} />
-      <Button type="submit" className="justify-self-start" disabled={pending}>
-        {pending ? "Evaluando y asignando…" : "Evaluar y asignar rutina"}
-      </Button>
+      {replacesActive ? (
+        <ConfirmSubmit
+          className="justify-self-start"
+          pendingLabel="Evaluando y asignando…"
+          tone="default"
+          title="¿Reemplazar la rutina activa?"
+          description="Este paciente ya tiene una rutina activa. Al evaluar y asignar, la rutina completa del mismo tipo se reemplaza por la nueva propuesta y su historial de sesiones se conserva."
+          confirmLabel="Evaluar y asignar"
+        >
+          Evaluar y asignar rutina
+        </ConfirmSubmit>
+      ) : (
+        <SubmitButton
+          className="justify-self-start"
+          pendingLabel="Evaluando y asignando…"
+        >
+          Evaluar y asignar rutina
+        </SubmitButton>
+      )}
     </form>
   );
 }

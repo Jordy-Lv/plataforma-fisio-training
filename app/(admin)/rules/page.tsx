@@ -1,4 +1,5 @@
 import { ruleList } from "@/lib/catalog/rule-list";
+import { FlashToast } from "@/components/ui/FlashToast";
 import { ListFilters } from "@/components/ui/ListFilters";
 import { Pagination } from "@/components/ui/Pagination";
 import { Notice } from "@/components/ui/Notice";
@@ -68,6 +69,7 @@ export default async function Page({
           Regla eliminada.
         </p>
       )}
+      <FlashToast param="eliminada" message="Regla eliminada." />
 
       {rules.length > 0 && activeTotal === 0 && (
         <p

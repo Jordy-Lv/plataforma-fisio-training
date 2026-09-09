@@ -5,7 +5,13 @@ import { getActiveProfile } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { bodyPartLabels } from "@/lib/catalog/body-parts";
 import { listExercises } from "@/lib/catalog/queries";
-import { exerciseFiltersSchema, exercisesHref } from "@/lib/catalog/schemas";
+import {
+  catalogChips,
+  catalogFiltered,
+  catalogHref,
+  embeddedCatalogPageSize,
+} from "@/lib/catalog/embedded-catalog";
+import { exerciseFiltersSchema } from "@/lib/catalog/schemas";
 import { labelFor } from "@/lib/catalog/vocabulary";
 import { assignmentSchema } from "@/lib/routines/assignment";
 import {
@@ -14,21 +20,20 @@ import {
   type EditableRoutineItem,
 } from "@/lib/routines/item-queries";
 import { Workspace } from "@/components/auth/Workspace";
+import { CatalogPicker } from "@/components/catalog/CatalogPicker";
 import { AssignmentForm } from "@/components/routines/AssignmentForm";
 import {
   AddRoutineItemButton,
+  AddRoutineItemDayPicker,
   RemoveRoutineItemButton,
   ReplaceRoutineItemButton,
   RoutineItemForm,
 } from "@/components/routines/RoutineItems";
 import { PatientTabs } from "@/components/patients/PatientTabs";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { cardVariants } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Field, Input } from "@/components/ui/Field";
-import { SectionHeader, SeeAllLink } from "@/components/ui/SectionHeader";
 
 const statusLabels = {
   active: "Activa",
@@ -44,9 +49,6 @@ const statusVariants = {
   completed: "neutral",
   archived: "neutral",
 } as const;
-
-/** Cuántos ejercicios se ofrecen al buscar: los que caben sin sepultar el día. */
-const maxResultados = 8;
 
 /** Las condiciones del paciente que este ejercicio agrava. */
 const clashes = (item: EditableRoutineItem, conditions: string[]) =>
@@ -83,9 +85,10 @@ export default async function Page({
     activeConditions(patientId),
   ]);
 
-  // El buscador del catálogo se abre dentro de un día —para añadir— o sobre un
-  // ejercicio concreto —para sustituirlo—. La URL es su estado, así que el
-  // botón de retroceso lo cierra.
+  // El buscador del catálogo es único y permanente. Con `?dia=<dayId>` se
+  // enfoca en un día —para añadir— y con `?item=<itemId>` sobre un ejercicio
+  // —para sustituirlo—: son las dos URLs que `verify-routine-items` abre
+  // literalmente (ver `docs/11`). Sin ninguna, cada resultado elige el día.
   const query = await searchParams;
   const items = routines.flatMap((routine) =>
     routine.routine_days.flatMap((day) => day.routine_items),
@@ -102,89 +105,36 @@ export default async function Page({
     items.some((item) => item.id === query.item)
       ? query.item
       : null;
-  const filtros = exerciseFiltersSchema.parse({ q: query.q });
-  const resultados =
-    diaAbierto || itemAbierto
-      ? (await listExercises(filtros)).exercises.slice(0, maxResultados)
-      : [];
-
+  const filtros = exerciseFiltersSchema.parse({
+    q: query.q,
+    muscle: query.muscle,
+    equipment: query.equipment,
+    environment: query.environment,
+    page: query.page,
+  });
   const base = `/pro/routines/${patientId}`;
+  const extra: Record<string, string> = diaAbierto
+    ? { dia: diaAbierto }
+    : itemAbierto
+      ? { item: itemAbierto }
+      : {};
+  const mostrarCatalogo =
+    Boolean(diaAbierto || itemAbierto) || catalogFiltered(filtros);
+  const { exercises: resultados, pages: paginasCatalogo } = mostrarCatalogo
+    ? await listExercises(filtros, { pageSize: embeddedCatalogPageSize })
+    : { exercises: [], pages: 1 };
 
-  /** El buscador del catálogo, compartido por añadir y sustituir. */
-  const buscador = (
-    campo: "dia" | "item",
-    valor: string,
-    accion: (ejercicio: { id: string; name: string }) => React.ReactNode,
-  ) => (
-    <>
-      <form
-        method="get"
-        action={base}
-        className="flex flex-wrap items-end gap-3"
-      >
-        <input type="hidden" name={campo} value={valor} />
-        <Field
-          label="Buscar un ejercicio del catálogo"
-          className="min-w-60 flex-1"
-        >
-          <Input
-            name="q"
-            type="search"
-            defaultValue={filtros.q ?? ""}
-            maxLength={80}
-            autoCapitalize="none"
-            spellCheck={false}
-            placeholder="Sentadilla, plancha, remo…"
-          />
-        </Field>
-        <Button type="submit">Buscar</Button>
-        <ButtonLink variant="ghost" href={base}>
-          Cerrar
-        </ButtonLink>
-      </form>
-
-      {resultados.length === 0 ? (
-        <p className="mt-4 leading-7 text-muted-foreground">
-          Ningún ejercicio coincide con esa búsqueda. Prueba con otra palabra
-          del nombre.
-        </p>
-      ) : (
-        <div className="mt-4">
-          {/*
-            El buscador corta en `maxResultados`, así que cuando llega al tope
-            el «Ver el catálogo» es lo único que dice que hay más y adónde ir a
-            verlo.
-          */}
-          <SectionHeader
-            as="h3"
-            title="Ejercicios encontrados"
-            count={resultados.length}
-            action={
-              resultados.length === maxResultados && (
-                <SeeAllLink href={exercisesHref(filtros)}>
-                  Ver el catálogo
-                </SeeAllLink>
-              )
-            }
-          />
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {resultados.map((ejercicio) => (
-              <li
-                key={ejercicio.id}
-                className={cn(
-                  cardVariants({ padding: "none" }),
-                  "grid gap-2 rounded-xl p-3",
-                )}
-              >
-                <p className="text-sm font-medium">{ejercicio.name}</p>
-                {accion(ejercicio)}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </>
+  /** Los días de todas las rutinas del paciente, para el desplegable del buscador. */
+  const diasDisponibles = routines.flatMap((routine) =>
+    routine.routine_days.map((day) => ({
+      id: day.id,
+      label: `${routine.name} · Día ${day.day_number}${
+        day.title ? ` · ${day.title}` : ""
+      }`,
+    })),
   );
+  const diaEnfocado = diasDisponibles.find((day) => day.id === diaAbierto);
+  const itemEnfocado = items.find((item) => item.id === itemAbierto);
 
   return (
     <Workspace
@@ -203,7 +153,14 @@ export default async function Page({
       */}
       <PatientTabs patientId={patientId} active="routine" />
 
-      {patient.is_active && <AssignmentForm patientId={patientId} />}
+      {patient.is_active && (
+        <AssignmentForm
+          patientId={patientId}
+          replacesActive={routines.some(
+            (routine) => routine.status === "active",
+          )}
+        />
+      )}
 
       {conditions.length > 0 && (
         <p className="mt-6 rounded-lg bg-warning-soft p-3 text-sm leading-7 text-warning">
@@ -212,6 +169,67 @@ export default async function Page({
           El motor ya excluyó lo contraindicado al asignar; si añades un
           ejercicio a mano, revisa que no las agrave.
         </p>
+      )}
+
+      {Boolean(routines.length) && (
+        <CatalogPicker
+          action={base}
+          filters={filtros}
+          hiddenParams={extra}
+          heading={
+            itemEnfocado
+              ? `Sustituir «${itemEnfocado.exercises?.name ?? "ejercicio"}»`
+              : diaEnfocado
+                ? `Añadir a ${diaEnfocado.label}`
+                : "Añadir un ejercicio del catálogo"
+          }
+          description={
+            itemEnfocado
+              ? "El resultado que elijas ocupa su sitio y conserva su prescripción."
+              : diaEnfocado
+                ? "Los resultados se añaden al final del día enfocado."
+                : "Busca un ejercicio y elige a qué día de la rutina lo añades."
+          }
+          closeHref={diaAbierto || itemAbierto ? base : undefined}
+          closeLabel={itemAbierto ? "Dejar de sustituir" : "Salir del día"}
+          chips={catalogChips(base, extra, filtros)}
+          clearHref={
+            catalogFiltered(filtros) ? catalogHref(base, extra, {}) : undefined
+          }
+          exercises={resultados}
+          pages={paginasCatalogo}
+          hrefForPage={(page) => catalogHref(base, extra, { ...filtros, page })}
+          emptyHint={
+            catalogFiltered(filtros)
+              ? "Ningún ejercicio coincide con esa búsqueda. Prueba con otra palabra del nombre."
+              : "Escribe el nombre de un ejercicio para buscarlo en el catálogo."
+          }
+        >
+          {(ejercicio) =>
+            itemAbierto ? (
+              <ReplaceRoutineItemButton
+                patientId={patientId}
+                itemId={itemAbierto}
+                exerciseId={ejercicio.id}
+                exerciseName={ejercicio.name}
+              />
+            ) : diaAbierto ? (
+              <AddRoutineItemButton
+                patientId={patientId}
+                dayId={diaAbierto}
+                exerciseId={ejercicio.id}
+                exerciseName={ejercicio.name}
+              />
+            ) : (
+              <AddRoutineItemDayPicker
+                patientId={patientId}
+                days={diasDisponibles}
+                exerciseId={ejercicio.id}
+                exerciseName={ejercicio.name}
+              />
+            )
+          }
+        </CatalogPicker>
       )}
 
       {!routines.length && (
@@ -360,13 +378,14 @@ export default async function Page({
                             </div>
 
                             {/*
-                              La prescripción y la sustitución se pliegan: un día
-                              de cinco ejercicios pasa de cinco formularios
-                              abiertos a cinco líneas. Cerrado, el `<details>`
-                              sigue emitiendo sus formularios en el HTML del
-                              servidor —`verify-routine-items` los encuentra
-                              igual—; se abre solo cuando el profesional llega a
-                              sustituir este ítem por enlace.
+                              La prescripción se pliega: un día de cinco
+                              ejercicios pasa de cinco formularios abiertos a
+                              cinco líneas. Cerrado, el `<details>` sigue
+                              emitiendo su formulario en el HTML del servidor
+                              —`verify-routine-items` lo encuentra igual—; se abre
+                              cuando se enfoca este ítem para sustituirlo. La
+                              sustitución se hace en el buscador permanente de
+                              arriba, vía `?item=`.
                             */}
                             <details
                               className="mt-3 rounded-xl border border-border px-4"
@@ -381,22 +400,18 @@ export default async function Page({
                                   item={item}
                                 />
                                 <div className="border-t border-border pt-4">
-                                  {itemAbierto === item.id ? (
-                                    buscador("item", item.id, (ejercicio) => (
-                                      <ReplaceRoutineItemButton
-                                        patientId={patientId}
-                                        itemId={item.id}
-                                        exerciseId={ejercicio.id}
-                                        exerciseName={ejercicio.name}
-                                      />
-                                    ))
-                                  ) : (
-                                    <ButtonLink
-                                      href={`${base}?item=${item.id}`}
-                                    >
-                                      Sustituir por otro ejercicio
-                                    </ButtonLink>
-                                  )}
+                                  <ButtonLink
+                                    href={`${base}?item=${item.id}#catalogo-buscador`}
+                                    variant={
+                                      itemAbierto === item.id
+                                        ? "outline"
+                                        : "default"
+                                    }
+                                  >
+                                    {itemAbierto === item.id
+                                      ? "Buscando un recambio arriba"
+                                      : "Sustituir por otro ejercicio"}
+                                  </ButtonLink>
                                 </div>
                               </div>
                             </details>
@@ -407,20 +422,16 @@ export default async function Page({
                   )}
 
                   <div className="mt-5 border-t border-border pt-5">
-                    {diaAbierto === day.id ? (
-                      buscador("dia", day.id, (ejercicio) => (
-                        <AddRoutineItemButton
-                          patientId={patientId}
-                          dayId={day.id}
-                          exerciseId={ejercicio.id}
-                          exerciseName={ejercicio.name}
-                        />
-                      ))
-                    ) : (
-                      <ButtonLink href={`${base}?dia=${day.id}`}>
-                        Añadir ejercicios a este día
-                      </ButtonLink>
-                    )}
+                    {/* El buscador vive arriba, único y permanente; este enlace
+                        solo lo enfoca en este día (`?dia=`). */}
+                    <ButtonLink
+                      href={`${base}?dia=${day.id}#catalogo-buscador`}
+                      variant={diaAbierto === day.id ? "outline" : "default"}
+                    >
+                      {diaAbierto === day.id
+                        ? "Buscando para este día"
+                        : "Añadir ejercicios a este día"}
+                    </ButtonLink>
                   </div>
                 </section>
               ))}
