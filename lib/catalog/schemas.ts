@@ -1,54 +1,44 @@
 import { z } from "zod";
-import {
-  equipment,
-  environments,
-  muscleGroups,
-} from "@/lib/catalog/vocabulary";
+import { equipment, environments, muscleGroups } from "@/lib/catalog/vocabulary";
+import { createListParams, optionalEnum, pageParam, searchParam } from "@/lib/shared/list-params";
 
 /**
- * Filtros del listado del catálogo, tal como llegan en la URL.
+ * Cómo se pinta cada resultado. `tarjetas` es la vista de siempre —imagen 4:3 y
+ * ficha— y sigue siendo la de partida, entre otras cosas porque
+ * `scripts/verify-catalog-list.test.mjs` da por hecho 24 tarjetas en la primera
+ * página sin parámetros.
  *
- * Cada campo usa `catch`: la URL la escribe cualquiera —un enlace viejo, un
- * filtro que dejó de existir— y un valor inválido no debe tumbar la pantalla.
- * Se ignora ese filtro y se muestra el catálogo sin él. Esto vale solo para
- * lectura; al escribir el catálogo un valor inválido sí se rechaza.
+ * `lista` existe porque la de tarjetas se midió: 429 px por ejercicio, de los
+ * cuales 254 son la foto, y 24 de ellas son cinco pantallas de portátil
+ * (`docs/12-medicion-de-densidad.md`). Cuando se busca un ejercicio por su
+ * nombre la foto no ayuda, así que la fila la reduce a una miniatura.
  */
-export const exerciseFiltersSchema = z.object({
-  q: z
-    .string()
-    .max(80)
-    .catch("")
-    .transform((value) => value.trim() || undefined),
-  muscle: z.enum(muscleGroups).optional().catch(undefined),
-  equipment: z.enum(equipment).optional().catch(undefined),
-  environment: z.enum(environments).optional().catch(undefined),
-  page: z.coerce.number().int().min(1).max(500).catch(1),
-});
+export const exerciseViews = ["tarjetas", "lista"] as const;
+export type ExerciseView = (typeof exerciseViews)[number];
 
+export const exerciseFiltersSchema = z.object({
+  q: searchParam(),
+  muscle: optionalEnum(muscleGroups),
+  equipment: optionalEnum(equipment),
+  environment: optionalEnum(environments),
+  vista: z.enum(exerciseViews).catch("tarjetas").default("tarjetas"),
+  page: pageParam,
+});
 export type ExerciseFilters = z.infer<typeof exerciseFiltersSchema>;
 
-/** Construye la URL del listado conservando los filtros vigentes. */
-export function exercisesHref(
-  filters: ExerciseFilters,
-  overrides: Partial<ExerciseFilters> = {},
-) {
-  const { q, muscle, equipment, environment, page } = {
-    ...filters,
-    ...overrides,
-  };
-  const params = new URLSearchParams();
-  if (q) params.set("q", q);
-  if (muscle) params.set("muscle", muscle);
-  if (equipment) params.set("equipment", equipment);
-  if (environment) params.set("environment", environment);
-  if (page > 1) params.set("page", String(page));
-  const query = params.toString();
-  return query ? `/exercises?${query}` : "/exercises";
-}
+/**
+ * `pageSize` es el de la vista de tarjetas. La de lista cabe al triple, así que
+ * pide su propio tamaño con `pageSizeFor`: paginar de 24 en 24 una lista que
+ * ocupa un tercio obligaría a pasar página tres veces más de la cuenta.
+ */
+export const exerciseList = createListParams({
+  path: "/exercises",
+  schema: exerciseFiltersSchema,
+  pageSize: 24,
+  notFilters: ["vista"],
+});
 
-/** Hay al menos un filtro activo (la página no cuenta). */
-export function hasActiveFilters(filters: ExerciseFilters) {
-  return Boolean(
-    filters.q || filters.muscle || filters.equipment || filters.environment,
-  );
-}
+export const pageSizeFor = (vista: ExerciseView) => (vista === "lista" ? 60 : exerciseList.pageSize);
+
+export const exercisesHref = exerciseList.href;
+export const hasActiveFilters = exerciseList.hasActiveFilters;

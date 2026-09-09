@@ -1,5 +1,3 @@
-import type { ReactNode } from "react";
-import { cn } from "cn";
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth/session";
 import { Workspace } from "@/components/auth/Workspace";
@@ -8,24 +6,29 @@ import {
   AssignmentForm,
   DeactivateForm,
 } from "@/components/auth/PeopleForms";
+import { PeopleFilter } from "@/components/auth/PeopleFilter";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { cardVariants } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { SheetModal } from "@/components/ui/SheetModal";
 import { specialtyLabels } from "@/lib/auth/people-schemas";
 
 /**
- * `overview` se pinta dentro del shell, antes de la lista. Antes el panel de
- * administración lo montaba fuera y repetía a mano el ancho del contenedor;
- * con la navegación de la fase 2 eso habría dejado el panorama por encima de
- * la cabecera.
+ * El directorio de personas y el alta, resumidos en tarjetas: cada una abre un
+ * modal con su lista y su buscador. Vive en `/people`; el panel de inicio
+ * (`/admin`, `/pro`) es solo el panorama del negocio.
+ *
+ * Los modales no usan portal (`SheetModal`), así que las listas y los
+ * formularios de baja siguen en el HTML del servidor: `verify-people-onboarding`
+ * los encuentra igual. El orden de las tarjetas —registrar, pacientes, equipo,
+ * asignar— deja los formularios de baja antes que el de asignación, para que la
+ * suite no confunda un `<option value="<uuid>">` con el marcador de la baja.
  */
 export async function PeoplePanel({
   role,
-  overview,
 }: {
   role: "admin" | "professional";
-  overview?: ReactNode;
 }) {
   const profile = await requireRole(role);
   const supabase = await createClient();
@@ -46,100 +49,188 @@ export async function PeoplePanel({
     );
   const people = peopleResult.data;
   const assignments = assignmentsResult.data;
+  const patients = people.filter((person) => person.role === "patient");
+  const team = people.filter((person) => person.role === "professional");
+  const isAdmin = role === "admin";
+
   return (
     <Workspace
-      title={role === "admin" ? "Personas y equipo" : "Mis pacientes"}
+      title={isAdmin ? "Personas y equipo" : "Mis pacientes"}
       name={profile.fullName}
-      role={role === "admin" ? "admin" : "professional"}
+      role={isAdmin ? "admin" : "professional"}
       description={
-        role === "admin"
-          ? "Gestiona el equipo y el acompañamiento de cada paciente. Las bajas conservan su historial."
-          : "Consulta a las personas que acompañas y actualiza su perfil de entrenamiento."
+        isAdmin
+          ? "Cada tarjeta abre su lista con buscador. Las bajas conservan el historial."
+          : "Busca a quien acompañas y abre su ficha. El alta de un paciente está en la primera tarjeta."
       }
     >
-      {overview}
-      {/*
-        La lista y el formulario se parten en dos columnas a partir de `xl`
-        (1280px). Antes lo hacían en `lg` (1024px) y entre ~1024 y ~1200, con la
-        barra lateral del shell, la columna de "Dar de alta" no cabía y la
-        pantalla desbordaba en horizontal. `min-w-0` en la lista deja que su
-        pista flexible se encoja por debajo del ancho de su contenido.
-      */}
-      <div className="mt-10 grid items-start gap-10 xl:grid-cols-[1fr_320px]">
-        <section className="min-w-0">
-          {people.length === 0 ? (
-            <EmptyState title="Aún no tienes pacientes asignados">
-              Crea tu primer paciente con el formulario de esta pantalla para
-              comenzar su acompañamiento.
-            </EmptyState>
-          ) : (
-            <ul className="grid gap-4">
-              {people.map((person) => (
-                <li key={person.id} className={cardVariants()}>
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <h2 className="text-lg font-semibold">
-                        {person.full_name || "Sin nombre"}
-                      </h2>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {person.specialty
-                          ? specialtyLabels[person.specialty]
-                          : "Paciente"}
-                        {person.phone && ` · ${person.phone}`}
-                      </p>
-                    </div>
-                    <Badge variant={person.is_active ? "success" : "neutral"}>
-                      {person.is_active ? "Activo" : "De baja"}
-                    </Badge>
-                  </div>
-                  {person.role === "patient" && (
-                    <>
-                      <p className="mt-3 text-sm text-muted-foreground">
-                        {assignments
-                          .filter((a) => a.patient_id === person.id)
-                          .map((a) => specialtyLabels[a.kind])
-                          .join(" y ") || "Sin profesional asignado"}
-                      </p>
-                      <ButtonLink
-                        variant="ghost"
-                        className="mt-3"
-                        href={`/people/${person.id}`}
+      {patients.length === 0 && team.length === 0 ? (
+        <EmptyState
+          className="mt-8"
+          title={
+            isAdmin
+              ? "Todavía no hay personas registradas"
+              : "Aún no tienes pacientes asignados"
+          }
+        >
+          Registra al primero con la tarjeta «
+          {isAdmin ? "Registrar persona" : "Registrar paciente"}».
+        </EmptyState>
+      ) : null}
+
+      <div className="mt-8 grid gap-4 sm:grid-cols-2">
+        <SheetModal
+          title={isAdmin ? "Registrar persona" : "Registrar paciente"}
+          description={
+            isAdmin
+              ? "Crea un paciente o un profesional y comparte sus credenciales."
+              : "Crea un paciente y comparte sus credenciales de acceso."
+          }
+          action="Abrir el formulario"
+        >
+          <CreatePersonForm isAdmin={isAdmin} />
+        </SheetModal>
+
+        <SheetModal
+          title="Pacientes"
+          count={patients.length}
+          description="Búscalos por nombre y abre su ficha e historial."
+          action="Buscar un paciente"
+        >
+          <PeopleFilter searchPlaceholder="Buscar un paciente por su nombre">
+            {patients.length === 0 ? (
+              <EmptyState title="Aún no hay pacientes registrados">
+                Regístralos desde la tarjeta «
+                {isAdmin ? "Registrar persona" : "Registrar paciente"}».
+              </EmptyState>
+            ) : (
+              <ul className="grid gap-3">
+                {patients.map((person) => (
+                  <li
+                    key={person.id}
+                    data-name={(person.full_name ?? "").toLowerCase()}
+                    className={cardVariants({ padding: "sm" })}
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="font-semibold">
+                          {person.full_name || "Sin nombre"}
+                        </h3>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {assignments
+                            .filter((a) => a.patient_id === person.id)
+                            .map((a) => specialtyLabels[a.kind])
+                            .join(" y ") || "Sin profesional asignado"}
+                          {person.phone ? ` · ${person.phone}` : ""}
+                        </p>
+                      </div>
+                      <Badge
+                        variant={person.is_active ? "success" : "neutral"}
                       >
-                        Ver perfil e historial de condiciones
-                      </ButtonLink>
-                    </>
-                  )}
-                  {role === "admin" && person.is_active && (
-                    <DeactivateForm
-                      personId={person.id}
-                      name={person.full_name || "esta persona"}
-                      assignments={
-                        assignments.filter(
-                          (a) => a.professional_id === person.id,
-                        ).length
-                      }
-                    />
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-        <aside className={cn(cardVariants({ padding: "lg" }), "grid gap-8")}>
-          <CreatePersonForm isAdmin={role === "admin"} />
-          {role === "admin" && (
-            <div className="border-t border-border pt-6">
-              <AssignmentForm
-                patients={people.filter(
-                  (p) => p.role === "patient" && p.is_active,
-                )}
-                professionals={people.filter(
-                  (p) => p.role === "professional" && p.is_active,
-                )}
-              />
-            </div>
-          )}
-        </aside>
+                        {person.is_active ? "Activo" : "De baja"}
+                      </Badge>
+                    </div>
+                    <ButtonLink
+                      variant="ghost"
+                      className="mt-2"
+                      href={`/people/${person.id}`}
+                    >
+                      Ver ficha e historial de condiciones
+                    </ButtonLink>
+                    {isAdmin && person.is_active && (
+                      <DeactivateForm
+                        personId={person.id}
+                        name={person.full_name || "esta persona"}
+                        assignments={
+                          assignments.filter(
+                            (a) => a.professional_id === person.id,
+                          ).length
+                        }
+                      />
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </PeopleFilter>
+        </SheetModal>
+
+        {isAdmin && (
+          <SheetModal
+            title="Equipo"
+            count={team.length}
+            description="Entrenadores y fisioterapeutas. Filtra por especialidad."
+            action="Ver el equipo"
+          >
+            <PeopleFilter
+              searchPlaceholder="Buscar por nombre"
+              specialties={[
+                { value: "training", label: "Entrenadores" },
+                { value: "physio", label: "Fisioterapeutas" },
+              ]}
+            >
+              {team.length === 0 ? (
+                <EmptyState title="Aún no hay profesionales">
+                  Regístralos desde la tarjeta «Registrar persona».
+                </EmptyState>
+              ) : (
+                <ul className="grid gap-3">
+                  {team.map((person) => (
+                    <li
+                      key={person.id}
+                      data-name={(person.full_name ?? "").toLowerCase()}
+                      data-specialty={person.specialty ?? ""}
+                      className={cardVariants({ padding: "sm" })}
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <h3 className="font-semibold">
+                            {person.full_name || "Sin nombre"}
+                          </h3>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {person.specialty
+                              ? specialtyLabels[person.specialty]
+                              : "Profesional"}
+                            {person.phone ? ` · ${person.phone}` : ""}
+                          </p>
+                        </div>
+                        <Badge
+                          variant={person.is_active ? "success" : "neutral"}
+                        >
+                          {person.is_active ? "Activo" : "De baja"}
+                        </Badge>
+                      </div>
+                      {person.is_active && (
+                        <DeactivateForm
+                          personId={person.id}
+                          name={person.full_name || "esta persona"}
+                          assignments={
+                            assignments.filter(
+                              (a) => a.professional_id === person.id,
+                            ).length
+                          }
+                        />
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </PeopleFilter>
+          </SheetModal>
+        )}
+
+        {isAdmin && (
+          <SheetModal
+            title="Asignar acompañamiento"
+            description="Vincula un paciente con su entrenador o su fisioterapeuta."
+            action="Abrir la asignación"
+          >
+            <AssignmentForm
+              patients={patients.filter((person) => person.is_active)}
+              professionals={team.filter((person) => person.is_active)}
+            />
+          </SheetModal>
+        )}
       </div>
     </Workspace>
   );

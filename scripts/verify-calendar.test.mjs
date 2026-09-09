@@ -226,14 +226,38 @@ test(
             assert.equal(results.response.status, 200);
             const resultsDocument = new JSDOM(results.html).window.document;
             const closeHref = [...resultsDocument.querySelectorAll("a")]
-              .find((link) => link.textContent.trim() === "Cerrar")
+              .find(
+                (link) =>
+                  link.textContent.trim() ===
+                  (label === "Añadir ejercicios a este día"
+                    ? "Salir del día"
+                    : "Dejar de sustituir"),
+              )
               ?.getAttribute("href");
             assert.ok(closeHref);
             const closed = await web.request(closeHref);
             const closedDocument = new JSDOM(closed.html).window.document;
+            const generalSearch =
+              closedDocument.querySelector('form[method="get"]');
+            assert.ok(
+              generalSearch,
+              "El catálogo general permanece disponible.",
+            );
             assert.equal(
-              closedDocument.querySelector('form[method="get"]'),
+              generalSearch.querySelector('[name="dia"], [name="item"]'),
               null,
+            );
+            assert.equal(
+              generalSearch
+                .querySelector('[name="calendarDate"]')
+                ?.getAttribute("value"),
+              today,
+            );
+            assert.equal(
+              generalSearch
+                .querySelector('[name="calendarView"]')
+                ?.getAttribute("value"),
+              view,
             );
             assert.equal(
               closedDocument

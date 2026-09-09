@@ -13,19 +13,40 @@ import {
 } from "@/lib/progress/plan-vocabulary";
 import { cardVariants } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ButtonLink } from "@/components/ui/ButtonLink";
+import { ListFilters } from "@/components/ui/ListFilters";
+import { showcaseList } from "@/lib/progress/showcase-list";
 
 export const metadata: Metadata = {
   title: "Planes y servicios",
 };
 
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const profile = await requireAuth();
+  const filters = showcaseList.parse(await searchParams);
   const [plans, groups] = await Promise.all([
-    listActivePlans(),
-    listActiveServiceGroups(),
+    listActivePlans(filters),
+    listActiveServiceGroups(filters),
   ]);
 
   const empty = plans.length === 0 && groups.length === 0;
+  const filtrada = showcaseList.hasActiveFilters(filters);
+  const choices = [
+    { name: "category", label: "Categoría", options: serviceCategoryLabels },
+  ];
+  const chips = Object.entries(filters)
+    .filter(([key, value]) => key !== "page" && value)
+    .map(([key, value]) => ({
+      label: key === "category"
+        ? serviceCategoryLabels[value as keyof typeof serviceCategoryLabels]
+        : String(value),
+      href: showcaseList.href(filters, { [key]: undefined, page: 1 }),
+      removeLabel: key === "category" ? "Quitar la categoría" : "Quitar la búsqueda",
+    }));
 
   return (
     <Workspace
@@ -34,7 +55,16 @@ export default async function Page() {
       description="Lo que el negocio ofrece hoy: los planes de suscripción y los servicios que se contratan aparte."
     >
       <section className="max-w-3xl">
-        {empty ? (
+        <ListFilters action="/offer" label="Filtros de la oferta" values={filters}
+          choices={choices} chips={chips}
+          search={{ label: "Buscar por nombre", placeholder: "Un plan o un servicio…" }} />
+
+        {empty && filtrada ? (
+          <EmptyState title="Nada de la oferta coincide con estos filtros"
+            action={<ButtonLink href="/offer">Ver toda la oferta</ButtonLink>}>
+            Prueba con otra categoría o con menos palabras.
+          </EmptyState>
+        ) : empty ? (
           <EmptyState title="Todavía no hay oferta publicada">
             Cuando el administrador active los planes y servicios, los verás
             aquí con su descripción y su precio.

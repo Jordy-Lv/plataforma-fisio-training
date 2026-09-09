@@ -23,6 +23,7 @@ vistazo, quién está cumpliendo, quién reportó dolor o quién dejó de asisti
 | Quien va a escribir código | [CLAUDE.md](CLAUDE.md) → [02-modelo-de-datos](docs/02-modelo-de-datos.md) → [05-flujo-de-trabajo](docs/05-flujo-de-trabajo.md) |
 | Quien va a revisar un PR | [CONTRIBUTING.md](CONTRIBUTING.md) → [04-roles-y-permisos](docs/04-roles-y-permisos.md) |
 | Quien prueba la demo | [07-plan-de-verificacion](docs/07-plan-de-verificacion.md) |
+| Quien retoma el proyecto | [15-pendiente-del-proyecto](docs/15-pendiente-del-proyecto.md) |
 
 ## Documentación
 
@@ -38,7 +39,10 @@ vistazo, quién está cumpliendo, quién reportó dolor o quién dejó de asisti
 - [`docs/09-verificacion-acceso.md`](docs/09-verificacion-acceso.md) — cómo se comprueba el acceso de cada rol contra la base local.
 - [`docs/10-sistema-de-diseno.md`](docs/10-sistema-de-diseno.md) — tokens, componentes y reglas al pintar una pantalla.
 - [`docs/11-contratos-de-las-suites-http.md`](docs/11-contratos-de-las-suites-http.md) — los marcadores del marcado que las suites de `scripts/` dan por contrato.
-- [`docs/12-excepcion-antigravity-frontend.md`](docs/12-excepcion-antigravity-frontend.md) — excepción acotada: un compañero evalúa Antigravity rehaciendo el frontend en una rama aparte.
+- [`docs/12-medicion-de-densidad.md`](docs/12-medicion-de-densidad.md) — cómo se mide la densidad de un listado y las cifras registradas.
+- [`docs/13-referencia-smart-fit.md`](docs/13-referencia-smart-fit.md) — la referencia visual que señaló el cliente y qué se toma de ella.
+- [`docs/14-auditoria-de-vistas.md`](docs/14-auditoria-de-vistas.md) — repaso pantalla por pantalla con una rúbrica fija: qué le falta a cada vista y en qué orden se arregla.
+- [`docs/15-pendiente-del-proyecto.md`](docs/15-pendiente-del-proyecto.md) — todo lo que queda abierto: código, verificaciones, operación y la deuda decidida a propósito.
 - [`docs/adr/`](docs/adr/) — decisiones de arquitectura con su justificación y sus alternativas descartadas.
 
 ## Stack

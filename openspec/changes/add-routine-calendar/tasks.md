@@ -20,4 +20,6 @@
 - [x] 3.5 Revisar la integración del calendario con la edición de rutinas, conservar fecha y vista al buscar/añadir/sustituir ejercicios y verificar regresiones.
 - [x] 3.6 Verificar el recorrido desde un paciente sin rutina hasta su primera sesión completada; corregir la vigencia de la asignación para usar la fecha de Bogotá, incluso si el servidor está en otra zona.
 
+- [x] 3.7 Integrar `main`, conservar el editor actual y su confirmación de reemplazo, repetir reset y verificación completa: 29 suites y 284 pruebas aprobadas.
+
 La comprobación en teléfono físico se excluye del alcance de esta PR por indicación explícita del usuario; no se realizó ni se marca como aprobada.

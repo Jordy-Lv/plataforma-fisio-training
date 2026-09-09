@@ -25,7 +25,9 @@ export function CreatePersonForm({ isAdmin }: { isAdmin: boolean }) {
   const [role, setRole] = useState("patient");
   return (
     <form onSubmit={validation.onSubmit} action={action} className="grid gap-4">
-      <h2 className="text-xl font-semibold">Dar de alta</h2>
+      <h2 className="text-xl font-semibold">
+        {isAdmin ? "Registrar una persona" : "Registrar un paciente"}
+      </h2>
       {isAdmin ? (
         <Field label="Tipo de persona">
           <select
@@ -99,10 +101,10 @@ export function CreatePersonForm({ isAdmin }: { isAdmin: boolean }) {
       />
       <Button type="submit" className="min-h-12" disabled={pending}>
         {pending
-          ? "Creando…"
+          ? "Registrando…"
           : role === "professional"
-            ? "Crear profesional"
-            : "Crear paciente"}
+            ? "Registrar profesional"
+            : "Registrar paciente"}
       </Button>
     </form>
   );

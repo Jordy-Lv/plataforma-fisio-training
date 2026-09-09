@@ -14,19 +14,19 @@
   único token a 3:1 pondría líneas oscuras alrededor de cada tarjeta.
 */
 :root {
-  --background: #f7f9f8;
-  --foreground: #17211e;
+  --background: #f8f9fa;
+  --foreground: #202124;
   --surface: #ffffff;
-  --muted: #edf2f0;
-  --muted-foreground: #54655f;
+  --muted: #eff1f3;
+  --muted-foreground: #5b6066;
 
-  --border: #d7e0dc;
-  --border-strong: #78908a;
+  --border: #dadddf;
+  --border-strong: #7c8288;
 
-  --brand: #146c5b;
+  --brand: #876000;
   --brand-foreground: #ffffff;
-  --brand-soft: #dcefe9;
-  --brand-soft-foreground: #0f4d40;
+  --brand-soft: #fbf3da;
+  --brand-soft-foreground: #5f4400;
 
   /* Estados. Cada uno lleva su relleno (`--x`), el texto que va encima de ese
      relleno (`--x-foreground`) y un fondo suave (`--x-soft`) sobre el que el
@@ -74,10 +74,9 @@
   --alert-critical: var(--danger);
   --alert-critical-soft: var(--danger-soft);
 
-  /* Series de gráfica. La 1 es el verde de marca para que `EvolutionChart` no
-     cambie de aspecto; las otras cuatro se separan entre sí en tono y en
+  /* Series de gráfica. La 1 sigue el dorado de marca; las otras cuatro se separan entre sí en tono y en
      luminosidad. Las consume `components/progress/EvolutionChart.tsx`. */
-  --chart-1: #146c5b;
+  --chart-1: #876000;
   --chart-2: #1d7fa8;
   --chart-3: #a1670a;
   --chart-4: #7a4fa3;
@@ -107,23 +106,23 @@
 }
 
 /*
-  Modo oscuro. El verde de marca sube a #4db6a0 (7,46:1 sobre el fondo, AAA);
-  el #146c5b de la paleta clara sería ilegible aquí.
+  Modo oscuro: dorado luminoso sobre superficies neutras; en claro se usa
+  un dorado más oscuro para conservar el contraste de texto y controles.
 */
 .dark {
-  --background: #0d1614;
-  --foreground: #e6efec;
-  --surface: #152220;
-  --muted: #1d2c29;
-  --muted-foreground: #9aada7;
+  --background: #121416;
+  --foreground: #f0f1f2;
+  --surface: #1b1e21;
+  --muted: #25292d;
+  --muted-foreground: #a6abb0;
 
-  --border: #2b3a36;
-  --border-strong: #5d746d;
+  --border: #363c42;
+  --border-strong: #747c84;
 
-  --brand: #4db6a0;
-  --brand-foreground: #06231d;
-  --brand-soft: #12332c;
-  --brand-soft-foreground: #7fd0bc;
+  --brand: #e0aa25;
+  --brand-foreground: #201700;
+  --brand-soft: #302714;
+  --brand-soft-foreground: #f2cd65;
 
   --success: #4fc08a;
   --success-foreground: #06231a;
@@ -149,7 +148,7 @@
   --pain-severe: #f08279;
   --pain-severe-soft: #331715;
 
-  --chart-1: #4db6a0;
+  --chart-1: #e0aa25;
   --chart-2: #5cb4d8;
   --chart-3: #d9a441;
   --chart-4: #b394e0;
@@ -159,8 +158,8 @@
   --panel-shadow: 0 24px 60px rgb(0 0 0 / 45%);
   --elevation-high: 0 12px 28px rgb(0 0 0 / 50%), 0 32px 72px rgb(0 0 0 / 55%);
 
-  --secondary: #1d2c29;
-  --secondary-foreground: #cfe3dd;
+  --secondary: #25292d;
+  --secondary-foreground: #e1e4e7;
 }
 
 @theme inline {

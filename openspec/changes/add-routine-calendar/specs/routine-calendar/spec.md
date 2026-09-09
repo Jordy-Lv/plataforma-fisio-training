@@ -46,7 +46,7 @@ El calendario SHALL aparecer antes de la meta semanal. Las rutinas dentro de la 
 
 #### Scenario: Editar ejercicios desde el calendario
 - **WHEN** el profesional abre una rutina desde el calendario y busca ejercicios para añadir o sustituir
-- **THEN** conserva la fecha y vista elegidas al buscar, cerrar el buscador y volver al calendario
+- **THEN** conserva la fecha y vista elegidas al buscar, salir del modo de añadir o sustituir y volver al calendario
 
 ### Requirement: Ejecución e historial reales
 El sistema SHALL combinar las programaciones y las sesiones registradas por paciente, día de rutina y fecha. SHALL conservar visibles las sesiones no programadas y distinguir programada, pendiente, en curso, completada y abandonada. SHALL reutilizar la ejecución existente y no registrar sesiones en fechas futuras o pasadas desde el calendario.

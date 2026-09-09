@@ -1,11 +1,12 @@
+import { sanitizeSearch } from "@/lib/shared/search";
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/db/types";
-import type { ExerciseFilters } from "@/lib/catalog/schemas";
+import { exerciseList, type ExerciseFilters } from "@/lib/catalog/schemas";
 
 /** Suficiente para desplazarse en el teléfono sin descargar 868 tarjetas. */
-export const pageSize = 24;
+export const pageSize = exerciseList.pageSize;
 
 type ExerciseRow = Database["public"]["Tables"]["exercises"]["Row"];
 
@@ -13,6 +14,7 @@ export type ExerciseListItem = Pick<
   ExerciseRow,
   | "id"
   | "name"
+  | "description"
   | "media_url"
   | "muscle_groups"
   | "equipment"
@@ -21,28 +23,27 @@ export type ExerciseListItem = Pick<
   | "is_custom"
 >;
 
-/** Columnas del listado. Sin `description`: son 868 filas y no se muestra aquí. */
-const columns =
-  "id, name, media_url, muscle_groups, equipment, environments, difficulty, is_custom";
-
 /**
- * PostgREST no admite `escape` en `ilike` y trata la coma y los paréntesis como
- * separadores del propio filtro, así que los caracteres que cambiarían el
- * significado de la consulta se retiran en lugar de escaparse.
+ * Columnas del listado. `description` entró con la ficha en diálogo (15.2): el
+ * detalle se lee sin cambiar de pantalla, así que las indicaciones tienen que
+ * viajar con la fila. Cuesta poco —de los 868 ejercicios del catálogo solo 41
+ * tienen indicaciones escritas— y ahorra una consulta por cada ficha abierta.
  */
-function sanitizeSearch(term: string) {
-  return term.replace(/[%_,()."\\*]/g, " ").replace(/\s+/g, " ").trim();
-}
+const columns =
+  "id, name, description, media_url, muscle_groups, equipment, environments, difficulty, is_custom";
 
-export async function listExercises(filters: ExerciseFilters) {
+
+export async function listExercises(filters: ExerciseFilters, options?: { pageSize?: number }) {
+  const size = options?.pageSize ?? pageSize;
+  if (!Number.isInteger(size) || size < 1 || size > 200) throw new Error("Tamaño de página inválido.");
   const supabase = await createClient();
-  const from = (filters.page - 1) * pageSize;
+  const from = (filters.page - 1) * size;
 
   let query = supabase
     .from("exercises")
     .select(columns, { count: "exact" })
     .order("name")
-    .range(from, from + pageSize - 1);
+    .range(from, from + size - 1);
 
   const term = filters.q ? sanitizeSearch(filters.q) : "";
   if (term) query = query.ilike("name", `%${term}%`);
@@ -58,7 +59,7 @@ export async function listExercises(filters: ExerciseFilters) {
   return {
     exercises: data ?? [],
     total: count ?? 0,
-    pages: Math.max(1, Math.ceil((count ?? 0) / pageSize)),
+    pages: Math.max(1, Math.ceil((count ?? 0) / size)),
   };
 }
 

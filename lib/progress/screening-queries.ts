@@ -3,6 +3,8 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/db/types";
 import { measurements, type Measurement } from "@/lib/progress/vocabulary";
+import { screeningList, type ScreeningFilters } from "@/lib/progress/screening-list";
+import { sanitizeSearch } from "@/lib/shared/search";
 
 type ScreeningRow = Database["public"]["Tables"]["screenings"]["Row"];
 
@@ -54,11 +56,16 @@ const porPaciente = "screenings!screenings_patient_id_fkey";
  * distingue a quien ya tiene seguimiento de quien nunca fue medido, y pedirlo
  * aparte sería una consulta por fila.
  */
-export async function listPatientsWithLastScreening(): Promise<
-  PatientWithLastScreening[]
-> {
+export async function listPatientsWithLastScreening(
+  filters: ScreeningFilters = screeningList.empty,
+): Promise<{
+  patients: PatientWithLastScreening[];
+  total: number;
+  pages: number;
+}> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const term = sanitizeSearch(filters.q ?? "");
+  let query = supabase
     .from("profiles")
     .select(`id, full_name, ${porPaciente} (taken_on, weight_kg, bmi)`)
     .eq("role", "patient")
@@ -66,13 +73,31 @@ export async function listPatientsWithLastScreening(): Promise<
     .order("full_name")
     .order("taken_on", { referencedTable: "screenings", ascending: false })
     .limit(1, { referencedTable: "screenings" });
+  if (term) query = query.ilike("full_name", `%${term}%`);
+  const { data, error } = await query;
   if (error)
     throw new Error(`No se pudieron consultar los pacientes: ${error.message}`);
 
-  return (data ?? []).map(({ screenings, ...patient }) => ({
-    ...patient,
-    last: screenings[0] ?? null,
-  }));
+  // «Con tamizaje» y «sin tamizaje» dependen de la fila embebida, no de una
+  // columna: el recorte va aquí. La lista es la de pacientes activos.
+  const all = (data ?? [])
+    .map(({ screenings, ...patient }) => ({
+      ...patient,
+      last: screenings[0] ?? null,
+    }))
+    .filter((patient) =>
+      filters.taken === "some"
+        ? patient.last !== null
+        : filters.taken === "none"
+          ? patient.last === null
+          : true,
+    );
+  const { from, to } = screeningList.range(filters);
+  return {
+    patients: all.slice(from, to + 1),
+    total: all.length,
+    pages: screeningList.pages(all.length),
+  };
 }
 
 /**

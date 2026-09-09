@@ -33,10 +33,10 @@ export function MoveRuleForm({
         className="min-h-11 px-3"
         disabled={disabled || pending}
         aria-label={subir ? "Subir la regla" : "Bajar la regla"}
-        title={state.error ?? undefined}
       >
         {subir ? "↑" : "↓"}
       </Button>
+      {state.error && <div className="col-span-2"><FormMessage state={state} /></div>}
     </form>
   );
 }

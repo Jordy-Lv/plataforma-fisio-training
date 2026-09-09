@@ -1,3 +1,8 @@
+import { templateList } from "@/lib/catalog/template-list";
+import { FlashToast } from "@/components/ui/FlashToast";
+import { ListFilters } from "@/components/ui/ListFilters";
+import { Pagination } from "@/components/ui/Pagination";
+import { DataList } from "@/components/ui/DataList";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { cn } from "cn";
@@ -29,8 +34,24 @@ export default async function Page({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const profile = await requireStaff();
-  const templates = await listTemplates();
-  const eliminada = (await searchParams).eliminada === "1";
+  const search = await searchParams;
+  const filters = templateList.parse(search);
+  const { templates, total, pages } = await listTemplates(filters);
+  const eliminada = search.eliminada === "1";
+  const choices = [
+    { name: "kind", label: "Tipo", options: templateKindLabels },
+    { name: "goal", label: "Objetivo", options: goalLabels },
+    { name: "level", label: "Nivel", options: difficultyLabels },
+    { name: "environment", label: "Entorno", options: environmentLabels },
+    { name: "status", label: "Estado", options: { active: "Activas", draft: "Borradores" } },
+    { name: "incomplete", label: "Construcción", options: { "1": "Incompletas" } },
+  ];
+  const chips = Object.entries(filters).filter(([key, value]) => key !== "page" && value).map(([key, value]) => {
+    const choice = choices.find((choice) => choice.name === key);
+    const options: Record<string, string> = choice?.options ?? {};
+    return { label: options[value === true ? "1" : String(value)] ?? String(value),
+      href: templateList.href(filters, { [key]: undefined, page: 1 }), removeLabel: `Quitar ${choice?.label ?? "búsqueda"}` };
+  });
   const esAdmin = profile.role === "admin";
 
   return (
@@ -54,8 +75,15 @@ export default async function Page({
           Plantilla eliminada.
         </p>
       )}
+      <FlashToast param="eliminada" message="Plantilla eliminada." />
 
-      {templates.length === 0 ? (
+      <ListFilters action="/templates" label="Filtros de plantillas" values={filters} choices={choices} chips={chips} />
+      <p className="mb-4 text-sm text-muted-foreground" aria-live="polite">{total} plantillas encontradas</p>
+      {templates.length === 0 && (templateList.hasActiveFilters(filters) || filters.page > 1) ? (
+        <EmptyState title="No hay plantillas en esta página" action={<ButtonLink href="/templates">Ver todas las plantillas</ButtonLink>}>
+          Prueba con menos filtros o vuelve a la primera página.
+        </EmptyState>
+      ) : templates.length === 0 ? (
         <EmptyState
           title="Aún no hay plantillas de rutina"
           action={
@@ -113,31 +141,17 @@ export default async function Page({
                   </Badge>
                 </div>
 
-                <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-                  <dt className="text-muted-foreground">Objetivo</dt>
-                  <dd>
-                    {template.goal
-                      ? labelFor(goalLabels, template.goal)
-                      : cualquiera}
-                  </dd>
-                  <dt className="text-muted-foreground">Nivel</dt>
-                  <dd>
-                    {template.level
-                      ? labelFor(difficultyLabels, template.level)
-                      : cualquiera}
-                  </dd>
-                  <dt className="text-muted-foreground">Entorno</dt>
-                  <dd>
-                    {template.environment
-                      ? labelFor(environmentLabels, template.environment)
-                      : cualquiera}
-                  </dd>
-                </dl>
+                <DataList items={[
+                  { term: "Objetivo", value: template.goal ? labelFor(goalLabels, template.goal) : cualquiera },
+                  { term: "Nivel", value: template.level ? labelFor(difficultyLabels, template.level) : cualquiera },
+                  { term: "Entorno", value: template.environment ? labelFor(environmentLabels, template.environment) : cualquiera },
+                ]} />
               </article>
             </li>
           ))}
         </ul>
       )}
+      <Pagination page={filters.page} pages={pages} hrefFor={(page) => templateList.href(filters, { page })} label="Páginas de plantillas" />
     </Workspace>
   );
 }

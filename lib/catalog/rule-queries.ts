@@ -1,3 +1,6 @@
+import { ruleList, type RuleFilters } from "@/lib/catalog/rule-list";
+import { readPage, readPages } from "@/lib/shared/read-pages";
+import { sanitizeSearch } from "@/lib/shared/search";
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
@@ -62,16 +65,29 @@ function toRule(row: Row): RuleListItem {
   };
 }
 
-export async function listRules(): Promise<RuleListItem[]> {
+export async function listRules(filters: RuleFilters = ruleList.empty) {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("assignment_rules")
-    .select(columns)
-    .order("priority")
-    .order("created_at");
-  if (error)
-    throw new Error(`No se pudieron consultar las reglas: ${error.message}`);
-  return (data ?? []).map(toRule);
+  const query = () => {
+    let request = supabase.from("assignment_rules").select(columns, { count: "exact" })
+      .order("priority").order("created_at");
+    const term = sanitizeSearch(filters.q ?? "");
+    if (term) request = request.ilike("name", `%${term}%`);
+    if (filters.status) request = request.eq("is_active", filters.status === "active");
+    if (filters.template) request = request.eq("template_id", filters.template);
+    return request;
+  };
+  const { count: activeTotal, error: activeError } = await supabase.from("assignment_rules")
+    .select("id", { count: "exact", head: true }).eq("is_active", true);
+  if (activeError) throw new Error(`No se pudieron contar las reglas activas: ${activeError.message}`);
+  const { from, to } = ruleList.range(filters);
+  if (filters.state === "broken") {
+    const candidates = await readPages((start, end) => query().range(start, end), "No se pudieron consultar las reglas");
+    const matches = candidates.map(toRule).filter((rule) => rule.conditions === null);
+    return { rules: matches.slice(from, to + 1), total: matches.length, pages: ruleList.pages(matches.length), activeTotal: activeTotal ?? 0 };
+  }
+  const { rows, total } = await readPage((start, end) => query().range(start, end),
+    { from, to }, "No se pudieron consultar las reglas");
+  return { rules: rows.map(toRule), total, pages: ruleList.pages(total), activeTotal: activeTotal ?? 0 };
 }
 
 export async function getRule(id: string): Promise<RuleListItem | null> {

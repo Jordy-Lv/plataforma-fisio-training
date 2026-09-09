@@ -1,8 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
-import { Button } from "@/components/ui/button";
 import { FormMessage } from "@/components/auth/FormParts";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import {
   triggerMembershipReview,
   type ReviewActionState,
@@ -12,23 +12,25 @@ import {
  * Dispara a mano la revisión de vencimientos. El job de pg_cron la ejecuta a
  * diario; este botón existe para la demostración y para forzarla tras registrar
  * una membresía que vence pronto.
+ *
+ * `useActionState` se conserva por el `FormMessage` —la acción devuelve el
+ * resumen o el motivo del fallo—; la espera del botón la lleva `SubmitButton`.
  */
 export function MembershipReviewButton() {
-  const [state, action, pending] = useActionState<ReviewActionState>(
+  const [state, action] = useActionState<ReviewActionState>(
     triggerMembershipReview,
     {},
   );
 
   return (
     <form action={action} className="grid gap-3">
-      <Button
-        type="submit"
+      <SubmitButton
         variant="outline"
         className="min-h-11 justify-self-start"
-        disabled={pending}
+        pendingLabel="Revisando…"
       >
-        {pending ? "Revisando…" : "Revisar vencimientos ahora"}
-      </Button>
+        Revisar vencimientos ahora
+      </SubmitButton>
       <FormMessage
         state={{ error: state.error, success: state.summary }}
       />

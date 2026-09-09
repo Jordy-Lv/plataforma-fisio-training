@@ -1,3 +1,5 @@
+import { ClientLogo } from "@/components/brand/ClientLogo";
+import { CLIENT_TAGLINE } from "@/lib/brand/client";
 import { cn } from "cn";
 
 import { ButtonLink } from "@/components/ui/ButtonLink";
@@ -39,12 +41,10 @@ export default function Home() {
       </div>
       <section className="mx-auto grid w-full max-w-7xl items-center gap-14 px-5 py-12 sm:px-12 lg:grid-cols-[1.05fr_0.95fr]">
         <div className="max-w-2xl">
-          <p className="mb-8 inline-flex min-h-11 items-center rounded-full border border-border bg-surface px-4 text-sm font-semibold text-muted-foreground">
-            Entrenamiento y fisioterapia, conectados
-          </p>
+          <ClientLogo priority className="mb-8 w-full max-w-sm" />
 
           <h1 className="max-w-3xl text-balance text-5xl font-semibold leading-[0.98] tracking-[-0.045em] sm:text-7xl">
-            Una ruta clara para moverte mejor.
+            {CLIENT_TAGLINE}.
           </h1>
 
           <p className="mt-8 max-w-xl text-pretty text-lg leading-8 text-muted-foreground sm:text-xl">
@@ -62,7 +62,7 @@ export default function Home() {
               Iniciar sesión
             </ButtonLink>
             <span className="text-sm leading-6 text-muted-foreground">
-              Primera etapa · Aplicación web instalable
+              Entrenamiento y fisioterapia
             </span>
           </div>
         </div>

@@ -1,3 +1,4 @@
+import { CLIENT_NAME } from "@/lib/brand/client";
 import type { MetadataRoute } from "next";
 
 import { BACKGROUND_COLOR, BRAND_COLOR } from "@/lib/pwa/theme";
@@ -22,8 +23,8 @@ import { BACKGROUND_COLOR, BRAND_COLOR } from "@/lib/pwa/theme";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "Entrenamiento y fisioterapia",
-    short_name: "Fisio Training",
+    name: CLIENT_NAME,
+    short_name: CLIENT_NAME,
     description:
       "Rutinas, seguimiento y progreso para entrenamiento y fisioterapia en un solo lugar.",
     lang: "es",

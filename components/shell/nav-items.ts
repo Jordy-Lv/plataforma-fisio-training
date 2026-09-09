@@ -14,6 +14,7 @@ import {
   Store,
   Tag,
   User,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 
@@ -70,7 +71,10 @@ export const navGroupsByRole: Record<UserRole, NavGroup[]> = {
   admin: [
     {
       title: "Inicio",
-      items: [{ href: "/admin", label: "Panel", icon: LayoutDashboard }],
+      items: [
+        { href: "/admin", label: "Panel", icon: LayoutDashboard },
+        { href: "/people", label: "Personas", icon: Users },
+      ],
     },
     catalogGroup,
     careGroup,
@@ -87,7 +91,10 @@ export const navGroupsByRole: Record<UserRole, NavGroup[]> = {
   professional: [
     {
       title: "Inicio",
-      items: [{ href: "/pro", label: "Mi panel", icon: LayoutDashboard }],
+      items: [
+        { href: "/pro", label: "Mi panel", icon: LayoutDashboard },
+        { href: "/people", label: "Pacientes", icon: Users },
+      ],
     },
     careGroup,
     followUpGroup,

@@ -1,9 +1,11 @@
 import { cn } from "cn";
-import { Button } from "@/components/ui/button";
+import { FilterForm } from "@/components/ui/FilterForm";
+import { Chip } from "@/components/ui/Chip";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { cardVariants } from "@/components/ui/Card";
 import { Field, Input, Select } from "@/components/ui/Field";
 import {
+  exerciseList,
   exercisesHref,
   hasActiveFilters,
   type ExerciseFilters as Filters,
@@ -27,11 +29,16 @@ import {
  */
 export function ExerciseFilters({ filters }: { filters: Filters }) {
   return (
-    <form
-      method="get"
+    <FilterForm
+      label="Filtros del catálogo"
       action="/exercises"
       className={cn(cardVariants({ padding: "sm" }), "sm:p-5")}
     >
+      {/* La vista no es un filtro, pero sí estado del listado: sin este campo,
+          cambiar un desplegable devolvería al usuario a la vista de tarjetas.
+          Va oculto y con la vista actual, que el esquema ya acotó. */}
+      <input type="hidden" name="vista" value={filters.vista} />
+
       <Field label="Buscar por nombre">
         <Input
           name="q"
@@ -79,25 +86,22 @@ export function ExerciseFilters({ filters }: { filters: Filters }) {
         </Field>
       </div>
 
+      {hasActiveFilters(filters) && <div className="mt-4 flex flex-wrap gap-2" aria-label="Filtros activos">
+        {filters.q && <Chip href={exercisesHref(filters, { q: undefined, page: 1 })} removeLabel="Quitar búsqueda">{filters.q}</Chip>}
+        {filters.muscle && <Chip href={exercisesHref(filters, { muscle: undefined, page: 1 })} removeLabel="Quitar grupo muscular">{muscleGroupLabels[filters.muscle]}</Chip>}
+        {filters.equipment && <Chip href={exercisesHref(filters, { equipment: undefined, page: 1 })} removeLabel="Quitar equipamiento">{equipmentLabels[filters.equipment]}</Chip>}
+        {filters.environment && <Chip href={exercisesHref(filters, { environment: undefined, page: 1 })} removeLabel="Quitar entorno">{environmentLabels[filters.environment]}</Chip>}
+      </div>}
       <div className="mt-5 flex flex-wrap items-center gap-3">
-        <Button type="submit" size="lg" className="w-full sm:w-auto">
-          Aplicar filtros
-        </Button>
         {hasActiveFilters(filters) && (
           <ButtonLink
             variant="ghost"
-            href={exercisesHref({
-              q: undefined,
-              muscle: undefined,
-              equipment: undefined,
-              environment: undefined,
-              page: 1,
-            })}
+            href={exercisesHref(exerciseList.empty, { vista: filters.vista })}
           >
             Quitar filtros
           </ButtonLink>
         )}
       </div>
-    </form>
+    </FilterForm>
   );
 }

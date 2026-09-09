@@ -10,6 +10,7 @@ import { getRule, listTemplateOptions } from "@/lib/catalog/rule-queries";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { FlashToast } from "@/components/ui/FlashToast";
 import { cn } from "cn";
 import { cardVariants } from "@/components/ui/Card";
 
@@ -67,6 +68,10 @@ export default async function Page({
           cuando haga lo que esperas.
         </p>
       )}
+      <FlashToast
+        param="nueva"
+        message="Regla creada como inactiva. Pruébala en el simulador y actívala cuando haga lo que esperas."
+      />
 
       <div className="flex flex-wrap gap-1.5">
         <Badge>Prioridad {rule.priority}</Badge>

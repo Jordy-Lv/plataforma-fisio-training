@@ -92,60 +92,84 @@ export function ExerciseForm({ exercise }: { exercise?: ExerciseDetail }) {
         {editing && " Si no eliges ninguna, se conserva la que ya tiene."}
       </p>
 
-      <Choices
-        multiple
-        name="muscleGroups"
-        title="Grupos musculares que trabaja"
-        labels={muscleGroupLabels}
-        selected={exercise?.muscle_groups}
-      />
+      {/*
+        Los tres etiquetados obligatorios van a dos columnas en pantalla ancha:
+        eran tres pilas de casillas de 56 px, una debajo de otra, y sumaban más
+        alto que el resto del formulario junto. No se pliegan —Zod los exige, y
+        un campo obligatorio escondido tras un `<details>` produce un error que
+        el usuario no ve de dónde sale—.
+      */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Choices
+          multiple
+          name="muscleGroups"
+          title="Grupos musculares que trabaja"
+          labels={muscleGroupLabels}
+          selected={exercise?.muscle_groups}
+        />
 
-      <Choices
-        multiple
-        name="equipment"
-        title="Equipamiento que necesita"
-        labels={equipmentLabels}
-        selected={exercise?.equipment}
-      />
+        <Choices
+          multiple
+          name="equipment"
+          title="Equipamiento que necesita"
+          labels={equipmentLabels}
+          selected={exercise?.equipment}
+        />
 
-      <Choices
-        multiple
-        name="environments"
-        title="Dónde se puede hacer"
-        labels={environmentLabels}
-        selected={exercise?.environments}
-      />
+        <Choices
+          multiple
+          name="environments"
+          title="Dónde se puede hacer"
+          labels={environmentLabels}
+          selected={exercise?.environments}
+        />
+      </div>
 
-      <Field label="Nivel">
-        <select
-          className={inputClass}
-          name="difficulty"
-          defaultValue={exercise?.difficulty ?? ""}
-        >
-          <option value="">Sin especificar</option>
-          {Object.entries(difficultyLabels).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </select>
-      </Field>
+      {/*
+        El nivel y las contraindicaciones sí son opcionales, así que se piden a
+        demanda. Un `<details>` cerrado emite igual su contenido en el HTML del
+        servidor, que es lo que recorre `verify-catalog-custom`.
+      */}
+      <details className="rounded-xl border border-border px-4">
+        <summary className="flex min-h-11 cursor-pointer items-center py-3 font-semibold text-brand">
+          {editing
+            ? "Nivel del ejercicio · opcional"
+            : "Nivel y contraindicaciones · opcional"}
+        </summary>
 
-      {!editing && (
-        <>
-          <Choices
-            multiple
-            name="contraindications"
-            title="Contraindicado para (opcional)"
-            labels={bodyPartLabels}
-          />
-          <p className="-mt-4 text-sm text-muted-foreground">
-            Marca las zonas del cuerpo con las que este ejercicio no es
-            compatible. El motor de asignación lo excluirá de las rutinas de
-            quien tenga una condición activa en esa zona.
-          </p>
-        </>
-      )}
+        <div className="grid gap-6 pb-4">
+          <Field label="Nivel">
+            <select
+              className={inputClass}
+              name="difficulty"
+              defaultValue={exercise?.difficulty ?? ""}
+            >
+              <option value="">Sin especificar</option>
+              {Object.entries(difficultyLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          {!editing && (
+            <>
+              <Choices
+                multiple
+                name="contraindications"
+                title="Contraindicado para"
+                labels={bodyPartLabels}
+              />
+              <p className="-mt-4 text-sm text-muted-foreground">
+                Marca las zonas del cuerpo con las que este ejercicio no es
+                compatible. El motor de asignación lo excluirá de las rutinas de
+                quien tenga una condición activa en esa zona.
+              </p>
+            </>
+          )}
+        </div>
+      </details>
 
       <FormMessage
         state={validation.error ? { error: validation.error } : state}
