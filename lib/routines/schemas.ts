@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { bodyParts } from "@/lib/catalog/body-parts";
+import { isSchedulingDate, todayInBogota } from "@/lib/routines/calendar";
 
 const id = z.string().uuid("Selecciona un registro válido.");
 const nullableNumber = (max: number, label: string, integer = true) => z.preprocess(
@@ -34,4 +35,16 @@ export const sessionLogSchema = z.object({
     ctx.addIssue({ code: "custom", path: ["status"], message: "Marca como modificado para registrar una sustitución." });
 });
 export const readAlertSchema = z.object({ alertId: id });
+export const calendarDateSchema = z.iso.date({ error: "Elige una fecha válida." })
+  .refine((value) => value >= "1900-01-01" && value <= "2200-12-31", "Elige una fecha entre 1900 y 2200.");
+export const calendarQuerySchema = z.object({
+  date: calendarDateSchema.optional(),
+  view: z.enum(["month", "week"], { error: "Elige la vista de mes o semana." }).default("month"),
+});
+export const scheduleRoutineSchema = z.object({
+  patientId: id,
+  dayId: id,
+  scheduledOn: calendarDateSchema.refine((date) => isSchedulingDate(date, todayInBogota()), "Elige una fecha desde hoy y hasta un año."),
+});
+export const cancelScheduleSchema = z.object({ patientId: id, scheduleId: id });
 export type RoutineActionState = { error?: string; success?: string };

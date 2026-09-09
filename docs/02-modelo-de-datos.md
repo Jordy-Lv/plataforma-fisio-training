@@ -183,7 +183,7 @@ La rutina asignada a un paciente. **Copia de la plantilla**, no referencia.
 | `assigned_by` | `uuid` FK | Profesional que la asignó; nulo si la asignó el motor |
 | `name` | `text` | |
 | `status` | `routine_status` | `active` \| `completed` \| `archived` |
-| `starts_on` / `ends_on` | `date` | |
+| `starts_on` / `ends_on` | `date` | La asignación desde plantillas usa la fecha civil de America/Bogota para inicio y cierre. |
 
 ### `routine_days` · `routine_items`
 El contenido copiado y ya ajustado al paciente. Misma forma que `template_days` /
@@ -204,6 +204,28 @@ Una ejecución de un día de rutina.
 | `performed_on` | `date` | |
 | `status` | `session_status` | `in_progress` \| `completed` \| `abandoned` |
 | `completed_at` | `timestamptz` | |
+
+### `routine_schedules`
+Programación de un día de rutina en una fecha concreta. `day_number` sigue siendo
+el orden dentro de la rutina: no se interpreta como día de la semana.
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | `uuid` PK | |
+| `patient_id` | `uuid` FK | → `profiles(id)`; debe ser el dueño real de la rutina |
+| `routine_day_id` | `uuid` FK | → `routine_days(id)` |
+| `scheduled_on` | `date` | Fecha programada; al crear, desde hoy hasta 366 días y dentro de la vigencia de la rutina |
+| `created_by` | `uuid` FK | → `profiles(id)`; lo fija la base a partir de la sesión del profesional o administrador |
+| `cancelled_at` | `timestamptz` | Baja lógica; único campo editable |
+| `created_at` | `timestamptz` | |
+
+Único por `(patient_id, routine_day_id, scheduled_on)` mientras no esté cancelada.
+El equipo puede cancelar fechas no pasadas y sin ejecución. Al cerrar una rutina
+se cancelan automáticamente sus programaciones no pasadas sin sesión iniciada.
+Los historiales permanecen. La meta semanal cuenta las programaciones vigentes y
+las cruza con `sessions` por paciente, día de rutina y fecha; varias ejecuciones
+del mismo día cuentan una sola vez para esa programación. Las sesiones sin
+programación siguen visibles, sin aumentar esa meta.
 
 ### `session_logs`
 **El corazón del producto.** Una fila por ejercicio ejecutado (o no ejecutado).

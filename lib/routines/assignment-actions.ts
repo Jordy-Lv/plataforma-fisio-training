@@ -34,7 +34,9 @@ export async function assignRoutine(_previous: AssignmentState, form: FormData):
   });
   if (result.error) return { error: mensaje(result.error, "No se pudo asignar la rutina") };
   revalidatePath(`/pro/routines/${patientId}`);
+  revalidatePath(`/pro/routines/${patientId}/calendar`);
   revalidatePath("/routine");
+  revalidatePath("/routine/calendar");
   const outcome = (result.data as { outcome: string }).outcome;
   return { success: outcome === "assigned" ? "Rutina asignada. El paciente ya puede consultarla."
     : outcome === "pending_review" ? "Propuesta guardada para revisión: hay días con menos de tres ejercicios. Se avisó al equipo y se conservó la rutina anterior."

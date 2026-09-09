@@ -737,6 +737,58 @@ export type Database = {
           },
         ]
       }
+      routine_schedules: {
+        Row: {
+          cancelled_at: string | null
+          created_at: string
+          created_by: string
+          id: string
+          patient_id: string
+          routine_day_id: string
+          scheduled_on: string
+        }
+        Insert: {
+          cancelled_at?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          patient_id: string
+          routine_day_id: string
+          scheduled_on: string
+        }
+        Update: {
+          cancelled_at?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          patient_id?: string
+          routine_day_id?: string
+          scheduled_on?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "routine_schedules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "routine_schedules_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "routine_schedules_routine_day_id_fkey"
+            columns: ["routine_day_id"]
+            isOneToOne: false
+            referencedRelation: "routine_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       routine_templates: {
         Row: {
           created_at: string

@@ -41,6 +41,7 @@ Esta es la regla que hay que tener en la cabeza al escribir cualquier política.
 | `assignment_rules` | total | lectura | — |
 | `routines` / `routine_days` / `routine_items` | total | lectura/escritura de asignados | **solo lectura de las propias** |
 | `sessions` | lectura total | lectura de asignados | lectura/escritura propias |
+| `routine_schedules` | lectura/programación/cancelación | lectura/programación/cancelación de asignados | solo lectura propia |
 | `session_logs` | lectura total | lectura de asignados | lectura/escritura propios |
 | `screenings` | total | lectura/escritura de asignados | **solo lectura propias** |
 | `attendance` | total | lectura/escritura de asignados | solo lectura propia |

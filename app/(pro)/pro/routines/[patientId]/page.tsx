@@ -8,6 +8,8 @@ import { listExercises } from "@/lib/catalog/queries";
 import { exerciseFiltersSchema } from "@/lib/catalog/schemas";
 import { labelFor } from "@/lib/catalog/vocabulary";
 import { assignmentSchema } from "@/lib/routines/assignment";
+import { calendarHref } from "@/lib/routines/calendar";
+import { calendarQuerySchema } from "@/lib/routines/schemas";
 import {
   activeConditions,
   editableRoutines,
@@ -85,6 +87,18 @@ export default async function Page({
   // ejercicio concreto —para sustituirlo—. La URL es su estado, así que el
   // botón de retroceso lo cierra.
   const query = await searchParams;
+  const calendarQuery = calendarQuerySchema.safeParse({
+    date: query.calendarDate,
+    view: query.calendarView,
+  });
+  const calendarContext =
+    calendarQuery.success && calendarQuery.data.date
+      ? {
+          date: calendarQuery.data.date,
+          view: calendarQuery.data.view,
+          returnHref: `${calendarHref(`/pro/routines/${patientId}/calendar`, calendarQuery.data.date, calendarQuery.data.view)}#calendar-schedule`,
+        }
+      : undefined;
   const items = routines.flatMap((routine) =>
     routine.routine_days.flatMap((day) => day.routine_items),
   );
@@ -107,6 +121,17 @@ export default async function Page({
       : [];
 
   const base = `/pro/routines/${patientId}`;
+  const editorParams = new URLSearchParams();
+  if (calendarContext) {
+    editorParams.set("calendarDate", calendarContext.date);
+    editorParams.set("calendarView", calendarContext.view);
+  }
+  const editorHref = (filter?: { name: "dia" | "item"; value: string }) => {
+    const parameters = new URLSearchParams(editorParams);
+    if (filter) parameters.set(filter.name, filter.value);
+    const search = parameters.toString();
+    return search ? `${base}?${search}` : base;
+  };
 
   /** El buscador del catálogo, compartido por añadir y sustituir. */
   const buscador = (
@@ -121,6 +146,9 @@ export default async function Page({
         className="flex flex-wrap items-end gap-3"
       >
         <input type="hidden" name={campo} value={valor} />
+        {[...editorParams].map(([name, value]) => (
+          <input key={name} type="hidden" name={name} value={value} />
+        ))}
         <Field
           label="Buscar un ejercicio del catálogo"
           className="min-w-60 flex-1"
@@ -136,7 +164,7 @@ export default async function Page({
           />
         </Field>
         <Button type="submit">Buscar</Button>
-        <ButtonLink variant="ghost" href={base}>
+        <ButtonLink variant="ghost" href={editorHref()}>
           Cerrar
         </ButtonLink>
       </form>
@@ -170,12 +198,28 @@ export default async function Page({
       title={patient.full_name ?? "Rutinas del paciente"}
       name={actor.fullName}
       actions={
-        <ButtonLink variant="ghost" href="/pro/routines">
-          Volver a pacientes
-        </ButtonLink>
+        <div className="flex flex-wrap gap-2">
+          <ButtonLink
+            variant="default"
+            href={
+              calendarContext?.returnHref ??
+              `/pro/routines/${patientId}/calendar`
+            }
+          >
+            Ver calendario
+          </ButtonLink>
+          <ButtonLink variant="ghost" href="/pro/routines">
+            Volver a pacientes
+          </ButtonLink>
+        </div>
       }
     >
-      {patient.is_active && <AssignmentForm patientId={patientId} />}
+      {patient.is_active && (
+        <AssignmentForm
+          patientId={patientId}
+          calendarContext={calendarContext}
+        />
+      )}
 
       {conditions.length > 0 && (
         <p className="mt-6 rounded-lg bg-warning-soft p-3 text-sm leading-7 text-warning">
@@ -233,7 +277,11 @@ export default async function Page({
               {routine.routine_days.map((day) => (
                 <section
                   key={day.id}
-                  className={cn(cardVariants({ padding: "sm" }), "sm:p-5")}
+                  id={`routine-day-${day.id}`}
+                  className={cn(
+                    cardVariants({ padding: "sm" }),
+                    "scroll-mt-24 sm:p-5",
+                  )}
                 >
                   <h3 className="text-lg font-semibold">
                     Día {day.day_number}
@@ -325,7 +373,12 @@ export default async function Page({
                                   />
                                 ))
                               ) : (
-                                <ButtonLink href={`${base}?item=${item.id}`}>
+                                <ButtonLink
+                                  href={editorHref({
+                                    name: "item",
+                                    value: item.id,
+                                  })}
+                                >
                                   Sustituir por otro ejercicio
                                 </ButtonLink>
                               )}
@@ -347,7 +400,9 @@ export default async function Page({
                         />
                       ))
                     ) : (
-                      <ButtonLink href={`${base}?dia=${day.id}`}>
+                      <ButtonLink
+                        href={editorHref({ name: "dia", value: day.id })}
+                      >
                         Añadir ejercicios a este día
                       </ButtonLink>
                     )}
