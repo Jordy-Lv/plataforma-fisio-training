@@ -48,6 +48,17 @@ lo que hay sobra; lo que sobra es cuánto de ello se enseña a la vez.
 | **KAN-8** — Simplificar la creación de rutinas | Por hacer | **Válido**, con dos datos del ticket corregidos. |
 | KAN-1, KAN-3 | De Andrès | Solapan con KAN-6 y con los defectos D4 y D7. Coordinar. |
 
+Del análisis salieron **seis tickets nuevos**, ya creados y enlazados:
+
+| Ticket | Qué es | Fase |
+|---|---|---|
+| **KAN-9** | Defecto D1 — la rutina no se asigna sola al terminar el registro | 3 |
+| **KAN-10** | Defecto D2 — las alertas se reparten sin mirar la especialidad (era «KAN-4b») | 3 |
+| **KAN-11** | Agrupar el menú con pestañas: de 13 entradas a 8 (era «KAN-4a») | 2 |
+| **KAN-12** | Defecto D4 — el porcentaje de cumplimiento se falsea en silencio | 2 |
+| **KAN-13** | Defecto D5 — no se puede cerrar ni reasignar un acompañamiento. **Bloquea KAN-6** | 4 |
+| **KAN-14** | Filtros de Personas por URL, con paginación (era «KAN-4c») | 4 |
+
 ### KAN-4 — el criterio de aceptación parte de un supuesto que no se cumple
 
 El ticket pide «verificar que no hay fuga de datos entre pacientes de distintas especialidades».
@@ -64,11 +75,15 @@ paciente puede tener entrenador y fisioterapeuta a la vez») y lo que decide
 > «La interfaz debe filtrar por `specialty` donde corresponda […]. Es filtrado de presentación,
 > no de autorización.»
 
-Ese filtrado de presentación es lo que **no** está hecho. El ticket se reparte así:
+Ese filtrado de presentación es lo que **no** está hecho. El ticket queda repartido en tres tickets
+que ya existen:
 
-- **KAN-4a** — menú y panel → Fase 2.
-- **KAN-4b** — alertas por especialidad → es el defecto **D2**, y sí es un defecto real.
-- **KAN-4c** — filtros de `/people` → Fase 4.
+- **KAN-11** — menú y panel → Fase 2.
+- **KAN-10** — alertas por especialidad → es el defecto **D2**, y sí es un defecto real.
+- **KAN-14** — filtros de `/people` → Fase 4.
+
+Con eso, KAN-4 se queda sin contenido propio: conviene cerrarlo apuntando a los tres, en vez de
+dejarlo abierto con un criterio de aceptación que no se puede cumplir.
 
 ### KAN-7 — qué hacen las reglas y por qué no se pueden quitar
 
@@ -162,7 +177,7 @@ Media hora, y puede explicar sola parte de la sensación de «no aporta valor».
 
 Salida: confirmar o descartar **D1** en vivo, y saber si el motor está sembrado.
 
-### Fase 2 — Adelgazar (KAN-5, KAN-4a, KAN-7)
+### Fase 2 — Adelgazar (KAN-11, KAN-5, KAN-12, KAN-7)
 
 El bulto del valor. **Ninguna ruta cambia**: las pestañas son enlaces a las rutas que ya existen,
 así que el riesgo para las dieciocho suites HTTP de [`11`](11-contratos-de-las-suites-http.md) es
@@ -214,7 +229,7 @@ miente en silencio.
 **[verif.]** `test:design`, `test:auth:screens`, `test:rules:panel`, `test:catalog`,
 `test:templates`, más los cuatro checks.
 
-### Fase 3 — Cumplir lo prometido (D1 y D2)
+### Fase 3 — Cumplir lo prometido (KAN-9 y KAN-10)
 
 **3.1 — [código] El disparo automático del motor (D1).** Que `finish_patient_onboarding` invoque
 `commit_routine_assignment` en la misma transacción. Hay que preservar lo que ya existe: el
@@ -229,7 +244,7 @@ dolor, el entrenador las de cumplimiento. Es el filtrado por especialidad que
 
 **[verif.]** `test:routines`, `test:rules:panel`, `test:auth`, más los cuatro checks.
 
-### Fase 4 — Completar (KAN-6, KAN-8, KAN-4c)
+### Fase 4 — Completar (KAN-13, KAN-6, KAN-8, KAN-14)
 
 **4.1 — [código] Asignación de equipo (KAN-6).** El esquema **ya lo soporta**: `care_assignments`
 tiene `kind` y un único índice parcial `(patient_id, kind) where ended_at is null`, así que un
@@ -254,7 +269,7 @@ en el mismo formulario —`AddDayForm` ya asigna el número de día automáticam
 una de las dos fases obligatorias. Documentar en [`02`](02-modelo-de-datos.md) que un ejercicio va
 en tantas plantillas como se quiera.
 
-**4.3 — [código] Filtros de `/people` (KAN-4c).** `PeopleFilter` es la excepción del sistema:
+**4.3 — [código] Filtros de `/people` (KAN-14).** `PeopleFilter` es la excepción del sistema:
 filtra en el DOM del cliente, sin URL, **sin paginar** —trae todos los perfiles, con el tope duro
 de mil filas de PostgREST— y sin filtro de estado. Migrarlo a `createListParams`
 ([`lib/shared/list-params.ts`](../lib/shared/list-params.ts)) y a `listPeople` /
