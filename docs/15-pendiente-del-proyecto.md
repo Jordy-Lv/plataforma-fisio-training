@@ -14,6 +14,10 @@ Complementa a [`openspec/changes/improve-frontend-ux/pendiente-frontend.md`](../
 que detalla sección por sección el frontend pendiente. Si los dos se contradicen, gana el
 `tasks.md`.
 
+El **orden** en que se ataca todo esto, y qué se recorta por no aportar valor, se decide en
+[`16-plan-de-mejora.md`](16-plan-de-mejora.md), que valida además los tickets de Jira contra el
+código y recoge nueve defectos que no estaban en ninguna lista.
+
 Notación: **[código]** hay que escribirlo · **[verif.]** es comprobar, medir o correr suites ·
 **[oper.]** es infraestructura o proceso, no código de la aplicación.
 
