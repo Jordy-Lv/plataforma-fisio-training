@@ -44,6 +44,35 @@ Si ninguna regla coincide, **no se inventa nada**: el paciente queda sin rutina,
 una alerta para el profesional y la vista del paciente muestra "Tu profesional está
 preparando tu rutina". Es preferible a asignar algo inadecuado.
 
+### El apartado «Asignación automática» (KAN-7)
+
+Se preguntó si este apartado aporta valor o si se podía retirar. **Se queda**, y por dos
+razones duras:
+
+1. Es el punto 2 del alcance ([`00`](00-contexto-y-alcance.md)): «la plataforma propone una
+   rutina base automáticamente».
+2. **No existe otra forma de asignar una rutina por reglas.** Toda fila de `routines` nace de
+   `copy_routine_template`, y el camino con motor pasa por `commit_routine_assignment`, que
+   exige regla ganadora. La única alternativa es la copia manual directa, que es una decisión
+   clínica del profesional y deja su propia traza (BACK-003).
+
+Lo que sí sobraba era la presentación, y eso es lo que cambió:
+
+- **El nombre.** «Reglas» es lenguaje de ingeniero. En el menú es «Asignación» y la pantalla
+  se titula «Asignación automática».
+- **Los criterios del formulario.** De siete a la vista a **cuatro** —objetivo, nivel, entorno
+  y condiciones que la excluyen—, que son los que describen a quién va dirigida una regla. El
+  equipamiento, cómo se exige y la edad quedan plegados en «Criterios avanzados», que **se
+  abre solo** cuando la regla que se edita ya usa alguno: plegar algo que está puesto lo
+  esconde, y esconder no es simplificar. **El esquema de Zod no cambió**: sigue aceptando los
+  siete y las reglas que ya los usan siguen funcionando.
+- **Una línea de estado.** «N plantillas activas · N reglas activas», y si la máquina está
+  cableada o no. Antes había que recorrer la lista para deducirlo.
+
+**Descartado** doblar la regla dentro de la plantilla: obligaría a una regla por plantilla —el
+seed ya tiene dos apuntando a la misma— y reescribiría `test:rules:panel` entero a cambio de
+un beneficio que las pestañas de sección ya dan.
+
 ### Dónde se dispara (KAN-9)
 
 Los dos puntos de entrada, y ninguno más:
