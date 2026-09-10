@@ -456,3 +456,46 @@ botón del segundo día.
 Los 2.057 px de la pantalla entera incluyen algo que antes no estaba: la tarjeta de la sesión
 a medias, arriba del todo. Quien dejó una sesión abierta la reanuda desde la primera línea, en
 vez de descubrir al pulsar «Iniciar» que ya tenía una empezada.
+
+## 4 bis. El menú, de trece entradas a ocho (2026-09-10)
+
+Ticket **KAN-11**, fase 2.1 y 2.2 del [plan de mejora](16-plan-de-mejora.md). Es la medición
+«después» del punto 4: no cambia ninguna ruta, cambia cuántas se enseñan a la vez.
+
+**Cómo se midió.** Sesión de cada rol abierta por HTTP con el cliente de las propias suites
+(`scripts/helpers/auth-http.mjs`) contra un `next start` de producción en el 3000, contando
+los `<a>` del `<nav aria-label="Secciones">` del HTML del servidor. Las plazas de la barra
+del teléfono, en el navegador integrado a 375×812.
+
+| Rol | Entradas antes | Entradas después | En la barra del teléfono |
+|---|---|---|---|
+| Admin | 13 en 5 grupos | **8** | 5 + «Menú» (antes 4 + «Menú») |
+| Profesional | 12 en 5 grupos | **8** | 5 + «Menú» (antes 4 + «Menú») |
+| Paciente | 6 en 1 grupo | 6 | **6, todas** (antes 4 + «Menú») |
+
+La barra pasó de cinco plazas a seis. A 375 px cada objetivo mide 62 px de ancho, por encima
+de los 44 px mínimos, y ningún rótulo parte en dos líneas.
+
+**Lo que dejó de esconderse.** El admin veía 4 de 13 (31 %); ahora ve 5 de 8 (63 %). El
+paciente veía 4 de 6 y ahora ve las 6. Y el panel de «Menú» lista las ocho secciones **con
+sus apartados**, así que es el mapa completo de la aplicación en una pantalla, no una segunda
+lista que hay que recorrer.
+
+Tres grupos colapsaron en una entrada con pestañas dentro:
+
+| Entrada | Apartados | Quién los ve |
+|---|---|---|
+| Catálogo | Ejercicios · Plantillas · Asignación | «Asignación» solo el admin |
+| Seguimiento | Tamizaje · Asistencia | los dos |
+| Negocio | Planes · Membresías · Vitrina | «Planes» solo el admin |
+
+**Saltos entre pantallas hermanas: de 2 a 1.** Antes, ir de `/exercises` a `/rules` eran dos
+saltos —abrir el menú, elegir el grupo, elegir la entrada— y en el teléfono tres, porque
+«Reglas» vivía detrás de «Menú». Ahora las hermanas están en la banda de pestañas de la
+propia pantalla, a un toque, que es lo que ya hacía `PatientTabs` con las seis vistas de un
+paciente y ahora comparte marcado con ellas (`components/shell/TabBar.tsx`).
+
+**Ningún enlace del menú rebota.** Comprobado por HTTP: las trece rutas del admin y las once
+del profesional devuelven 200 con la sesión de ese rol. Antes, `/plans` le devolvía al
+profesional una redirección desde el botón «Planes y servicios» del panorama del negocio
+(defecto **D3**).

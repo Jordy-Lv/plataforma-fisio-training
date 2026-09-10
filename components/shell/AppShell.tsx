@@ -5,6 +5,7 @@ import { LogOut } from "lucide-react";
 import { cn } from "cn";
 
 import { MobileNav } from "@/components/shell/MobileNav";
+import { SectionTabs } from "@/components/shell/SectionTabs";
 import { SidebarNav } from "@/components/shell/SidebarNav";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -104,6 +105,12 @@ export function AppShell({
               withNav ? "pb-28" : "pb-12",
             )}
           >
+            {/*
+              Las pestañas de la sección van **encima** del título: son
+              navegación entre pantallas hermanas, no parte de esta. Solo
+              aparecen cuando la entrada activa del menú tiene apartados.
+            */}
+            {withNav && <SectionTabs role={role} />}
             {title && (
               <PageHeader
                 title={title}

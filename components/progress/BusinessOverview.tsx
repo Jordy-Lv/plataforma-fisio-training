@@ -43,8 +43,19 @@ function Metric({
  * El panorama del negocio: clientes activos, cumplimiento y asistencia del mes
  * en curso. Lo que tiene pantalla propia —alertas, membresías y planes— se
  * enlaza, no se repite aquí.
+ *
+ * Los enlaces del pie dependen del rol: `/plans` es `requireAdmin`, así que
+ * ofrecérselo al profesional era mandarlo a un rebote. Es la misma regla que
+ * gobierna el menú (`components/shell/nav-items.ts`): un enlace que redirige
+ * nada más pulsarlo es peor que no tenerlo.
  */
-export function BusinessOverview({ overview }: { overview: Overview }) {
+export function BusinessOverview({
+  overview,
+  role,
+}: {
+  overview: Overview;
+  role: "admin" | "professional";
+}) {
   const { activePatients, compliance, attendance } = overview;
   const month = formatMonth(monthStart());
 
@@ -104,9 +115,11 @@ export function BusinessOverview({ overview }: { overview: Overview }) {
         <ButtonLink href="/memberships">
           Membresías
         </ButtonLink>
-        <ButtonLink href="/plans">
-          Planes y servicios
-        </ButtonLink>
+        {role === "admin" && (
+          <ButtonLink href="/plans">
+            Planes y servicios
+          </ButtonLink>
+        )}
       </div>
     </section>
   );

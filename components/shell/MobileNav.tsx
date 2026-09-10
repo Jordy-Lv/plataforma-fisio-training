@@ -8,7 +8,7 @@ import { cn } from "cn";
 
 import {
   activeNavHref,
-  navGroupsByRole,
+  navItemsByRole,
   needsNavOverflow,
   primaryNavItems,
 } from "@/components/shell/nav-items";
@@ -18,9 +18,11 @@ const tabClass =
   "flex min-h-14 flex-1 flex-col items-center justify-center gap-1 px-1 text-[0.6875rem] font-medium leading-tight transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring";
 
 /**
- * Navegación del teléfono: barra fija abajo, donde llega el pulgar. El
- * paciente tiene cinco secciones y las ve todas; el administrador tiene doce,
- * que no caben en 375 px, así que ve cuatro y un botón que despliega el resto.
+ * Navegación del teléfono: barra fija abajo, donde llega el pulgar. La barra
+ * tiene seis plazas, así que el paciente ve sus **seis** secciones sin botón de
+ * «Menú», y el equipo ve **cinco de ocho** más el botón. Antes el equipo tenía
+ * trece secciones y la barra enseñaba cuatro: escondía dos tercios de la
+ * aplicación, y el paciente, con seis, veía solo cuatro.
  *
  * El panel se cierra solo al cambiar de ruta: sin eso taparía la pantalla
  * recién abierta, ya que Next conserva el árbol de React al navegar.
@@ -44,40 +46,51 @@ export function MobileNav({ role }: { role: UserRole }) {
         inferior, con `pb-24` para que la última entrada no quede debajo de la
         barra, que se dibuja encima por su `z-40`. Es opaco: con un fondo
         translúcido, el texto de la página de detrás se mezclaba con el del menú.
+
+        Lista las ocho secciones **con sus apartados**, para que el panel sea el
+        mapa completo y no haya que entrar en una sección para descubrir qué
+        contiene.
       */}
       {hasOverflow && isOpen && (
         <div
           id={panelId}
           className="fixed inset-x-0 bottom-0 top-16 z-30 overflow-y-auto overscroll-contain bg-background px-5 pb-24 pt-6"
         >
-          <nav aria-label="Todas las secciones" className="grid gap-6">
-            {navGroupsByRole[role].map((group) => (
-              <div key={group.title} className="grid gap-1">
-                <p className="px-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {group.title}
-                </p>
-                <ul className="grid gap-0.5">
-                  {group.items.map((item) => (
-                    <li key={item.href}>
-                      <Link
-                        href={item.href}
-                        aria-current={active === item.href ? "page" : undefined}
-                        className={cn(
-                          "flex min-h-12 items-center gap-3 rounded-lg px-3 font-medium",
-                          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
-                          active === item.href
-                            ? "bg-brand-soft text-brand-soft-foreground"
-                            : "hover:bg-muted",
-                        )}
-                      >
-                        <item.icon aria-hidden="true" className="size-5 shrink-0" />
-                        {item.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+          <nav aria-label="Todas las secciones" className="grid gap-1">
+            <ul className="grid gap-0.5">
+              {navItemsByRole[role].map((item) => (
+                <li key={item.href} className="grid gap-0.5">
+                  <Link
+                    href={item.href}
+                    aria-current={active === item.href ? "page" : undefined}
+                    className={cn(
+                      "flex min-h-12 items-center gap-3 rounded-lg px-3 font-medium",
+                      "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                      active === item.href
+                        ? "bg-brand-soft text-brand-soft-foreground"
+                        : "hover:bg-muted",
+                    )}
+                  >
+                    <item.icon aria-hidden="true" className="size-5 shrink-0" />
+                    {item.label}
+                  </Link>
+                  {item.tabs && (
+                    <ul className="grid gap-0.5 pl-11">
+                      {item.tabs.map((tab) => (
+                        <li key={tab.href}>
+                          <Link
+                            href={tab.href}
+                            className="flex min-h-11 items-center rounded-lg px-3 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                          >
+                            {tab.label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              ))}
+            </ul>
           </nav>
         </div>
       )}

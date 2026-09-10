@@ -42,7 +42,7 @@ export async function StaffHome({
           : "El estado de tus pacientes este mes. El directorio y el alta están en Pacientes."
       }
     >
-      <BusinessOverview overview={overview} />
+      <BusinessOverview overview={overview} role={role} />
 
       {/* El panel de trabajo solo aparece cuando hay de quién ocuparse: sin
           pacientes activos, el panorama ya explica qué hacer primero. */}
