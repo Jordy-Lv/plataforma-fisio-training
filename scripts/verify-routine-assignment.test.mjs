@@ -101,11 +101,15 @@ test("Motor conectado a asignación, aislamiento y vistas", { timeout: 180000 },
     assert.equal(sql(`select count(*) from public.routine_items i join public.routine_days d on d.id=i.routine_day_id where d.routine_id='${firstId}'`), '3');
     assert.equal(sql(`select assigned_by is null from public.routines where id='${firstId}'`), 't');
     assert.equal(templateContents(), original);
-    const alert = await physio.api.from('alerts').select('payload').eq('patient_id', patient.id);
+    // KAN-10 · D2: la plantilla es de tipo `training`, así que el aviso es del
+    // entrenador. El fisioterapeuta acompaña al mismo paciente y NO lo recibe:
+    // antes le llegaba, y era ruido.
+    const alert = await pro.api.from('alerts').select('payload').eq('patient_id', patient.id);
     assert.equal(alert.error, null);
     assert.equal(alert.data.length, 1);
     assert.equal(alert.data[0].payload.outcome, 'assigned');
-    for (const user of [pro, admin]) assert.equal((await user.api.from('alerts').select('id').eq('patient_id', patient.id)).data.length >= 1, true);
+    assert.deepEqual((await physio.api.from('alerts').select('id').eq('patient_id', patient.id)).data, []);
+    assert.equal((await admin.api.from('alerts').select('id').eq('patient_id', patient.id)).data.length >= 1, true);
   });
   await t.test("Un cambio posterior del perfil o de la regla obliga a reevaluar", async () => {
     const stale = await context();
@@ -130,7 +134,7 @@ test("Motor conectado a asignación, aislamiento y vistas", { timeout: 180000 },
     assert.match(result.html, /404|could not be found/);
     assert.ok(!result.html.includes('name="patientId"'));
   });
-  await t.test("Un día vacío se reserva al equipo, conserva la activa y avisa a ambos profesionales", async () => {
+  await t.test("Un día vacío se reserva al equipo, conserva la activa y avisa a quien entrena ese tipo", async () => {
     sql(`update public.exercises set contraindications='{knee}' where id='${safeId}'`);
     const result = await commit(pro, patient, await context());
     assert.equal(result.error, null);
@@ -142,7 +146,7 @@ test("Motor conectado a asignación, aislamiento y vistas", { timeout: 180000 },
     assert.deepEqual((await patient.api.from('routine_days').select('id').eq('routine_id', pendingId)).data, []);
     assert.deepEqual((await patient.api.from('alerts').select('id').eq('patient_id', patient.id)).data, []);
     assert.deepEqual((await outsider.api.from('alerts').select('id').eq('patient_id', patient.id)).data, []);
-    const alert = await physio.api.from('alerts').select('payload').eq('patient_id', patient.id).order('created_at', { ascending: false }).limit(1);
+    const alert = await pro.api.from('alerts').select('payload').eq('patient_id', patient.id).order('created_at', { ascending: false }).limit(1);
     assert.equal(alert.data[0].payload.outcome, 'pending_review');
     sql(`update public.exercises set contraindications='{}' where id='${safeId}'`);
   });
@@ -243,7 +247,7 @@ test("Motor conectado a asignación, aislamiento y vistas", { timeout: 180000 },
       before + 1,
     );
     // El evento generó su aviso para el equipo, igual que el camino con reglas.
-    const alert = await physio.api.from("alerts").select("payload")
+    const alert = await pro.api.from("alerts").select("payload")
       .eq("patient_id", patient.id).eq("type", "routine_assignment")
       .order("created_at", { ascending: false }).limit(1);
     assert.equal(alert.error, null);

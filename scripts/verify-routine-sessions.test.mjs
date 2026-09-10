@@ -96,16 +96,30 @@ test('Ejecución persistente, alertas y aislamiento por API y acciones HTTP', { 
     for (let i=0;i<3;i++) assert.equal((await write(session,{ pain_level:8,pain_location:'knee',notes:'Dolor al bajar' })).error,null);
     await close(session); assert.equal((await alerts()).length,0);
   });
-  await t.test('Tres sesiones con dolor y saltado generan contexto para dos profesionales y admin', async () => {
+  await t.test('Tres sesiones con dolor y saltado reparten por especialidad (KAN-10 · D2)', async () => {
     for (let i=0;i<3;i++) {
       const session = await start();
       assert.equal((await write(session,{ status:'skipped',pain_level:8,pain_location:'knee',notes:`Motivo de prueba ${i+1}` })).error,null);
       await close(session);
     }
-    const rows = await alerts(); assert.ok(rows.some((a)=>a.type==='pain')); assert.ok(rows.some((a)=>a.type==='skipped'));
-    const pain = rows.find((a)=>a.type==='pain'); assert.ok(new Set(pain.payload.evidence.map((e)=>e.session_id)).size>=3);
-    const skipped = rows.find((a)=>a.type==='skipped'); assert.equal(skipped.payload.evidence.flat().length,3);
-    assert.equal((await alerts(physio)).length,rows.length); assert.ok((await alerts(admin)).length>=rows.length*3);
+    // Este paciente lleva entrenador **y** fisioterapeuta a la vez, que es el
+    // caso que el seed ya crea y el que motiva el reparto: el dolor es criterio
+    // clínico y los saltados son cumplimiento. Antes las dos llegaban a los dos.
+    const delEntrenador = await alerts(pro), delFisio = await alerts(physio);
+    assert.ok(delEntrenador.some((a)=>a.type==='skipped'), 'El entrenador recibe los saltados');
+    assert.ok(!delEntrenador.some((a)=>a.type==='pain'), 'El entrenador NO recibe el dolor');
+    assert.ok(delFisio.some((a)=>a.type==='pain'), 'El fisioterapeuta recibe el dolor');
+    assert.ok(!delFisio.some((a)=>a.type==='skipped'), 'El fisioterapeuta NO recibe los saltados');
+
+    // El contenido de cada una sigue siendo el que era.
+    const pain = delFisio.find((a)=>a.type==='pain'); assert.ok(new Set(pain.payload.evidence.map((e)=>e.session_id)).size>=3);
+    const skipped = delEntrenador.find((a)=>a.type==='skipped'); assert.equal(skipped.payload.evidence.flat().length,3);
+
+    // El administrador lo sigue recibiendo todo: para él no cambia nada.
+    const delAdmin = await alerts(admin);
+    assert.ok(delAdmin.some((a)=>a.type==='pain') && delAdmin.some((a)=>a.type==='skipped'));
+    assert.ok(delAdmin.length >= delEntrenador.length + delFisio.length);
+
     for (const actor of [patient,other,outsider]) assert.deepEqual(await alerts(actor),[]);
   });
   await t.test('Leer una alerta no afecta a otros destinatarios ni permite alterar contenido', async () => {
@@ -191,5 +205,25 @@ test('Ejecución persistente, alertas y aislamiento por API y acciones HTTP', { 
     assert.ok((await patient.api.rpc('start_routine_session',{target_day:dayId})).error);
     assert.ok((await write(session)).error);
     sql(`update public.profiles set is_active=true where id='${patient.id}'`);
+  });
+  await t.test('KAN-10 · sin fisioterapeuta a cargo, el dolor lo recibe quien sí acompaña', async () => {
+    // El reparto no puede convertirse en pérdida de señal: si nadie de la
+    // especialidad que toca acompaña al paciente, la alerta va a quien sí lo
+    // acompaña. Es el segundo punto del criterio del ticket, por el otro lado.
+    sql(`update public.care_assignments set ended_at=now() where patient_id='${patient.id}' and professional_id='${physio.id}'`);
+    try {
+      const antes = (await alerts(pro)).filter((a)=>a.type==='pain').length;
+      for (let i=0;i<3;i++) {
+        const session = await start();
+        assert.equal((await write(session,{ status:'done',pain_level:9,pain_location:'shoulder',notes:`Sin fisio ${i+1}` })).error,null);
+        await close(session);
+      }
+      assert.ok(
+        (await alerts(pro)).filter((a)=>a.type==='pain').length > antes,
+        'El entrenador tiene que recibir el dolor cuando es el único que acompaña al paciente',
+      );
+    } finally {
+      sql(`update public.care_assignments set ended_at=null where patient_id='${patient.id}' and professional_id='${physio.id}'`);
+    }
   });
 });

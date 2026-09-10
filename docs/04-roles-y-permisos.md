@@ -58,6 +58,38 @@ Puntos que suelen implementarse mal:
 - **El paciente no ve alertas.** Las alertas son una herramienta clínica y administrativa.
 - **El profesional no ve pacientes que no tiene asignados.** Ni siquiera su nombre.
 
+### Matriz «tipo de alerta → especialidad» (KAN-10)
+
+Un mismo paciente puede tener entrenador **y** fisioterapeuta a la vez, y
+[`00-contexto-y-alcance.md`](00-contexto-y-alcance.md) promete que «cada uno ve las alertas
+que le corresponden». Esto es lo que decide a quién le toca cada una:
+
+| Tipo | Le toca a | Por qué |
+|---|---|---|
+| `pain` | **fisioterapeuta** | El dolor es criterio clínico. |
+| `skipped` | **entrenador** | Saltarse ejercicios es cumplimiento. |
+| `low_attendance` | **entrenador** | No venir también. |
+| `routine_assignment` | **quien entrena ese tipo de rutina** (`routines.kind`) | Sin rutina (`no_match`) no hay a quién adjudicarla: va a todo el equipo del paciente, que es justo cuando hace falta que alguien la prepare a mano. |
+| `membership_expiring` | **solo el administrador** | Es cobranza, no trabajo clínico ni de entrenamiento. |
+
+**El administrador lo recibe todo.** Para él no cambia nada.
+
+**Y hay una salida deliberada:** si *nadie de la especialidad que toca* acompaña al
+paciente, la alerta la reciben todos los que sí lo acompañan. Sin eso, el paciente que solo
+tiene entrenador dejaría de generar alertas de dolor para nadie salvo el administrador, y
+eso es perder señal, no repartirla.
+
+> **Esto es filtrado de presentación, no de autorización**, como decidió el
+> [ADR-0007](adr/0007-tres-roles-mas-especialidad.md). La autorización sigue siendo
+> `treats_patient()`, que no mira `specialty`: **ningún profesional alcanza a un paciente
+> que no acompaña**, ni antes ni después de este cambio.
+
+Se aplica en un disparador `before insert` sobre `public.alerts`
+(`public.filter_alert_recipient`), no en cada generador: la matriz queda escrita una vez,
+las dos funciones de job no hay que reescribirlas enteras para cambiarles cuatro líneas, y
+un generador futuro no puede saltárselo por descuido. **El disparador descarta la fila**
+devolviendo `null`, así que un `insert` de alerta puede no insertar nada.
+
 ## Cómo se implementa
 
 ### La función de rol
