@@ -9,14 +9,14 @@ Cada tarea es un ticket de Jira (proyecto `KAN`). El orden es el de las fases de
 ## 2. Adelgazar
 
 - [x] 2.1 **KAN-11** — Menú plano de ocho entradas con `SectionTabs`, sin «Asignación» ni «Planes» para el profesional (D3), comentarios de `MobileNav` corregidos (D8) y medición de densidad repetida en `docs/12`.
-- [ ] 2.2 **KAN-12** — Calcular el cumplimiento del panel en la base, sin traer filas para contarlas (D4).
-- [ ] 2.3 **KAN-5** — Separar `/admin` de `/pro`: de siete KPI por pantalla a tres.
+- [x] 2.2 **KAN-12** — Calcular el cumplimiento del panel en la base, sin traer filas para contarlas (D4).
+- [x] 2.3 **KAN-5** — Separar `/admin` de `/pro`: de siete KPI por pantalla a tres.
 - [ ] 2.4 **KAN-7** — «Reglas» → «Asignación», formulario de siete criterios a cuatro y línea de estado. Sin tocar el motor ni el esquema de Zod.
 
 ## 3. Cumplir lo prometido
 
-- [ ] 3.1 **KAN-9** — Que `finish_patient_onboarding` invoque `commit_routine_assignment` en la misma transacción, preservando el bloqueo, el rechazo por paso y los caminos `no_match` y `pending_review` (D1).
-- [ ] 3.2 **KAN-10** — Repartir las alertas por especialidad y documentar la matriz «tipo → especialidad» en `docs/04-roles-y-permisos.md` (D2).
+- [x] 3.1 **KAN-9** — Que `finish_patient_onboarding` invoque `commit_routine_assignment` en la misma transacción, preservando el bloqueo, el rechazo por paso y los caminos `no_match` y `pending_review` (D1).
+- [x] 3.2 **KAN-10** — Repartir las alertas por especialidad y documentar la matriz «tipo → especialidad» en `docs/04-roles-y-permisos.md` (D2).
 
 ## 4. Completar
 

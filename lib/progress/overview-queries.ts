@@ -84,32 +84,33 @@ export async function getBusinessOverview(): Promise<BusinessOverview> {
 }
 
 /**
- * Lo que el panel del personal tiene que atender ahora mismo, no el resumen
- * del mes: alertas clínicas sin leer, sesiones con fecha de hoy, membresías en
- * su ventana de vencimiento y pacientes activos que aún no tienen tamizaje.
+ * Lo que el profesional tiene que atender **hoy**: alertas clínicas sin leer,
+ * sesiones con fecha de hoy y pacientes activos que aún no tienen tamizaje.
  *
- * Es la contraparte de trabajo de `getBusinessOverview` y sigue la misma
- * forma que la agregación de la ficha del paciente (`patientOverview`): un
+ * Es la contraparte de trabajo de `getBusinessOverview`, y desde KAN-5 son de
+ * pantallas distintas: `/admin` enseña el mes del negocio y `/pro`, el día. Un
  * solo `Promise.all`, conteos con `head: true` y ninguna consulta por fila.
- * RLS decide el alcance —el administrador ve todo el negocio; el profesional,
- * solo a quien acompaña—.
+ * RLS decide el alcance: el profesional cuenta solo sobre quien acompaña.
+ *
+ * Las membresías por vencer salieron de aquí: son del administrador (la matriz
+ * de `docs/04-roles-y-permisos.md`), y viven en `/memberships`.
  */
-export type StaffWorkboard = {
+export type ProWorkboard = {
   /** Alertas clínicas sin marcar como leídas. */
   unreadAlerts: number;
   /** Sesiones con `performed_on` de hoy, en curso o cerradas. */
   todaySessions: number;
-  /** Membresías en estado «próxima a vencer». */
-  expiringMemberships: number;
   /** Pacientes activos sin ningún tamizaje registrado. */
   pendingScreenings: number;
+  /** Cuántos pacientes activos acompaña, para decidir el estado vacío. */
+  activePatients: number;
 };
 
-export async function getStaffWorkboard(): Promise<StaffWorkboard> {
+export async function getProWorkboard(): Promise<ProWorkboard> {
   const supabase = await createClient();
   const day = today();
 
-  const [alerts, sessions, memberships, patients] = await Promise.all([
+  const [alerts, sessions, screenings, patients] = await Promise.all([
     supabase
       .from("alerts")
       .select("id", { count: "exact", head: true })
@@ -118,15 +119,16 @@ export async function getStaffWorkboard(): Promise<StaffWorkboard> {
       .from("sessions")
       .select("id", { count: "exact", head: true })
       .eq("performed_on", day),
-    supabase
-      .from("memberships")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "expiring_soon"),
     // «Pendiente» es quien no tiene ningún tamizaje. Se cuenta en la base con
     // un `not exists`: traer todos los perfiles con su tamizaje embebido para
     // contar los que venían vacíos tenía el mismo tope de `max_rows` que
     // falseaba el cumplimiento.
     supabase.rpc("pending_screenings"),
+    supabase
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("role", "patient")
+      .eq("is_active", true),
   ]);
 
   if (alerts.error)
@@ -137,19 +139,19 @@ export async function getStaffWorkboard(): Promise<StaffWorkboard> {
     throw new Error(
       `No se pudieron contar las sesiones de hoy: ${sessions.error.message}`,
     );
-  if (memberships.error)
+  if (screenings.error)
     throw new Error(
-      `No se pudieron contar las membresías por vencer: ${memberships.error.message}`,
+      `No se pudieron consultar los tamizajes pendientes: ${screenings.error.message}`,
     );
   if (patients.error)
     throw new Error(
-      `No se pudieron consultar los tamizajes pendientes: ${patients.error.message}`,
+      `No se pudieron contar los pacientes activos: ${patients.error.message}`,
     );
 
   return {
     unreadAlerts: alerts.count ?? 0,
     todaySessions: sessions.count ?? 0,
-    expiringMemberships: memberships.count ?? 0,
-    pendingScreenings: Number(patients.data ?? 0),
+    pendingScreenings: Number(screenings.data ?? 0),
+    activePatients: patients.count ?? 0,
   };
 }

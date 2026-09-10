@@ -499,3 +499,39 @@ paciente y ahora comparte marcado con ellas (`components/shell/TabBar.tsx`).
 del profesional devuelven 200 con la sesión de ese rol. Antes, `/plans` le devolvía al
 profesional una redirección desde el botón «Planes y servicios» del panorama del negocio
 (defecto **D3**).
+
+## 4 ter. `/admin` y `/pro` dejan de ser la misma pantalla (2026-09-10)
+
+Ticket **KAN-5**, fase 2.3 del [plan de mejora](16-plan-de-mejora.md). Hasta aquí las dos
+rutas renderizaban `StaffHome` con los **mismos siete KPI**; lo único que cambiaba eran los
+títulos y un par de frases. Eran dos preguntas distintas metidas en una pantalla: «¿cómo va
+el negocio?» y «¿qué tengo que atender hoy?».
+
+**Cómo se midió.** Sesión de cada rol contra un `next start` de producción en el 3000.
+`document.documentElement.scrollHeight / innerHeight` en el navegador integrado a 1440×900;
+el peso, sobre el HTML del servidor pedido con el cliente de las propias suites.
+
+| | Antes (las dos) | `/admin` después | `/pro` después |
+|---|---|---|---|
+| KPI en pantalla | **7** | **3** | **3** |
+| Qué responde | las dos preguntas a la vez | el mes del negocio | el trabajo de hoy |
+| Pantallas de recorrido | 2,46 (§1) | **1,00** | **1,00** |
+| Peso del documento | — | 50,0 kB | 42,5 kB |
+
+```
+/admin  Clientes activos · Cumplimiento · Asistencia
+/pro    Mis alertas · Sesiones de hoy · Tamizajes pendientes
+```
+
+**Las dos caben en una pantalla sin desplazarse**, que es lo que pide el criterio de KAN-5:
+comunicar el estado en pocos segundos.
+
+**Lo que salió, y a dónde fue.** «Membresías por vencer» era el séptimo KPI y estaba en las
+dos pantallas. Es del administrador —la matriz de [`04`](04-roles-y-permisos.md) lo decide
+así— y vive en `/memberships`, a un toque desde la fila de enlaces del panorama y desde el
+menú. El profesional deja de ver el cumplimiento y la asistencia del negocio del mes: no son
+suyos y no le dicen qué hacer ahora.
+
+**Consultas por pantalla.** `/pro` deja de pedir `business_overview` y `/admin` deja de pedir
+el panel de trabajo. El profesional pasa de siete consultas a cuatro; el administrador, de
+siete a tres.

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { StaffHome } from "@/components/progress/StaffHome";
+import { AdminHome } from "@/components/progress/AdminHome";
 import { requireAdmin } from "@/lib/progress/access";
 
 export const metadata: Metadata = {
@@ -8,11 +8,12 @@ export const metadata: Metadata = {
 };
 
 /**
- * El panel de inicio es el panorama del negocio. El directorio de personas y
- * el alta se movieron a `/people`.
+ * El panel del administrador es el panorama del negocio del mes. El trabajo
+ * del día es del profesional y vive en `/pro`; el directorio y el alta, en
+ * `/people`.
  */
 export default async function Page() {
   const profile = await requireAdmin();
 
-  return <StaffHome role="admin" name={profile.fullName} />;
+  return <AdminHome name={profile.fullName} />;
 }
