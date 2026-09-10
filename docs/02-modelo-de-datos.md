@@ -335,3 +335,11 @@ va a querer ajustarlos durante la demo.
    propósito: sin él, cada política de RLS necesitaría dos joins.
 4. **Los tipos de TypeScript se generan**, no se escriben:
    `npm run db:types` → `lib/db/types.ts`.
+5. **Las cifras agregadas se cuentan en la base, no en el servidor de Next.** PostgREST
+   corta toda respuesta en `max_rows` (1000, en `supabase/config.toml`), así que traer filas
+   para contarlas en TypeScript da un número **falso sin avisar** en cuanto el volumen sube.
+   Un conteo va con `count: "exact", head: true`; una agregación de varias tablas, con una
+   función. Las del panel son `public.business_overview(date)` y
+   `public.pending_screenings()`, ambas **`security invoker`** a propósito: el alcance lo
+   sigue decidiendo RLS —el administrador ve todo el negocio y el profesional, solo a quien
+   acompaña—, y una `security definer` convertiría un número de presentación en una fuga.

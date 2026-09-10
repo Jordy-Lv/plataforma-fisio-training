@@ -1,7 +1,6 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
-import { listPatientsWithMonthAttendance } from "@/lib/progress/attendance-queries";
 import { monthStart, today } from "@/lib/progress/vocabulary";
 
 /** Las tres cifras que el panel de administración resume del mes en curso. */
@@ -28,67 +27,58 @@ export type AttendanceOverview = {
   attended: number;
 };
 
-/**
- * Cumplimiento: de los ejercicios que el paciente registró en las sesiones del
- * mes, cuántos hizo. Cuentan como cumplidos los marcados `done` y los
- * `modified` —el paciente hizo el trabajo, con una sustitución acordada— y no
- * cuentan los `skipped`, que son los que dejó sin hacer.
- *
- * No se mide sobre las sesiones cerradas ni sobre los ejercicios prescritos:
- * lo primero premia al que abandona una sesión a la mitad, porque la sesión
- * abierta no resta; lo segundo castiga al paciente que todavía la tiene en
- * curso, porque lo que aún no ha registrado contaría como incumplido.
- */
-const cumplidos = new Set(["done", "modified"]);
+/*
+  Cumplimiento: de los ejercicios que el paciente registró en las sesiones del
+  mes, cuántos hizo. Cuentan como cumplidos los marcados `done` y los
+  `modified` —el paciente hizo el trabajo, con una sustitución acordada— y no
+  cuentan los `skipped`, que son los que dejó sin hacer. La regla vive ahora en
+  `public.business_overview`, en la misma migración que la crea.
+
+  No se mide sobre las sesiones cerradas ni sobre los ejercicios prescritos:
+  lo primero premia al que abandona una sesión a la mitad, porque la sesión
+  abierta no resta; lo segundo castiga al paciente que todavía la tiene en
+  curso, porque lo que aún no ha registrado contaría como incumplido.
+*/
 
 /**
- * El panorama del negocio. RLS decide el alcance: esta consulta la hace el
- * administrador, que lee todas las filas.
+ * El panorama del negocio. RLS decide el alcance: el administrador lo ve de
+ * todo el negocio y el profesional, de los pacientes que acompaña.
  *
- * Son tres consultas fijas, no una por paciente: las sesiones del mes viajan
- * con sus registros embebidos y la asistencia sale del helper que ya la acota
- * al mes en una sola consulta.
+ * **Las cinco cifras se agregan en la base**, en una sola consulta. Antes se
+ * traían las sesiones del mes con sus registros embebidos y se contaba aquí,
+ * y PostgREST corta la respuesta en `max_rows`: pasada esa marca el porcentaje
+ * se calculaba sobre un subconjunto truncado y salía mal **sin ningún aviso**.
+ * Es el número que responde el primer punto ciego del negocio y uno de los tres
+ * KPI de la portada, así que un número inventado ahí es peor que no tenerlo.
  */
 export async function getBusinessOverview(): Promise<BusinessOverview> {
   const supabase = await createClient();
-  const month = monthStart();
 
-  const [patients, sessions, attendance] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("id", { count: "exact", head: true })
-      .eq("role", "patient")
-      .eq("is_active", true),
-    supabase
-      .from("sessions")
-      .select("id, session_logs (status)")
-      .gte("performed_on", month),
-    listPatientsWithMonthAttendance(undefined, { paginate: false }),
-  ]);
+  const { data, error } = await supabase
+    .rpc("business_overview", { since: monthStart() })
+    .single();
 
-  if (patients.error)
+  if (error)
     throw new Error(
-      `No se pudieron contar los clientes activos: ${patients.error.message}`,
-    );
-  if (sessions.error)
-    throw new Error(
-      `No se pudo consultar el cumplimiento: ${sessions.error.message}`,
+      `No se pudo consultar el panorama del negocio: ${error.message}`,
     );
 
-  const logs = (sessions.data ?? []).flatMap((session) => session.session_logs);
-  const done = logs.filter((log) => cumplidos.has(log.status)).length;
+  const logged = Number(data.logged);
+  const done = Number(data.done);
 
   return {
-    activePatients: patients.count ?? 0,
+    activePatients: Number(data.active_patients),
     compliance: {
-      rate: logs.length === 0 ? null : done / logs.length,
+      // Sin un solo registro no hay porcentaje que dar: `null` es «todavía no
+      // se sabe», que la pantalla explica, y no un 0 % que acusa a nadie.
+      rate: logged === 0 ? null : done / logged,
       done,
-      logged: logs.length,
-      sessions: sessions.data?.length ?? 0,
+      logged,
+      sessions: Number(data.sessions),
     },
     attendance: {
-      visits: attendance.patients.reduce((total, patient) => total + patient.days, 0),
-      attended: attendance.patients.filter((patient) => patient.days > 0).length,
+      visits: Number(data.visits),
+      attended: Number(data.attended),
     },
   };
 }
@@ -132,15 +122,11 @@ export async function getStaffWorkboard(): Promise<StaffWorkboard> {
       .from("memberships")
       .select("id", { count: "exact", head: true })
       .eq("status", "expiring_soon"),
-    // «Pendiente» es quien no tiene ninguna fila embebida: la misma forma que
-    // usa `listPatientsWithLastScreening`, con el tamizaje limitado a uno y sin
-    // traer columnas que no se cuentan.
-    supabase
-      .from("profiles")
-      .select("id, screenings!screenings_patient_id_fkey (id)")
-      .eq("role", "patient")
-      .eq("is_active", true)
-      .limit(1, { referencedTable: "screenings" }),
+    // «Pendiente» es quien no tiene ningún tamizaje. Se cuenta en la base con
+    // un `not exists`: traer todos los perfiles con su tamizaje embebido para
+    // contar los que venían vacíos tenía el mismo tope de `max_rows` que
+    // falseaba el cumplimiento.
+    supabase.rpc("pending_screenings"),
   ]);
 
   if (alerts.error)
@@ -164,8 +150,6 @@ export async function getStaffWorkboard(): Promise<StaffWorkboard> {
     unreadAlerts: alerts.count ?? 0,
     todaySessions: sessions.count ?? 0,
     expiringMemberships: memberships.count ?? 0,
-    pendingScreenings: (patients.data ?? []).filter(
-      (patient) => patient.screenings.length === 0,
-    ).length,
+    pendingScreenings: Number(patients.data ?? 0),
   };
 }
