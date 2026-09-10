@@ -20,7 +20,7 @@ Cada tarea es un ticket de Jira (proyecto `KAN`). El orden es el de las fases de
 
 ## 4. Completar
 
-- [ ] 4.1 **KAN-13** — Cerrar y reasignar el acompañamiento, con el `revalidatePath("/people")` que falta (D5 y D6).
+- [x] 4.1 **KAN-13** — Cerrar y reasignar el acompañamiento, con el `revalidatePath("/people")` que falta (D5 y D6).
 - [ ] 4.2 **KAN-6** — Mostrar quién acompaña a cada paciente en `/people` y en su ficha. Solo el admin ve el mapa completo.
 - [ ] 4.3 **KAN-8** — Crear la plantilla con su primer día en el mismo formulario, y documentar en `docs/02` que un ejercicio va en tantas plantillas como se quiera.
 - [ ] 4.4 **KAN-14** — Filtros de Personas por URL con paginación, sobre `createListParams` y `listPeople`.

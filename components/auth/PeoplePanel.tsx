@@ -4,6 +4,7 @@ import { Workspace } from "@/components/auth/Workspace";
 import {
   CreatePersonForm,
   AssignmentForm,
+  CloseAssignmentForm,
   DeactivateForm,
 } from "@/components/auth/PeopleForms";
 import { PeopleFilter } from "@/components/auth/PeopleFilter";
@@ -40,7 +41,7 @@ export async function PeoplePanel({
       .order("full_name"),
     supabase
       .from("care_assignments")
-      .select("patient_id, professional_id, kind")
+      .select("id, patient_id, professional_id, kind")
       .is("ended_at", null),
   ]);
   if (peopleResult.error || assignmentsResult.error)
@@ -52,6 +53,9 @@ export async function PeoplePanel({
   const patients = people.filter((person) => person.role === "patient");
   const team = people.filter((person) => person.role === "professional");
   const isAdmin = role === "admin";
+  /** El nombre de una persona por su id, para los acompañamientos vigentes. */
+  const nombre = (id: string) =>
+    people.find((person) => person.id === id)?.full_name || "Sin nombre";
 
   return (
     <Workspace
@@ -229,6 +233,43 @@ export async function PeoplePanel({
               patients={patients.filter((person) => person.is_active)}
               professionals={team.filter((person) => person.is_active)}
             />
+
+            {/*
+              Los acompañamientos vigentes van **después** del formulario de
+              asignar: sus `value="<uuid>"` no pueden adelantarse a los de las
+              bajas, que es el marcador con el que las suites localizan aquel
+              formulario (`docs/11-contratos-de-las-suites-http.md`).
+            */}
+            <section className="mt-8 grid gap-3">
+              <div>
+                <h2 className="text-xl font-semibold">
+                  Acompañamientos vigentes
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  Para cambiar al profesional de un paciente, cierra primero el
+                  acompañamiento que tiene. La fila no se borra: queda el
+                  historial.
+                </p>
+              </div>
+              {assignments.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Todavía no hay ningún acompañamiento asignado.
+                </p>
+              ) : (
+                <ul className="grid gap-2">
+                  {assignments.map((assignment) => (
+                    <li key={assignment.id}>
+                      <CloseAssignmentForm
+                        assignmentId={assignment.id}
+                        patientName={nombre(assignment.patient_id)}
+                        professionalName={nombre(assignment.professional_id)}
+                        kindLabel={specialtyLabels[assignment.kind]}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
           </SheetModal>
         )}
       </div>
