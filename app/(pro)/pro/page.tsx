@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { StaffHome } from "@/components/progress/StaffHome";
+import { ProHome } from "@/components/progress/ProHome";
 import { requireRole } from "@/lib/auth/session";
 
 export const metadata: Metadata = {
@@ -8,11 +8,12 @@ export const metadata: Metadata = {
 };
 
 /**
- * El panel de inicio del profesional es el estado de sus pacientes este mes.
- * El directorio y el alta de un paciente están en `/people`.
+ * El panel del profesional es lo que tiene que atender hoy. El panorama del
+ * negocio del mes es del administrador y vive en `/admin`; el directorio y el
+ * alta de un paciente, en `/people`.
  */
 export default async function Page() {
   const profile = await requireRole("professional");
 
-  return <StaffHome role="professional" name={profile.fullName} />;
+  return <ProHome name={profile.fullName} />;
 }
