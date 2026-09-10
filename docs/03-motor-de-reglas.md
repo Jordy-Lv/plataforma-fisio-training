@@ -44,6 +44,27 @@ Si ninguna regla coincide, **no se inventa nada**: el paciente queda sin rutina,
 una alerta para el profesional y la vista del paciente muestra "Tu profesional está
 preparando tu rutina". Es preferible a asignar algo inadecuado.
 
+### Dónde se dispara (KAN-9)
+
+Los dos puntos de entrada, y ninguno más:
+
+1. **El final del registro del paciente.** `public.finish_patient_onboarding` marca el paso
+   a 3 y llama a `private.assign_routine_from_rules` **en la misma transacción**. Es lo que
+   promete el punto 2 de [`00-contexto-y-alcance.md`](00-contexto-y-alcance.md) y el primer
+   recuadro del diagrama de arriba. Hasta el 2026-09-10 ese disparo **no existía**: el
+   diagrama describía una intención, no el código.
+2. **El botón «Evaluar y asignar rutina»** de `/pro/routines/[patientId]`, para reasignar
+   tras un cambio de perfil o de reglas. Entra por `public.commit_routine_assignment`, que
+   además comprueba que el contexto no cambió desde que el equipo lo vio en pantalla y
+   recalcula el ganador en el servidor (BACK-002).
+
+Los dos comparten el mismo efecto —una sola implementación— así que no pueden divergir. El
+evento del registro automático se distingue en `routine_assignment_events` por
+`payload.source = 'onboarding'`.
+
+Si la transacción del registro no puede asignar, **se deshace entera** y el paciente
+termina sin registrar: es preferible a dejarlo a medias sin que nadie se entere.
+
 ## Forma de una regla
 
 `assignment_rules.conditions` es un `jsonb`. Todos los campos son opcionales; un campo
