@@ -16,7 +16,7 @@ import { cardVariants } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 
 export const metadata: Metadata = {
-  title: "Reglas de asignación",
+  title: "Asignación automática",
 };
 
 export default async function Page({
@@ -42,12 +42,13 @@ export default async function Page({
       href: ruleList.href(filters, { [key]: undefined, page: 1 }), removeLabel: `Quitar ${choice?.label ?? "búsqueda"}` };
   });
   const esAdmin = profile.role === "admin";
+  const plantillasActivas = templates.filter((template) => template.is_active).length;
 
   return (
     <Workspace
-      title="Reglas de asignación"
+      title="Asignación automática"
       name={profile.fullName}
-      description="Cuando un paciente termina su registro se evalúan estas reglas de arriba abajo y gana la primera que coincide con su perfil. Si ninguna coincide, no se le asigna nada: queda a la espera de su profesional."
+      description="Cuando un paciente termina su registro se evalúan estas reglas de arriba abajo y gana la primera que coincide con su perfil. Su plantilla se copia a una rutina propia y se le quitan los ejercicios contraindicados. Si ninguna coincide, no se le asigna nada: queda a la espera de su profesional."
       actions={
         <>
           <ButtonLink variant="ghost" href="/rules/simulador">
@@ -80,6 +81,26 @@ export default async function Page({
           rutina automática.
         </p>
       )}
+
+      {/*
+        Si la máquina está cableada o no se deducía recorriendo la lista: una
+        regla activa que apunta a una plantilla vacía no asigna nada, y sin
+        plantillas activas no hay a qué apuntar.
+      */}
+      <p className="mb-6 text-sm text-muted-foreground">
+        <strong className="font-semibold text-foreground">
+          {plantillasActivas === 1
+            ? "1 plantilla activa"
+            : `${plantillasActivas} plantillas activas`}
+        </strong>
+        {" · "}
+        <strong className="font-semibold text-foreground">
+          {activeTotal === 1 ? "1 regla activa" : `${activeTotal} reglas activas`}
+        </strong>
+        {activeTotal > 0 && plantillasActivas > 0
+          ? ". El siguiente paciente que termine su registro recibirá rutina."
+          : ". Ningún paciente nuevo recibirá rutina automática."}
+      </p>
 
       <ListFilters action="/rules" label="Filtros de reglas" values={filters} choices={choices} chips={chips} />
       {!canReorder && esAdmin && <Notice tone="info" className="mb-4">Quita los filtros para reordenar. Si hay varias páginas, los controles se ocultan para evitar mover una regla respecto a otra que no está a la vista. El orden es el que evalúa el motor.</Notice>}

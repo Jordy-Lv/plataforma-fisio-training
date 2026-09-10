@@ -11,7 +11,7 @@ Cada tarea es un ticket de Jira (proyecto `KAN`). El orden es el de las fases de
 - [x] 2.1 **KAN-11** — Menú plano de ocho entradas con `SectionTabs`, sin «Asignación» ni «Planes» para el profesional (D3), comentarios de `MobileNav` corregidos (D8) y medición de densidad repetida en `docs/12`.
 - [x] 2.2 **KAN-12** — Calcular el cumplimiento del panel en la base, sin traer filas para contarlas (D4).
 - [x] 2.3 **KAN-5** — Separar `/admin` de `/pro`: de siete KPI por pantalla a tres.
-- [ ] 2.4 **KAN-7** — «Reglas» → «Asignación», formulario de siete criterios a cuatro y línea de estado. Sin tocar el motor ni el esquema de Zod.
+- [x] 2.4 **KAN-7** — «Reglas» → «Asignación», formulario de siete criterios a cuatro y línea de estado. Sin tocar el motor ni el esquema de Zod.
 
 ## 3. Cumplir lo prometido
 
