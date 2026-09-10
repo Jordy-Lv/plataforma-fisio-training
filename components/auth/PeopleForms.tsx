@@ -7,11 +7,13 @@ import { Field, FormMessage, inputClass } from "@/components/auth/FormParts";
 import {
   createPerson,
   assignProfessional,
+  closeAssignment,
   deactivatePerson,
 } from "@/lib/auth/people-actions";
 import {
   createPersonSchema,
   assignmentSchema,
+  closeAssignmentSchema,
   deactivateSchema,
   specialtyLabels,
 } from "@/lib/auth/people-schemas";
@@ -194,6 +196,73 @@ export function AssignmentForm({
         {pending ? "Asignando…" : "Asignar profesional"}
       </Button>
     </form>
+  );
+}
+
+/**
+ * Cierra un acompañamiento vigente. Va **después** del formulario de asignar y,
+ * por tanto, después de las bajas de persona: su `value="<uuid>"` es el del
+ * acompañamiento, y en `/people` el primer `<form>` que contiene un uuid es «el
+ * formulario» para las suites (`docs/11-contratos-de-las-suites-http.md`).
+ *
+ * Pide confirmación porque **cambia quién ve al paciente**: a partir de aquí
+ * `treats_patient()` deja de dar acceso a ese profesional. La fila no se borra,
+ * se cierra.
+ */
+export function CloseAssignmentForm({
+  assignmentId,
+  patientName,
+  professionalName,
+  kindLabel,
+}: {
+  assignmentId: string;
+  patientName: string;
+  professionalName: string;
+  kindLabel: string;
+}) {
+  const [state, action, pending] = useActionState(closeAssignment, {});
+  const validation = useFormValidation(closeAssignmentSchema);
+  return (
+    <details className="rounded-lg border border-border p-3">
+      <summary className="flex min-h-11 cursor-pointer items-center text-sm">
+        <span>
+          <strong className="font-semibold">{patientName}</strong>
+          {" · "}
+          {kindLabel}
+          {" · "}
+          {professionalName}
+        </span>
+      </summary>
+      <form onSubmit={validation.onSubmit} action={action} className="mt-3 grid gap-3">
+        <input type="hidden" name="assignmentId" value={assignmentId} />
+        <p className="text-sm leading-6 text-muted-foreground">
+          {professionalName} dejará de ver a {patientName} en cuanto se cierre.
+          El historial se conserva y podrás asignarle otro profesional de{" "}
+          {kindLabel.toLowerCase()}.
+        </p>
+        <label className="flex min-h-11 items-center gap-3 text-sm">
+          <input
+            type="checkbox"
+            name="confirmation"
+            value="yes"
+            required
+            className="size-5 accent-brand"
+          />
+          Confirmo el cierre
+        </label>
+        <FormMessage
+          state={{ ...state, error: validation.error ?? state.error }}
+        />
+        <Button
+          variant="destructive"
+          type="submit"
+          className="min-h-11 w-fit"
+          disabled={pending}
+        >
+          {pending ? "Cerrando…" : "Cerrar acompañamiento"}
+        </Button>
+      </form>
+    </details>
   );
 }
 

@@ -38,6 +38,17 @@ export const assignmentSchema = z.object({
     error: "Selecciona la especialidad.",
   }),
 });
+/**
+ * Cerrar un acompañamiento cambia **quién puede ver al paciente**: a partir de
+ * ahí `treats_patient()` deja de dar acceso a ese profesional. Por eso pide
+ * confirmación explícita, igual que la baja de una persona.
+ */
+export const closeAssignmentSchema = z.object({
+  assignmentId: z.string().uuid("Selecciona un acompañamiento válido."),
+  confirmation: z.literal("yes", {
+    error: "Confirma el cierre del acompañamiento para continuar.",
+  }),
+});
 export const deactivateSchema = z.object({
   personId: z.string().uuid("Selecciona una persona válida."),
   expectedAssignments: z.coerce.number().int().min(0),

@@ -98,6 +98,8 @@ suite los exige **todos en el mismo formulario**.
 | `/patient/onboarding` | `name="step"` | `test:people`, `test:auth:resilience` |
 | `/people` · registrar persona | `name="fullName"` | `test:people` |
 | `/people` · baja de persona | **`value="<uuid de la persona>"`** | `test:people` |
+| `/people` · asignar acompañamiento | `name="patientId"` | `test:people` |
+| `/people` · cerrar acompañamiento | **`value="<uuid del acompañamiento>"`** | `test:people` |
 | `/people/[id]` · perfil | `name="goal"` | `test:people` |
 | `/people/[id]` · condición | `name="conditionId"` | `test:people` |
 
@@ -108,6 +110,12 @@ suite los exige **todos en el mismo formulario**.
 > server action». Por eso las tarjetas van en el orden registrar → pacientes → equipo →
 > asignar: las bajas quedan antes que la asignación. Los modales de `SheetModal` no usan
 > portal, así que su contenido —listas y formularios— sí está en el HTML del servidor.
+>
+> **Dentro de la tarjeta de asignar, el orden también es contrato** (KAN-13): primero el
+> formulario de asignar y **después** la lista de «Acompañamientos vigentes». Cada uno de esos
+> cierres lleva `value="<uuid del acompañamiento>"`, así que adelantarlos los pondría delante
+> del formulario de asignar —que se localiza por `name="patientId"`, no por uuid— y, lo que es
+> peor, delante de las bajas si algún día la tarjeta se moviera.
 >
 > `/admin` y `/pro` ya no montan formularios de personas: son el panorama del negocio. El
 > login sigue redirigiendo el personal a `/admin` y `/pro`, y `test:people` lo comprueba.
