@@ -76,6 +76,7 @@ export async function createPerson(
         "La cuenta se creó, pero no se pudo cerrar su sesión de registro. No repitas el alta.",
       );
   }
+  revalidatePath("/people");
   revalidatePath("/admin");
   revalidatePath("/pro");
   return {
@@ -104,6 +105,8 @@ export async function assignProfessional(
           ? "Este paciente ya tiene un profesional de esa especialidad. Cierra la asignación anterior antes de cambiarlo."
           : "No se pudo asignar. Revisa que ambas personas estén activas y la especialidad coincida.",
     };
+  revalidatePath("/people");
+  revalidatePath(`/people/${parsed.data.patientId}`);
   revalidatePath("/admin");
   revalidatePath("/pro");
   return { success: "Profesional asignado." };
@@ -121,6 +124,8 @@ export async function deactivatePerson(
     expected_assignments: parsed.data.expectedAssignments,
   });
   if (error) return { error: error.message };
+  revalidatePath("/people");
+  revalidatePath(`/people/${parsed.data.personId}`);
   revalidatePath("/admin");
   revalidatePath("/pro");
   return { success: "Persona dada de baja. Su historial se conserva." };

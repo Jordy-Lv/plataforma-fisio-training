@@ -53,9 +53,12 @@ export default async function Page({
   // Lo que registró el paciente en las sesiones que motivaron las alertas de
   // **esta página**, en una sola consulta con `in`. Es lo que se lee dentro del
   // diálogo sin salir de la pantalla de triaje (15.4).
-  const reports = await sessionReports(
-    alerts.flatMap((alert) => alert.evidence.map((item) => item.session_id)),
+  const evidenceSessionIds = alerts.flatMap((alert) =>
+    alert.evidence.map((item) => item.session_id),
   );
+  const reports = evidenceSessionIds.length
+    ? await sessionReports(evidenceSessionIds)
+    : new Map();
 
   // El filtro por paciente emite uuids, y en esta pantalla no hay conflicto:
   // el marcador de «marcar leída» es el uuid **de la alerta** (`docs/11`, §3),

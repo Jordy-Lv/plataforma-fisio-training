@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { createClient } from "@supabase/supabase-js";
+import { JSDOM } from "jsdom";
 import {
   status,
   sql,
@@ -48,6 +49,26 @@ async function createAuthorized(actor, role, specialty = null) {
   assert.equal(signup.error, null);
   return { id: signup.data.user.id, email, client, token: reservation.data };
 }
+
+test("Personas entrega los scripts necesarios para abrir sus paneles", async () => {
+  const browser = httpClient();
+  await browser.submit("/login", { email: "admin@demo.local", password: "demo1234" });
+  const { html, response } = await browser.request("/people");
+  assert.equal(response.status, 200);
+  const dom = new JSDOM(html);
+  try {
+    const scripts = [...dom.window.document.querySelectorAll("script[src]")]
+      .map((script) => script.getAttribute("src"));
+    assert.ok(scripts.length > 0, "Faltan los scripts de la pantalla");
+    for (const source of new Set(scripts)) {
+      const asset = await browser.request(source);
+      assert.equal(asset.response.status, 200, `No se pudo cargar ${source}`);
+      assert.match(asset.response.headers.get("content-type") ?? "", /javascript/);
+    }
+  } finally {
+    dom.window.close();
+  }
+});
 
 test(
   "Personas y onboarding contra Next.js y la API local",

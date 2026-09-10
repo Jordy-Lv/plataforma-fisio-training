@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { usePreservedForm } from "@/lib/auth/use-preserved-form";
 import { useFormValidation } from "@/lib/auth/use-form-validation";
 import { Button } from "@/components/ui/button";
 import { Field, FormMessage, inputClass } from "@/components/auth/FormParts";
@@ -17,6 +18,7 @@ import {
 } from "@/lib/auth/people-schemas";
 
 export function CreatePersonForm({ isAdmin }: { isAdmin: boolean }) {
+  const formRef = usePreservedForm();
   const [state, action, pending] = useActionState(createPerson, {});
   const validation = useFormValidation(createPersonSchema, (form) => ({
     ...Object.fromEntries(form),
@@ -24,7 +26,7 @@ export function CreatePersonForm({ isAdmin }: { isAdmin: boolean }) {
   }));
   const [role, setRole] = useState("patient");
   return (
-    <form onSubmit={validation.onSubmit} action={action} className="grid gap-4">
+    <form ref={formRef} onSubmit={validation.onSubmit} action={action} className="grid gap-4">
       <h2 className="text-xl font-semibold">
         {isAdmin ? "Registrar una persona" : "Registrar un paciente"}
       </h2>
@@ -122,11 +124,12 @@ export function AssignmentForm({
   patients: PersonOption[];
   professionals: PersonOption[];
 }) {
+  const formRef = usePreservedForm();
   const [state, action, pending] = useActionState(assignProfessional, {});
   const validation = useFormValidation(assignmentSchema);
   const [kind, setKind] = useState<"training" | "physio">("training");
   return (
-    <form onSubmit={validation.onSubmit} action={action} className="grid gap-4">
+    <form ref={formRef} onSubmit={validation.onSubmit} action={action} className="grid gap-4">
       <h2 className="text-xl font-semibold">Asignar profesional</h2>
       <p className="text-sm leading-6 text-muted-foreground">
         Cada paciente puede tener un entrenador y un fisioterapeuta.
@@ -215,6 +218,7 @@ export function DeactivateForm({
       </summary>
       <form
         action={action}
+        onSubmit={validation.onSubmit}
         className="mt-2 grid max-w-lg gap-3 rounded-lg border border-border p-4"
       >
         <input type="hidden" name="personId" value={personId} />

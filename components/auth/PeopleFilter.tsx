@@ -6,6 +6,9 @@ import { inputClass } from "@/components/auth/FormParts";
 
 type Specialty = { value: string; label: string };
 
+const normalizeName = (value: string) =>
+  value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+
 /**
  * Filtra en el cliente una lista ya renderizada en el servidor. Cada elemento
  * de la lista lleva `data-name` (el nombre en minúsculas) y, si aplica,
@@ -36,11 +39,11 @@ export function PeopleFilter({
     const items =
       wrapperRef.current?.querySelectorAll<HTMLElement>("[data-name]");
     if (!items) return;
-    const needle = query.trim().toLowerCase();
+    const needle = normalizeName(query);
     let shown = 0;
     for (const item of items) {
       const matchesName =
-        !needle || (item.dataset.name ?? "").includes(needle);
+        !needle || normalizeName(item.dataset.name ?? "").includes(needle);
       const matchesSpecialty =
         !specialty || (item.dataset.specialty ?? "") === specialty;
       const show = matchesName && matchesSpecialty;
@@ -48,7 +51,7 @@ export function PeopleFilter({
       if (show) shown += 1;
     }
     setVisible(shown);
-  }, [query, specialty]);
+  }, [query, specialty, children]);
 
   return (
     <div ref={wrapperRef} className="grid gap-4">
@@ -85,7 +88,7 @@ export function PeopleFilter({
 
       {children}
 
-      {visible === 0 && (
+      {visible === 0 && (query.trim() || specialty) && (
         <p className="text-sm leading-6 text-muted-foreground">{emptyLabel}</p>
       )}
     </div>

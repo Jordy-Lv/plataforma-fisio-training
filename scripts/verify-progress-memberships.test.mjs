@@ -59,7 +59,8 @@ const textOf = (html) =>
 
 /** Una fecha relativa a hoy en el formato de una columna `date`. */
 const dateIn = (days) => {
-  const d = new Date();
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota" }).format(new Date());
+  const d = new Date(`${today}T12:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 };
