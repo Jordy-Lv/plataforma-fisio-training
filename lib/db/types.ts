@@ -1232,6 +1232,17 @@ export type Database = {
         Args: { conditions: Json; profile: Json }
         Returns: boolean
       }
+      business_overview: {
+        Args: { since: string }
+        Returns: {
+          active_patients: number
+          attended: number
+          done: number
+          logged: number
+          sessions: number
+          visits: number
+        }[]
+      }
       can_read_routine: { Args: { target_routine: string }; Returns: boolean }
       can_write_routine: { Args: { target_routine: string }; Returns: boolean }
       cancel_person_registration: {
@@ -1265,6 +1276,7 @@ export type Database = {
         Returns: undefined
       }
       is_admin: { Args: never; Returns: boolean }
+      pending_screenings: { Args: never; Returns: number }
       prepare_person_registration: {
         Args: {
           person_email: string
