@@ -44,6 +44,56 @@ Si ninguna regla coincide, **no se inventa nada**: el paciente queda sin rutina,
 una alerta para el profesional y la vista del paciente muestra "Tu profesional está
 preparando tu rutina". Es preferible a asignar algo inadecuado.
 
+### El apartado «Asignación automática» (KAN-7)
+
+Se preguntó si este apartado aporta valor o si se podía retirar. **Se queda**, y por dos
+razones duras:
+
+1. Es el punto 2 del alcance ([`00`](00-contexto-y-alcance.md)): «la plataforma propone una
+   rutina base automáticamente».
+2. **No existe otra forma de asignar una rutina por reglas.** Toda fila de `routines` nace de
+   `copy_routine_template`, y el camino con motor pasa por `commit_routine_assignment`, que
+   exige regla ganadora. La única alternativa es la copia manual directa, que es una decisión
+   clínica del profesional y deja su propia traza (BACK-003).
+
+Lo que sí sobraba era la presentación, y eso es lo que cambió:
+
+- **El nombre.** «Reglas» es lenguaje de ingeniero. En el menú es «Asignación» y la pantalla
+  se titula «Asignación automática».
+- **Los criterios del formulario.** De siete a la vista a **cuatro** —objetivo, nivel, entorno
+  y condiciones que la excluyen—, que son los que describen a quién va dirigida una regla. El
+  equipamiento, cómo se exige y la edad quedan plegados en «Criterios avanzados», que **se
+  abre solo** cuando la regla que se edita ya usa alguno: plegar algo que está puesto lo
+  esconde, y esconder no es simplificar. **El esquema de Zod no cambió**: sigue aceptando los
+  siete y las reglas que ya los usan siguen funcionando.
+- **Una línea de estado.** «N plantillas activas · N reglas activas», y si la máquina está
+  cableada o no. Antes había que recorrer la lista para deducirlo.
+
+**Descartado** doblar la regla dentro de la plantilla: obligaría a una regla por plantilla —el
+seed ya tiene dos apuntando a la misma— y reescribiría `test:rules:panel` entero a cambio de
+un beneficio que las pestañas de sección ya dan.
+
+### Dónde se dispara (KAN-9)
+
+Los dos puntos de entrada, y ninguno más:
+
+1. **El final del registro del paciente.** `public.finish_patient_onboarding` marca el paso
+   a 3 y llama a `private.assign_routine_from_rules` **en la misma transacción**. Es lo que
+   promete el punto 2 de [`00-contexto-y-alcance.md`](00-contexto-y-alcance.md) y el primer
+   recuadro del diagrama de arriba. Hasta el 2026-09-10 ese disparo **no existía**: el
+   diagrama describía una intención, no el código.
+2. **El botón «Evaluar y asignar rutina»** de `/pro/routines/[patientId]`, para reasignar
+   tras un cambio de perfil o de reglas. Entra por `public.commit_routine_assignment`, que
+   además comprueba que el contexto no cambió desde que el equipo lo vio en pantalla y
+   recalcula el ganador en el servidor (BACK-002).
+
+Los dos comparten el mismo efecto —una sola implementación— así que no pueden divergir. El
+evento del registro automático se distingue en `routine_assignment_events` por
+`payload.source = 'onboarding'`.
+
+Si la transacción del registro no puede asignar, **se deshace entera** y el paciente
+termina sin registrar: es preferible a dejarlo a medias sin que nadie se entere.
+
 ## Forma de una regla
 
 `assignment_rules.conditions` es un `jsonb`. Todos los campos son opcionales; un campo

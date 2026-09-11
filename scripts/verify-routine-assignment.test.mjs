@@ -28,15 +28,21 @@ test("Motor conectado a asignación, aislamiento y vistas", { timeout: 180000 },
       delete from public.exercises where id in ('${safeId}', '${excludedId}');`);
     for (const user of users) { await user.api.auth.signOut(); sql(`delete from auth.users where id = '${user.id}'`); }
   });
-  async function person(role, specialty = null) {
+  const perfilPorDefecto = { goal: "performance", level: "advanced", environment: "gym", equipment: "{barbell}" };
+  async function person(role, specialty = null, { step = 3, ...perfil } = {}) {
     const api = client(), email = `rutinas-${randomUUID()}@demo.local`;
     const { data, error } = await api.auth.signUp({ email, password });
     assert.equal(error, null);
     const user = { api, email, id: data.user.id, role };
     users.push(user);
     sql(`update public.profiles set role = '${role}', specialty = ${specialty ? `'${specialty}'` : 'null'}, full_name = 'Prueba de rutinas ${role}' where id = '${user.id}'`);
-    if (role === "patient") sql(`insert into public.patient_details(profile_id, goal, level, environment, equipment, onboarding_step)
-      values ('${user.id}', 'performance', 'advanced', 'gym', '{barbell}', 3)`);
+    // `step` 2 deja al paciente **a un paso** de terminar: es el estado desde el
+    // que se prueba el disparo automático del motor (D1).
+    if (role === "patient") {
+      const { goal, level, environment, equipment } = { ...perfilPorDefecto, ...perfil };
+      sql(`insert into public.patient_details(profile_id, goal, level, environment, equipment, onboarding_step)
+        values ('${user.id}', '${goal}', '${level}', '${environment}', '${equipment}', ${step})`);
+    }
     return user;
   }
   const admin = await person("admin");
@@ -101,11 +107,15 @@ test("Motor conectado a asignación, aislamiento y vistas", { timeout: 180000 },
     assert.equal(sql(`select count(*) from public.routine_items i join public.routine_days d on d.id=i.routine_day_id where d.routine_id='${firstId}'`), '3');
     assert.equal(sql(`select assigned_by is null from public.routines where id='${firstId}'`), 't');
     assert.equal(templateContents(), original);
-    const alert = await physio.api.from('alerts').select('payload').eq('patient_id', patient.id);
+    // KAN-10 · D2: la plantilla es de tipo `training`, así que el aviso es del
+    // entrenador. El fisioterapeuta acompaña al mismo paciente y NO lo recibe:
+    // antes le llegaba, y era ruido.
+    const alert = await pro.api.from('alerts').select('payload').eq('patient_id', patient.id);
     assert.equal(alert.error, null);
     assert.equal(alert.data.length, 1);
     assert.equal(alert.data[0].payload.outcome, 'assigned');
-    for (const user of [pro, admin]) assert.equal((await user.api.from('alerts').select('id').eq('patient_id', patient.id)).data.length >= 1, true);
+    assert.deepEqual((await physio.api.from('alerts').select('id').eq('patient_id', patient.id)).data, []);
+    assert.equal((await admin.api.from('alerts').select('id').eq('patient_id', patient.id)).data.length >= 1, true);
   });
   await t.test("Un cambio posterior del perfil o de la regla obliga a reevaluar", async () => {
     const stale = await context();
@@ -130,7 +140,7 @@ test("Motor conectado a asignación, aislamiento y vistas", { timeout: 180000 },
     assert.match(result.html, /404|could not be found/);
     assert.ok(!result.html.includes('name="patientId"'));
   });
-  await t.test("Un día vacío se reserva al equipo, conserva la activa y avisa a ambos profesionales", async () => {
+  await t.test("Un día vacío se reserva al equipo, conserva la activa y avisa a quien entrena ese tipo", async () => {
     sql(`update public.exercises set contraindications='{knee}' where id='${safeId}'`);
     const result = await commit(pro, patient, await context());
     assert.equal(result.error, null);
@@ -142,7 +152,7 @@ test("Motor conectado a asignación, aislamiento y vistas", { timeout: 180000 },
     assert.deepEqual((await patient.api.from('routine_days').select('id').eq('routine_id', pendingId)).data, []);
     assert.deepEqual((await patient.api.from('alerts').select('id').eq('patient_id', patient.id)).data, []);
     assert.deepEqual((await outsider.api.from('alerts').select('id').eq('patient_id', patient.id)).data, []);
-    const alert = await physio.api.from('alerts').select('payload').eq('patient_id', patient.id).order('created_at', { ascending: false }).limit(1);
+    const alert = await pro.api.from('alerts').select('payload').eq('patient_id', patient.id).order('created_at', { ascending: false }).limit(1);
     assert.equal(alert.data[0].payload.outcome, 'pending_review');
     sql(`update public.exercises set contraindications='{}' where id='${safeId}'`);
   });
@@ -243,7 +253,7 @@ test("Motor conectado a asignación, aislamiento y vistas", { timeout: 180000 },
       before + 1,
     );
     // El evento generó su aviso para el equipo, igual que el camino con reglas.
-    const alert = await physio.api.from("alerts").select("payload")
+    const alert = await pro.api.from("alerts").select("payload")
       .eq("patient_id", patient.id).eq("type", "routine_assignment")
       .order("created_at", { ascending: false }).limit(1);
     assert.equal(alert.error, null);
@@ -265,5 +275,146 @@ test("Motor conectado a asignación, aislamiento y vistas", { timeout: 180000 },
       (await patient.api.from("routine_assignment_events").select("id").eq("routine_id", routineId)).data,
       [],
     );
+  });
+  // ---- KAN-9 · D1: el motor se dispara solo al terminar el registro ---------
+
+  /** Termina el registro **como el propio paciente**, que es quien lo hace. */
+  const terminarRegistro = (persona, conditions = []) =>
+    persona.api.rpc("finish_patient_onboarding", {
+      patient_id: persona.id,
+      conditions,
+    });
+
+  const rutinasDe = (persona) =>
+    sql(`select coalesce(string_agg(status::text || ':' || coalesce(source_template_id::text,'-'), ','), '')
+           from public.routines where patient_id = '${persona.id}'`);
+
+  await t.test("D1 · al terminar el registro la rutina se asigna sola", async () => {
+    const recién = await person("patient", null, { step: 2 });
+    assert.equal(rutinasDe(recién), "", "Un paciente a medio registrar no tiene rutina");
+    // La plantilla no se fija: un subtest anterior repunta la regla, y lo que
+    // se comprueba aquí es que gana **la que gana ahora**, no una en concreto.
+    const esperada = sql(`select template_id from public.assignment_rules where id = '${ruleId}'`);
+
+    // Nadie pulsa nada: esto es lo único que hace el paciente.
+    const { error } = await terminarRegistro(recién);
+    assert.equal(error, null, "Terminar el registro no puede fallar");
+
+    assert.equal(
+      rutinasDe(recién),
+      `active:${esperada}`,
+      "Al terminar el registro tiene que quedar una rutina activa de la plantilla que gana",
+    );
+    // El paciente la ve: es el punto 2 del alcance.
+    const suya = await recién.api.from("routines").select("id, status").eq("patient_id", recién.id);
+    assert.equal(suya.error, null);
+    assert.equal(suya.data.length, 1);
+    assert.equal(suya.data[0].status, "active");
+
+    // Y queda la traza, marcada como automática para distinguirla del botón.
+    const evento = sql(
+      `select outcome || '|' || coalesce(payload->>'source','-') || '|' || coalesce(payload->>'rule_id','-')
+         from public.routine_assignment_events where patient_id = '${recién.id}'`,
+    );
+    assert.equal(evento, `assigned|onboarding|${ruleId}`);
+
+    // El paso queda en 3 aunque la asignación haya escrito por el camino.
+    assert.equal(
+      sql(`select onboarding_step from public.patient_details where profile_id='${recién.id}'`),
+      "3",
+    );
+
+    // Reentrante: volver a llamar no asigna una segunda rutina.
+    assert.equal((await terminarRegistro(recién)).error, null);
+    assert.equal(rutinasDe(recién), `active:${esperada}`);
+    assert.equal(
+      Number(sql(`select count(*) from public.routine_assignment_events where patient_id='${recién.id}'`)),
+      1,
+    );
+  });
+
+  await t.test("D1 · sin regla compatible no se inventa una rutina, y se avisa", async () => {
+    // `seed:rules` incluye «Acondicionamiento general» sin condiciones, que
+    // gana siempre: sin desactivar las reglas, `no_match` es inalcanzable. Es
+    // el comportamiento correcto del negocio, y por eso hay que provocarlo.
+    const activas = sql(`select coalesce(string_agg(id::text, ','), '') from public.assignment_rules where is_active`);
+    assert.ok(activas, "La base tiene que tener alguna regla activa para esta prueba");
+    const restaurar = () =>
+      sql(`update public.assignment_rules set is_active = true
+            where id in (${activas.split(",").map((id) => `'${id}'`).join(",")})`);
+    sql(`update public.assignment_rules set is_active = false`);
+    try {
+      const huérfano = await person("patient", null, { step: 2 });
+      assert.equal((await terminarRegistro(huérfano)).error, null);
+
+      assert.equal(rutinasDe(huérfano), "", "Sin regla compatible no se crea ninguna rutina");
+      assert.equal(
+        sql(`select outcome from public.routine_assignment_events where patient_id='${huérfano.id}'`),
+        "no_match",
+      );
+      // El trigger avisa al equipo para que alguien la prepare a mano.
+      assert.ok(
+        Number(sql(`select count(*) from public.alerts where patient_id='${huérfano.id}' and type='routine_assignment'`)) > 0,
+        "El caso sin coincidencia tiene que dejar aviso al equipo",
+      );
+      // Y el registro sí quedó terminado: el paciente no se queda a medias.
+      assert.equal(
+        sql(`select onboarding_step from public.patient_details where profile_id='${huérfano.id}'`),
+        "3",
+      );
+    } finally {
+      restaurar();
+    }
+  });
+
+  await t.test("D1 · si el tamizaje deja el día corto, la rutina espera revisión", async () => {
+    // Plantilla y regla propias, con un perfil que ninguna otra regla de la
+    // prueba usa: así esta gana sin desordenar los demás subtests.
+    const cortaId = randomUUID(), reglaCortaId = randomUUID();
+    const hombroA = randomUUID(), hombroB = randomUUID();
+    sql(`insert into public.exercises(id, name, contraindications, is_custom) values
+          ('${hombroA}', 'Empuje de hombro A de prueba', '{shoulder}', true),
+          ('${hombroB}', 'Empuje de hombro B de prueba', '{shoulder}', true);
+        insert into public.routine_templates(id, name, kind) values ('${cortaId}', 'Rutina corta de prueba', 'physio');
+        insert into public.template_days(template_id, day_number, title) values ('${cortaId}', 1, 'Día único');
+        insert into public.template_items(template_day_id, exercise_id, position, sets, reps)
+          select id, '${safeId}', 1, 3, 10 from public.template_days where template_id = '${cortaId}';
+        insert into public.template_items(template_day_id, exercise_id, position, sets, reps)
+          select id, '${hombroA}', 2, 3, 10 from public.template_days where template_id = '${cortaId}';
+        insert into public.template_items(template_day_id, exercise_id, position, sets, reps)
+          select id, '${hombroB}', 3, 3, 10 from public.template_days where template_id = '${cortaId}';
+        insert into public.assignment_rules(id, name, priority, conditions, template_id)
+          values ('${reglaCortaId}', 'Regla corta de prueba', -2000000,
+            '{"goal":["rehab"],"level":["beginner"],"environment":["home"]}', '${cortaId}');`);
+    try {
+      const frágil = await person("patient", null, {
+        step: 2, goal: "rehab", level: "beginner", environment: "home", equipment: "{none}",
+      });
+      // La condición se registra en el mismo envío que cierra el registro, que
+      // es como llega de verdad desde el formulario del paciente.
+      assert.equal(
+        (await terminarRegistro(frágil, [{ body_part: "shoulder", severity: "moderate" }])).error,
+        null,
+      );
+
+      assert.equal(
+        rutinasDe(frágil),
+        `pending_review:${cortaId}`,
+        "De tres ejercicios, dos contraindicados dejan el día corto",
+      );
+      assert.equal(
+        sql(`select outcome from public.routine_assignment_events where patient_id='${frágil.id}'`),
+        "pending_review",
+      );
+      // **El paciente no la ve**: una propuesta incompleta es del equipo.
+      const suya = await frágil.api.from("routines").select("id").eq("patient_id", frágil.id);
+      assert.equal(suya.error, null);
+      assert.deepEqual(suya.data, []);
+    } finally {
+      sql(`delete from public.routines where source_template_id = '${cortaId}';
+           delete from public.assignment_rules where id = '${reglaCortaId}';
+           delete from public.routine_templates where id = '${cortaId}';
+           delete from public.exercises where id in ('${hombroA}', '${hombroB}')`);
+    }
   });
 });

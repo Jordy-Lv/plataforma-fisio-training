@@ -32,7 +32,8 @@ const cualquiera = "Cualquiera";
 
 /**
  * Alta y edición de la cabecera de una plantilla. Es el mismo formulario: al
- * crear, la plantilla nace como borrador y sus días se añaden después.
+ * crear, la plantilla nace como borrador, con su día 1 si se le pone título
+ * (KAN-8) y sin ningún día si no.
  */
 export function TemplateForm({ template }: { template?: TemplateDetail }) {
   const editing = Boolean(template);
@@ -137,6 +138,31 @@ export function TemplateForm({ template }: { template?: TemplateDetail }) {
           required
         />
       </Field>
+
+      {/*
+        El primer día, solo al crear (KAN-8). Montar una plantilla asignable
+        eran dos fases obligatorias; con un título aquí, la plantilla nace con
+        su día 1 y al llegar a la ficha solo queda ponerle ejercicios.
+
+        Es opcional y no lleva `required`: dejarlo vacío mantiene el flujo de
+        siempre, y plegarlo sería esconder un campo que decide qué se crea
+        (`docs/11-contratos-de-las-suites-http.md`). Va después de la cabecera
+        porque es lo que ocurre después: primero a quién se dirige la plantilla,
+        luego su contenido.
+      */}
+      {!editing && (
+        <Field
+          label="Título del primer día (opcional)"
+          hint="Si lo rellenas, la plantilla nace con su día 1 y solo tendrás que añadirle ejercicios. Si lo dejas vacío, añadirás los días después."
+        >
+          <input
+            className={inputClass}
+            name="firstDayTitle"
+            maxLength={80}
+            placeholder="Movilidad y activación"
+          />
+        </Field>
+      )}
 
       <FormMessage
         state={validation.error ? { error: validation.error } : state}

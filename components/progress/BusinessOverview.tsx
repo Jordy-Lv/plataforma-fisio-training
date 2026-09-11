@@ -43,6 +43,10 @@ function Metric({
  * El panorama del negocio: clientes activos, cumplimiento y asistencia del mes
  * en curso. Lo que tiene pantalla propia —alertas, membresías y planes— se
  * enlaza, no se repite aquí.
+ *
+ * Desde KAN-5 solo la ve el administrador, así que los enlaces del pie ya no
+ * dependen del rol. Cuando la veía también el profesional, `/plans` —que es
+ * `requireAdmin`— lo mandaba a un rebote (defecto D3).
  */
 export function BusinessOverview({ overview }: { overview: Overview }) {
   const { activePatients, compliance, attendance } = overview;

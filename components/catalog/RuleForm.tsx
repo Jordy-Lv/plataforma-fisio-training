@@ -49,6 +49,9 @@ export function RuleForm({
   const equipment =
     conditions?.equipment_all_of ?? conditions?.equipment_any_of ?? [];
   const equipmentMode = conditions?.equipment_all_of ? "all" : "any";
+  /** Si la regla que se edita ya usa alguno de los criterios plegados. */
+  const avanzadosEnUso =
+    equipment.length > 0 || conditions?.age_range != null;
 
   return (
     <form onSubmit={validation.onSubmit} action={action} className="grid gap-8">
@@ -115,11 +118,13 @@ export function RuleForm({
         </div>
 
         {/*
-          Seis criterios, uno debajo de otro, hacían de esta la pantalla más
-          larga del catálogo. A dos columnas se ven casi todos de una vez, que
-          es lo que hace falta para entender qué restringe la regla. El
-          equipamiento y su modo van juntos: el segundo no significa nada sin el
-          primero.
+          Cuatro criterios a la vista: son los que el negocio usa para describir
+          a quién va dirigida una regla. Antes eran siete en la misma pantalla,
+          y los tres que sobraban —el equipamiento, cómo se exige y la edad— no
+          los usa ninguna de las reglas sembradas.
+
+          A dos columnas se ven los cuatro de una vez, que es lo que hace falta
+          para entender qué restringe la regla.
         */}
         <div className="grid gap-8 lg:grid-cols-2">
           <Choices
@@ -150,68 +155,81 @@ export function RuleForm({
             selected={conditions?.excludes_conditions ?? []}
             multiple
           />
-          <div className="grid gap-8 lg:col-span-2 lg:grid-cols-2">
-            <Choices
-              name="equipment"
-              title="Equipamiento"
-              labels={equipmentLabels}
-              selected={equipment}
-              multiple
-            />
-            <Choices
-              name="equipmentMode"
-              title="Cómo se exige ese equipamiento"
-              labels={{
-                any: "Le basta con tener uno",
-                all: "Tiene que tenerlos todos",
-              }}
-              selected={equipmentMode}
-            />
-          </div>
         </div>
 
         {/*
-          La edad es el criterio que menos se usa y el único que no son
-          casillas: va plegado. Un `<details>` cerrado emite igual sus dos
-          campos, y ninguno es obligatorio.
+          Los tres criterios que casi nadie toca, plegados. Un `<details>`
+          cerrado **emite igual sus campos**, así que la regla que ya los usa
+          sigue guardándose entera y `equipmentMode` y `ageMin`/`ageMax` siguen
+          llegando a la server action —los mandan dos pruebas de
+          `test:rules:panel`—.
+
+          Se abre solo cuando la regla que se edita ya usa alguno: plegar algo
+          que está puesto lo esconde, y esconder no es simplificar.
+
+          **El esquema de Zod no se toca**: sigue aceptando los siete criterios y
+          las reglas que ya los tienen siguen funcionando igual.
         */}
-        <details className="rounded-xl border border-border px-4">
+        <details
+          open={avanzadosEnUso}
+          className="rounded-xl border border-border px-4"
+        >
           <summary className="flex min-h-11 cursor-pointer items-center py-3 font-semibold text-brand">
-            Acotar por edad · opcional
+            Criterios avanzados · opcional
           </summary>
-          <fieldset className="grid gap-3 pb-4">
-            <legend className="sr-only">Edad</legend>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Desde (años)">
-                <input
-                  className={inputClass}
-                  name="ageMin"
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  max={120}
-                  defaultValue={conditions?.age_range?.min ?? ""}
-                  placeholder="Sin mínimo"
-                />
-              </Field>
-              <Field label="Hasta (años)">
-                <input
-                  className={inputClass}
-                  name="ageMax"
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  max={120}
-                  defaultValue={conditions?.age_range?.max ?? ""}
-                  placeholder="Sin máximo"
-                />
-              </Field>
+          <div className="grid gap-8 pb-4">
+            <div className="grid gap-8 lg:grid-cols-2">
+              <Choices
+                name="equipment"
+                title="Equipamiento"
+                labels={equipmentLabels}
+                selected={equipment}
+                multiple
+              />
+              <Choices
+                name="equipmentMode"
+                title="Cómo se exige ese equipamiento"
+                labels={{
+                  any: "Le basta con tener uno",
+                  all: "Tiene que tenerlos todos",
+                }}
+                selected={equipmentMode}
+              />
             </div>
-            <p className="text-sm leading-7 text-muted-foreground">
-              Si indicas una edad, la regla no se aplicará a quien no tenga
-              fecha de nacimiento registrada.
-            </p>
-          </fieldset>
+            <fieldset className="grid gap-3">
+              <legend className="mb-2 font-semibold">Acotar por edad</legend>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Desde (años)">
+                  <input
+                    className={inputClass}
+                    name="ageMin"
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={120}
+                    defaultValue={conditions?.age_range?.min ?? ""}
+                    placeholder="Sin mínimo"
+                  />
+                </Field>
+                <Field label="Hasta (años)">
+                  <input
+                    className={inputClass}
+                    name="ageMax"
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={120}
+                    defaultValue={conditions?.age_range?.max ?? ""}
+                    placeholder="Sin máximo"
+                  />
+                </Field>
+              </div>
+              <p className="text-sm leading-7 text-muted-foreground">
+                Si indicas una edad, la regla no se aplicará a quien no tenga
+                fecha de nacimiento registrada.
+              </p>
+            </fieldset>
+          </div>
         </details>
       </div>
 

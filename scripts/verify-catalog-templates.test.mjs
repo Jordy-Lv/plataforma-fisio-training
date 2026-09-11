@@ -221,6 +221,49 @@ test("Plantillas de rutina: días y ejercicios", { timeout: 180_000 }, async (t)
     );
   });
 
+  await t.test(
+    "El admin crea una plantilla con su primer día en el mismo envío",
+    async () => {
+      // KAN-8: montar una plantilla asignable eran dos fases obligatorias
+      // —cabecera, redirección y luego añadir día—. El título del primer día
+      // es opcional; el sub-test de arriba lo deja vacío y sigue naciendo sin
+      // ningún día, que es el flujo que esta suite ya afirmaba.
+      const client = await signedInAs("admin");
+      const name = `Con primer día ${marca}`;
+      const result = await enviar(client, "/templates/new", ['name="name"'], {
+        name,
+        kind: "training",
+        goal: "",
+        level: "",
+        environment: "",
+        daysPerWeek: "3",
+        firstDayTitle: "Movilidad y activación",
+      });
+
+      const destino = locationOf(result);
+      assert.match(destino, /^\/templates\/[0-9a-f-]{36}$/, alerta(result.html));
+      const conDia = destino.split("/").pop();
+      plantillas.push(conDia);
+
+      // Un único día, y es el 1: la plantilla acaba de nacer.
+      assert.equal(
+        sql(
+          `select count(*) from public.template_days where template_id = '${conDia}'::uuid`,
+        ).trim(),
+        "1",
+      );
+      assert.equal(
+        sql(
+          `select title from public.template_days where id = '${diaId(conDia, 1)}'::uuid`,
+        ).trim(),
+        "Movilidad y activación",
+      );
+
+      // Sigue siendo un borrador: un día sin ejercicios no la hace asignable.
+      assert.equal(columna(conDia, "is_active"), "f");
+    },
+  );
+
   await t.test("Un nombre demasiado corto se rechaza", async () => {
     const client = await signedInAs("admin");
     const result = await enviar(client, "/templates/new", ['name="name"'], {

@@ -699,6 +699,167 @@ test(
       ).data.is_active,
       false,
     );
+    // ---- KAN-6: quién acompaña al paciente ---------------------------------
+    //
+    // Hasta aquí la ficha no consultaba `care_assignments` en absoluto y
+    // `/people` mostraba solo *el tipo* de acompañamiento: para saber quién
+    // llevaba a un paciente había que salir y cruzarlo a ojo.
+    //
+    // Lo que se comprueba es el reparto que impone la RLS, no el texto: el
+    // administrador ve el mapa completo y el profesional no alcanza al otro
+    // profesional. Por eso no hay función `security definer`.
+    const proName = sql(
+      `select full_name from public.profiles where id = '${proId}'`,
+    ).trim();
+    const fichaAdmin = await adminBrowser.request(`/people/${patientId}`);
+    assert.ok(
+      fichaAdmin.html.includes("Quién le acompaña"),
+      "La ficha tiene que decir quién acompaña al paciente",
+    );
+    assert.ok(
+      fichaAdmin.html.includes(proName),
+      "El administrador ve el nombre del profesional en la ficha",
+    );
+    assert.ok(
+      (await adminBrowser.request("/people")).html.includes(
+        `Fisioterapia: ${proName}`,
+      ),
+      "En `/people` la tarjeta del paciente nombra a quien lo acompaña",
+    );
+
+    // El profesional sí se ve a sí mismo, y en las **dos** pantallas: su propio
+    // perfil siempre es legible. El listado no lo trae en el directorio —solo
+    // carga pacientes—, así que el nombre tiene que salir igual; si solo se
+    // comprueba la ficha, `/people` puede quedarse mostrando «Fisioterapia» a
+    // secas sin que nadie se entere.
+    assert.ok(
+      (await proBrowser.request(`/people/${patientId}`)).html.includes(proName),
+      "El profesional a cargo se ve a sí mismo en la ficha",
+    );
+    assert.ok(
+      (await proBrowser.request("/people")).html.includes(
+        `Fisioterapia: ${proName}`,
+      ),
+      "El profesional también se ve a sí mismo en la tarjeta de `/people`",
+    );
+
+    // Y el reparto restrictivo, sobre la semilla (KAN-16: esta parte depende de
+    // `supabase/seed.sql`). Diego tiene entrenador **y** fisioterapeuta; Beto,
+    // su entrenador, no puede alcanzar a Carla ni por asignación ni por perfil.
+    const diego = "00000000-0000-4000-a000-000000000004";
+    const betoBrowser = httpClient();
+    expectRedirect(
+      await betoBrowser.submit("/login", {
+        email: "entrenador@demo.local",
+        password: "demo1234",
+      }),
+      "/pro",
+    );
+    const fichaBeto = await betoBrowser.request(`/people/${diego}`);
+    assert.ok(
+      fichaBeto.html.includes("Beto Entrenador"),
+      "Beto se ve a sí mismo como el entrenador de Diego",
+    );
+    assert.ok(
+      !fichaBeto.html.includes("Carla Fisio"),
+      "El entrenador no puede ver al fisioterapeuta del mismo paciente",
+    );
+    assert.ok(
+      (await adminBrowser.request(`/people/${diego}`)).html.includes(
+        "Carla Fisio",
+      ),
+      "El mapa completo sí lo ve el administrador",
+    );
+
+    // ---- KAN-13 · D5: cerrar y reasignar el acompañamiento ----------------
+    //
+    // Hasta aquí `ended_at` no lo escribía ninguna server action: cambiarle el
+    // fisioterapeuta a un paciente exigía dar de baja al profesional entero o
+    // entrar a la base a mano. Y el índice único parcial `(patient_id, kind)
+    // where ended_at is null` hacía que reasignar saltara con un 23505 cuyo
+    // mensaje pedía «cierra la asignación anterior», que era justo lo que la
+    // interfaz no ofrecía.
+    const assignmentId = sql(
+      `select id from public.care_assignments
+        where patient_id = '${patientId}' and professional_id = '${proId}'
+          and ended_at is null`,
+    ).trim();
+    assert.match(assignmentId, /^[a-f0-9-]{36}$/, "El paciente tiene que llegar aquí con su acompañamiento vivo");
+
+    // Punto de partida: el profesional a cargo sí ve al paciente.
+    assert.equal(
+      (await proApi.from("profiles").select("id").eq("id", patientId)).data.length,
+      1,
+      "Antes de cerrar, su profesional tiene que verlo",
+    );
+
+    // Sin marcar la casilla no se cierra nada.
+    const sinConfirmar = await adminBrowser.submit(
+      "/people",
+      { assignmentId },
+      `value="${assignmentId}"`,
+    );
+    assert.ok(
+      sinConfirmar.html.includes("Confirma el cierre del acompañamiento"),
+      "Cerrar cambia quién ve al paciente: tiene que pedir confirmación",
+    );
+    assert.equal(
+      sql(`select ended_at is null from public.care_assignments where id = '${assignmentId}'`).trim(),
+      "t",
+    );
+
+    const cerrar = await adminBrowser.submit(
+      "/people",
+      { assignmentId, confirmation: "yes" },
+      `value="${assignmentId}"`,
+    );
+    assert.ok(
+      cerrar.html.includes("Acompañamiento cerrado."),
+      cerrar.html.match(/role="alert"[^>]*>([^<]*)/)?.[1],
+    );
+
+    // La fila **se cierra, no se borra**: el historial es parte del producto.
+    assert.equal(
+      sql(`select count(*) from public.care_assignments where id = '${assignmentId}'`).trim(),
+      "1",
+    );
+    assert.equal(
+      sql(`select ended_at is not null from public.care_assignments where id = '${assignmentId}'`).trim(),
+      "t",
+    );
+
+    // Y el profesional deja de verlo. Comprobado, no supuesto.
+    assert.deepEqual(
+      (await proApi.from("profiles").select("id").eq("id", patientId)).data,
+      [],
+      "Tras cerrar, ese profesional no puede alcanzar al paciente",
+    );
+
+    // `/people` lo refleja sin recargar a mano: la acción revalida esa ruta.
+    assert.ok(
+      !(await adminBrowser.request("/people")).html.includes(`value="${assignmentId}"`),
+      "El acompañamiento cerrado deja de aparecer entre los vigentes",
+    );
+
+    // Y ahora sí se puede reasignar otro profesional de la misma especialidad,
+    // que era el callejón sin salida.
+    const otroFisio = sql(`select id from public.profiles where role='professional' and specialty='physio' and is_active and id <> '${proId}' limit 1`).trim();
+    assert.match(otroFisio, /^[a-f0-9-]{36}$/);
+    const reasignar = await adminBrowser.submit(
+      "/people",
+      { patientId, professionalId: otroFisio, kind: "physio" },
+      'name="patientId"',
+    );
+    assert.ok(
+      reasignar.html.includes("Profesional asignado."),
+      reasignar.html.match(/role="alert"[^>]*>([^<]*)/)?.[1],
+    );
+    sql(`update public.care_assignments set ended_at = now()
+          where patient_id = '${patientId}' and professional_id = '${otroFisio}' and ended_at is null`);
+    // Se devuelve el acompañamiento original para que la baja de después siga
+    // contando la misma asignación que espera el resto de la prueba.
+    sql(`update public.care_assignments set ended_at = null where id = '${assignmentId}'`);
+
     const noConfirmation = await adminBrowser.submit(
       "/people",
       { personId: proId, expectedAssignments: 1 },

@@ -237,9 +237,17 @@ function sembrarSesión(rutina, performedOn) {
   return sessionId;
 }
 
-test("Panorama del negocio", { timeout: 180_000 }, async (t) => {
+test("Panorama del negocio", { timeout: 480_000 }, async (t) => {
   const sesiones = [];
+  /** La siembra de volumen: se borra por su ventana de creación, no por mil ids. */
+  let volumen = null;
   t.after(() => {
+    if (volumen)
+      sql(
+        `delete from public.sessions
+          where routine_id = '${volumen.routineId}'::uuid
+            and created_at >= '${volumen.desde}'`,
+      );
     if (sesiones.length)
       sql(
         `delete from public.sessions where id in (${sesiones
@@ -288,6 +296,81 @@ test("Panorama del negocio", { timeout: 180_000 }, async (t) => {
     // acotara por fecha, estos dos registros de más la descuadrarían.
     await cuadra(client, "con una sesión del mes pasado");
   });
+
+  await t.test(
+    "El cumplimiento no se falsea por encima del tope de PostgREST",
+    { timeout: 300_000 },
+    async () => {
+      // El defecto D4: el panorama traía las sesiones del mes con sus registros
+      // embebidos y contaba en el servidor de Next. PostgREST corta en
+      // `max_rows` (1000), así que pasada esa marca el porcentaje se calculaba
+      // sobre un subconjunto truncado, sin error y sin log.
+      //
+      // Por eso el volumen se siembra **desequilibrado**: las primeras mil
+      // sesiones cumplen y las últimas ciento cincuenta no. Con la lista
+      // truncada el cumplimiento sale del 100 %; con la base entera, del 87 %.
+      // Una siembra uniforme daría el mismo porcentaje de las dos formas y no
+      // probaría nada.
+      const rutina = rutinaConTresEjercicios();
+      const [hecho, , saltado] = rutina.items;
+      const desde = sql("select clock_timestamp()::text").trim();
+      volumen = { routineId: rutina.routineId, desde };
+
+      const sembrar = (cuantas, item, estado, extra) =>
+        sql(
+          `with nuevas as (
+             insert into public.sessions
+                    (routine_id, routine_day_id, patient_id, performed_on, status)
+             select '${rutina.routineId}'::uuid, '${rutina.dayId}'::uuid,
+                    '${rutina.patientId}'::uuid, '${hoy}', 'completed'
+               from generate_series(1, ${cuantas})
+             returning id)
+           insert into public.session_logs
+                  (session_id, routine_item_id, patient_id, status${extra.columnas})
+           select nuevas.id, '${item}'::uuid, '${rutina.patientId}'::uuid,
+                  '${estado}'${extra.valores}
+             from nuevas`,
+        );
+
+      sembrar(1000, hecho, "done", { columnas: ", actual_sets, actual_reps", valores: ", 3, 10" });
+      sembrar(150, saltado, "skipped", {
+        columnas: ", pain_level, pain_location, notes",
+        valores: `, 6, 'knee', 'Volumen ${marca}'`,
+      });
+
+      const base = esperado();
+      assert.ok(
+        base.sesiones > 1000,
+        `El mes tiene que superar el tope de PostgREST para que la prueba sirva (${base.sesiones})`,
+      );
+
+      // Lo que habría devuelto la consulta truncada, para dejar escrito que el
+      // número correcto y el falseado no coinciden.
+      const truncado = Number(
+        sql(
+          `select round(100.0 * count(*) filter (where l.status in ('done','modified'))
+                        / nullif(count(l.id), 0))
+             from (select id from public.sessions
+                    where performed_on >= '${mes}' order by created_at limit 1000) s
+             left join public.session_logs l on l.session_id = s.id`,
+        ).trim(),
+      );
+      const real = Math.round((100 * base.cumplidos) / base.registrados);
+      assert.notEqual(
+        truncado,
+        real,
+        "La siembra tiene que hacer distinto el número truncado del real",
+      );
+
+      const client = await screenAs("admin");
+      const leído = await cuadra(client, "con más de mil sesiones en el mes");
+      assert.equal(
+        Math.round((100 * leído.cumplidos) / leído.registrados),
+        real,
+        `La pantalla tiene que decir ${real} %, no el ${truncado} % de la lista truncada`,
+      );
+    },
+  );
 
   await t.test("Un profesional y un paciente no llegan al panorama", async () => {
     for (const [role, panel] of [
