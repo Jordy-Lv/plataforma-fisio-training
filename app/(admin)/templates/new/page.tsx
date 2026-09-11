@@ -15,7 +15,7 @@ export default async function Page() {
     <Workspace
       title="Nueva plantilla de rutina"
       name={profile.fullName}
-      description="Primero el perfil al que se dirige la plantilla; los días y sus ejercicios se añaden a continuación. Hasta entonces queda como borrador."
+      description="Primero el perfil al que se dirige la plantilla. Puedes dejarla lista con su primer día desde aquí; los ejercicios se añaden a continuación. Hasta entonces queda como borrador."
       actions={
         <ButtonLink variant="ghost" href="/templates">
           Volver a las plantillas

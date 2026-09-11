@@ -12,7 +12,10 @@ import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { cardVariants } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Notice } from "@/components/ui/Notice";
 import { SheetModal } from "@/components/ui/SheetModal";
+import { careTeamSummary, toCareTeam } from "@/lib/auth/care-team";
+import { listPeopleDirectory } from "@/lib/auth/people-queries";
 import { specialtyLabels } from "@/lib/auth/people-schemas";
 
 /**
@@ -33,29 +36,70 @@ export async function PeoplePanel({
 }) {
   const profile = await requireRole(role);
   const supabase = await createClient();
-  const [peopleResult, assignmentsResult] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("id, full_name, role, specialty, phone, is_active")
-      .in("role", role === "admin" ? ["professional", "patient"] : ["patient"])
-      .order("full_name"),
+  const [directory, assignmentsResult] = await Promise.all([
+    // La consulta del directorio vivía aquí duplicada; ahora es la misma que
+    // usan `/pro/sessions` y `/pro/alerts` (KAN-14).
+    listPeopleDirectory(role === "admin" ? "everyone" : "patients"),
     supabase
       .from("care_assignments")
       .select("id, patient_id, professional_id, kind")
       .is("ended_at", null),
   ]);
-  if (peopleResult.error || assignmentsResult.error)
+  if (assignmentsResult.error)
     throw new Error(
       "No se pudo cargar la lista de personas. Inténtalo de nuevo.",
     );
-  const people = peopleResult.data;
+  const people = directory.people;
   const assignments = assignmentsResult.data;
+  /**
+   * Cuánta gente quedó fuera del techo de PostgREST. Antes el listado se
+   * truncaba en silencio y quien no cupiera desaparecía sin rastro, también
+   * del buscador; ahora la pantalla lo dice.
+   */
+  const fuera = directory.total - people.length;
+  /**
+   * El aviso del techo. Dice la verdad y nada más: a quien no se cargó **no se
+   * llega desde aquí**, tampoco buscándolo, porque el buscador de esta pantalla
+   * filtra en el cliente sobre lo ya pintado. Llevarlo al servidor exige
+   * filtros en la URL, y eso es la deuda 3.3 de `docs/15`, congelada mientras
+   * `/people` sean cuatro `SheetModal`. Prometer una búsqueda que no existe
+   * sería peor que el silencio de antes.
+   */
+  const avisoDeTecho =
+    fuera > 0 ? (
+      <Notice tone="warning">
+        Se han cargado {people.length} personas por orden alfabético y quedan{" "}
+        {fuera} sin mostrar. A esas no se llega todavía desde esta lista:
+        ábrelas por su ficha si tienes el enlace.
+      </Notice>
+    ) : null;
   const patients = people.filter((person) => person.role === "patient");
   const team = people.filter((person) => person.role === "professional");
   const isAdmin = role === "admin";
+  /**
+   * Los nombres por id, que es lo que la lista no trae: `care_assignments`
+   * guarda uuids. Solo están los perfiles que el actor puede leer, y eso lo
+   * decide la RLS: al profesional le oculta tanto la asignación del otro
+   * profesional como su perfil, así que el mapa completo es del administrador.
+   */
+  const nombres = new Map(people.map((person) => [person.id, person.full_name]));
+  // El actor no sale en su propio directorio —el profesional solo carga
+  // pacientes— pero la RLS sí le devuelve sus asignaciones, así que sin esto su
+  // acompañamiento se pintaba como «Fisioterapia» a secas mientras la ficha,
+  // que lee `profiles` por id, sí lo nombraba. No amplía ninguna consulta: es
+  // su propio perfil, que ya viene de `requireRole`.
+  nombres.set(profile.id, profile.fullName);
   /** El nombre de una persona por su id, para los acompañamientos vigentes. */
-  const nombre = (id: string) =>
-    people.find((person) => person.id === id)?.full_name || "Sin nombre";
+  const nombre = (id: string) => nombres.get(id) || "Sin nombre";
+  /**
+   * Quién acompaña a un paciente (KAN-6), resuelto sobre las filas ya cargadas:
+   * pedir el equipo tarjeta a tarjeta sería una consulta por paciente.
+   */
+  const equipoDe = (patientId: string) =>
+    toCareTeam(
+      assignments.filter((a) => a.patient_id === patientId),
+      nombres,
+    );
 
   return (
     <Workspace
@@ -102,6 +146,7 @@ export async function PeoplePanel({
           action="Buscar un paciente"
         >
           <PeopleFilter searchPlaceholder="Buscar un paciente por su nombre">
+            {avisoDeTecho}
             {patients.length === 0 ? (
               <EmptyState title="Aún no hay pacientes registrados">
                 Regístralos desde la tarjeta «
@@ -121,10 +166,7 @@ export async function PeoplePanel({
                           {person.full_name || "Sin nombre"}
                         </h3>
                         <p className="mt-1 text-sm text-muted-foreground">
-                          {assignments
-                            .filter((a) => a.patient_id === person.id)
-                            .map((a) => specialtyLabels[a.kind])
-                            .join(" y ") || "Sin profesional asignado"}
+                          {careTeamSummary(equipoDe(person.id))}
                           {person.phone ? ` · ${person.phone}` : ""}
                         </p>
                       </div>
@@ -173,6 +215,7 @@ export async function PeoplePanel({
                 { value: "physio", label: "Fisioterapeutas" },
               ]}
             >
+              {avisoDeTecho}
               {team.length === 0 ? (
                 <EmptyState title="Aún no hay profesionales">
                   Regístralos desde la tarjeta «Registrar persona».

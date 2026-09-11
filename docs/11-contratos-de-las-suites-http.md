@@ -119,6 +119,11 @@ suite los exige **todos en el mismo formulario**.
 >
 > `/admin` y `/pro` ya no montan formularios de personas: son el panorama del negocio. El
 > login sigue redirigiendo el personal a `/admin` y `/pro`, y `test:people` lo comprueba.
+>
+> **La ficha no gana formularios con KAN-6.** «Quién le acompaña» (`CareTeamCard`) es solo
+> lectura —como `PatientHeader` y `PatientTabs`—, así que el primero de `/people/[id]` sigue
+> siendo el de `name="goal"`. Asignar y cerrar se quedan en `/people`, y desde la ficha se
+> llega con un `<a>`, que no cuenta como formulario.
 
 ### Catálogo
 

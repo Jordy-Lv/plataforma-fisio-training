@@ -213,6 +213,15 @@ el servidor local.
   tarjetas con `SheetModal`, un filtro en la URL navega y cierra el modal en cada tecla.
   `PeopleFilter` ya filtra en el cliente y sin JavaScript la lista se ve entera. Reabrir
   cuando el modal conserve su estado en la URL.
+  **Revisado el 2026-09-11 con KAN-14 y vuelto a congelar.** Paginar en el servidor
+  manteniendo el filtro en el cliente sería peor que no hacerlo: el buscador solo alcanza lo
+  ya pintado, así que estrechar la página dejaría a gente fuera de su alcance. Lo que sí se
+  arregló es el defecto real que se escondía detrás: la consulta se comía el tope de
+  PostgREST **en silencio** y quien no cupiera desaparecía sin rastro. Ahora `/people` lee por
+  `listPeopleDirectory`, que devuelve el total, y la pantalla dice cuánta gente queda sin
+  mostrar en lugar de fingir que la lista está completa. Mientras 3.3 siga congelada, a esas
+  personas no se llega desde el listado: hace falta la búsqueda en el servidor, que es
+  justamente lo que exige los filtros en la URL.
 - **10.2 — Devolver al servidor los componentes de cliente.** Cerrado como «no aplica»:
   ninguno es de cliente *solo* por el botón; todos pintan además errores en línea, y dos
   tienen contrato de suite sobre esa respuesta. Reabrir si un change posterior mueve esos

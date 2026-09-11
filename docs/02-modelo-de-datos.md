@@ -155,6 +155,13 @@ Las rutinas base que define el equipo. **Nunca se modifican al asignarlas.**
 - `template_items`: `template_day_id`, `exercise_id`, `position`, `sets`, `reps`,
   `target_weight`, `rest_seconds`, `notes`.
 
+**Un ejercicio va en tantas plantillas como se quiera**, y también varias veces dentro de la
+misma. Ni `template_items` ni `routine_items` tienen unicidad sobre `exercise_id`: la única
+restricción de la tabla es `unique (template_day_id, position)`, que ordena los ejercicios
+dentro del día. La pregunta la plantea KAN-8 —«¿un ejercicio debe estar asociado a una o a
+varias rutinas?»— y el esquema ya la responde: a varias, y no hay que duplicar el ejercicio
+en el catálogo para reutilizarlo.
+
 ### `assignment_rules`
 Las reglas del motor de asignación, editables desde el panel de administración.
 

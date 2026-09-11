@@ -678,6 +678,78 @@ test(
       ).data.is_active,
       false,
     );
+    // ---- KAN-6: quién acompaña al paciente ---------------------------------
+    //
+    // Hasta aquí la ficha no consultaba `care_assignments` en absoluto y
+    // `/people` mostraba solo *el tipo* de acompañamiento: para saber quién
+    // llevaba a un paciente había que salir y cruzarlo a ojo.
+    //
+    // Lo que se comprueba es el reparto que impone la RLS, no el texto: el
+    // administrador ve el mapa completo y el profesional no alcanza al otro
+    // profesional. Por eso no hay función `security definer`.
+    const proName = sql(
+      `select full_name from public.profiles where id = '${proId}'`,
+    ).trim();
+    const fichaAdmin = await adminBrowser.request(`/people/${patientId}`);
+    assert.ok(
+      fichaAdmin.html.includes("Quién le acompaña"),
+      "La ficha tiene que decir quién acompaña al paciente",
+    );
+    assert.ok(
+      fichaAdmin.html.includes(proName),
+      "El administrador ve el nombre del profesional en la ficha",
+    );
+    assert.ok(
+      (await adminBrowser.request("/people")).html.includes(
+        `Fisioterapia: ${proName}`,
+      ),
+      "En `/people` la tarjeta del paciente nombra a quien lo acompaña",
+    );
+
+    // El profesional sí se ve a sí mismo, y en las **dos** pantallas: su propio
+    // perfil siempre es legible. El listado no lo trae en el directorio —solo
+    // carga pacientes—, así que el nombre tiene que salir igual; si solo se
+    // comprueba la ficha, `/people` puede quedarse mostrando «Fisioterapia» a
+    // secas sin que nadie se entere.
+    assert.ok(
+      (await proBrowser.request(`/people/${patientId}`)).html.includes(proName),
+      "El profesional a cargo se ve a sí mismo en la ficha",
+    );
+    assert.ok(
+      (await proBrowser.request("/people")).html.includes(
+        `Fisioterapia: ${proName}`,
+      ),
+      "El profesional también se ve a sí mismo en la tarjeta de `/people`",
+    );
+
+    // Y el reparto restrictivo, sobre la semilla (KAN-16: esta parte depende de
+    // `supabase/seed.sql`). Diego tiene entrenador **y** fisioterapeuta; Beto,
+    // su entrenador, no puede alcanzar a Carla ni por asignación ni por perfil.
+    const diego = "00000000-0000-4000-a000-000000000004";
+    const betoBrowser = httpClient();
+    expectRedirect(
+      await betoBrowser.submit("/login", {
+        email: "entrenador@demo.local",
+        password: "demo1234",
+      }),
+      "/pro",
+    );
+    const fichaBeto = await betoBrowser.request(`/people/${diego}`);
+    assert.ok(
+      fichaBeto.html.includes("Beto Entrenador"),
+      "Beto se ve a sí mismo como el entrenador de Diego",
+    );
+    assert.ok(
+      !fichaBeto.html.includes("Carla Fisio"),
+      "El entrenador no puede ver al fisioterapeuta del mismo paciente",
+    );
+    assert.ok(
+      (await adminBrowser.request(`/people/${diego}`)).html.includes(
+        "Carla Fisio",
+      ),
+      "El mapa completo sí lo ve el administrador",
+    );
+
     // ---- KAN-13 · D5: cerrar y reasignar el acompañamiento ----------------
     //
     // Hasta aquí `ended_at` no lo escribía ninguna server action: cambiarle el
