@@ -26,8 +26,10 @@ export function SidebarNav({ role }: { role: UserRole }) {
           const isActive = active === item.href;
           return (
             <li key={item.href}>
+              {/* Sin precarga (KAN-19): ver el comentario equivalente en MobileNav. */}
               <Link
                 href={item.href}
+                prefetch={false}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
                   "flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors",

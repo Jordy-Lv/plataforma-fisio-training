@@ -62,6 +62,7 @@ export function MobileNav({ role }: { role: UserRole }) {
                 <li key={item.href} className="grid gap-0.5">
                   <Link
                     href={item.href}
+                    prefetch={false}
                     aria-current={active === item.href ? "page" : undefined}
                     className={cn(
                       "flex min-h-12 items-center gap-3 rounded-lg px-3 font-medium",
@@ -80,6 +81,7 @@ export function MobileNav({ role }: { role: UserRole }) {
                         <li key={tab.href}>
                           <Link
                             href={tab.href}
+                            prefetch={false}
                             className="flex min-h-11 items-center rounded-lg px-3 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                           >
                             {tab.label}
@@ -108,9 +110,18 @@ export function MobileNav({ role }: { role: UserRole }) {
           {items.map((item) => {
             const isActive = active === item.href && !isOpen;
             return (
+              /*
+                Sin precarga (KAN-19): estas seis pestañas están siempre en el
+                viewport, así que Next las precarga en segundo plano apenas se
+                pinta la pantalla. En `/routine/sessions/[id]` esa precarga
+                compite con el POST de la Server Action de SessionItemForm y el
+                navegador aborta peticiones de ambos a la vez —el botón se
+                queda en «Guardando…» aunque el registro sí llegó a la base—.
+              */
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={false}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
                   tabClass,
