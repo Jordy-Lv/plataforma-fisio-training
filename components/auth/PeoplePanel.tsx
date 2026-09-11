@@ -83,6 +83,12 @@ export async function PeoplePanel({
    * profesional como su perfil, así que el mapa completo es del administrador.
    */
   const nombres = new Map(people.map((person) => [person.id, person.full_name]));
+  // El actor no sale en su propio directorio —el profesional solo carga
+  // pacientes— pero la RLS sí le devuelve sus asignaciones, así que sin esto su
+  // acompañamiento se pintaba como «Fisioterapia» a secas mientras la ficha,
+  // que lee `profiles` por id, sí lo nombraba. No amplía ninguna consulta: es
+  // su propio perfil, que ya viene de `requireRole`.
+  nombres.set(profile.id, profile.fullName);
   /** El nombre de una persona por su id, para los acompañamientos vigentes. */
   const nombre = (id: string) => nombres.get(id) || "Sin nombre";
   /**

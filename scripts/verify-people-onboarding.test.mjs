@@ -706,10 +706,20 @@ test(
       "En `/people` la tarjeta del paciente nombra a quien lo acompaña",
     );
 
-    // El profesional sí se ve a sí mismo: su propio perfil siempre es legible.
+    // El profesional sí se ve a sí mismo, y en las **dos** pantallas: su propio
+    // perfil siempre es legible. El listado no lo trae en el directorio —solo
+    // carga pacientes—, así que el nombre tiene que salir igual; si solo se
+    // comprueba la ficha, `/people` puede quedarse mostrando «Fisioterapia» a
+    // secas sin que nadie se entere.
     assert.ok(
       (await proBrowser.request(`/people/${patientId}`)).html.includes(proName),
       "El profesional a cargo se ve a sí mismo en la ficha",
+    );
+    assert.ok(
+      (await proBrowser.request("/people")).html.includes(
+        `Fisioterapia: ${proName}`,
+      ),
+      "El profesional también se ve a sí mismo en la tarjeta de `/people`",
     );
 
     // Y el reparto restrictivo, sobre la semilla (KAN-16: esta parte depende de
