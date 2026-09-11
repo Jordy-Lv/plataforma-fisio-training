@@ -28,4 +28,4 @@ Cada tarea es un ticket de Jira (proyecto `KAN`). El orden es el de las fases de
   hacen: exigen que `SheetModal` conserve su estado en la URL (deuda 3.3 de `docs/15`, revisada
   y vuelta a congelar el 2026-09-11). Paginar dejando el filtro en el cliente habría dejado a
   gente fuera del alcance del buscador.
-- [ ] 4.5 **KAN-4** — Cerrarlo apuntando a KAN-11, KAN-10 y KAN-14: se queda sin contenido propio.
+- [x] 4.5 **KAN-4** — Cerrarlo apuntando a KAN-11, KAN-10 y KAN-14: se queda sin contenido propio.
