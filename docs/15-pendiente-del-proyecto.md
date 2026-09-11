@@ -1,9 +1,11 @@
 # Lo que falta por hacer
 
-Foto del **2026-09-08**, tomada justo después de fusionar a `main` los PRs
-[#16](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/16),
-[#17](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/17) y
-[#18](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/18) (`main` = `4388346`).
+Foto del **2026-09-11**, tomada tras fusionar a `main` los PRs
+[#22](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/22) a
+[#30](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/30) (`main` = `31e121c`).
+Quedan abiertos [#21](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/21) (KAN-3,
+rendimiento) y [#31](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/31) (KAN-17,
+ver «Estado de las suites» abajo).
 
 Este documento reúne **todo** lo que queda abierto, dentro y fuera de OpenSpec. La fuente de
 verdad de cada tarea del change en curso sigue siendo su `tasks.md`, y cada casilla se marca
@@ -31,11 +33,48 @@ Notación: **[código]** hay que escribirlo · **[verif.]** es comprobar, medir 
 | `add-exercise-library-and-rules` | 27 | — | — |
 | `add-progress-and-memberships` | 31 | — | — |
 | `add-routine-execution` | 28 | — | **1** |
+| `add-routine-calendar` | 14 | — | — |
+| `simplify-navigation-and-panel` | 12 | — | **1** |
 | `improve-frontend-ux` | 120 | 3 | **19** |
 
-Los cuatro slices funcionales están cerrados salvo una verificación en teléfono real. Todo lo
-que queda vivo es el change de frontend y un bloque de operación que nunca estuvo en ninguna
-lista.
+Los seis changes funcionales (todo salvo `improve-frontend-ux`) están cerrados salvo dos
+verificaciones en teléfono real (`add-routine-execution` 6.1 y `simplify-navigation-and-panel`
+1.2), que caben en la misma sesión que la 13.5 de `improve-frontend-ux` (§C.1). Todo lo que
+queda vivo en código es la sección 16 y la 14 de `improve-frontend-ux`, más el bloque de
+operación que nunca estuvo en ninguna lista.
+
+---
+
+## Estado de las suites y tickets abiertos
+
+**`main` tiene una suite en rojo.** `npm run test:calendar` falla contra `main` (`31e121c`):
+`CalendarGrid` pinta la celda de «día vacío» en la cuadrícula del profesional en vez de la
+celda con la rutina ya programada. Es **KAN-17**, causado por que la migración de KAN-9
+(`20260910130000`) reescribió `copy_routine_template` con `create or replace` sin repetir el
+`set timezone to 'America/Bogota'` de la versión anterior, así que la rutina se fecha en la
+zona del servidor. El fix ya está listo —fecha explícita en `(now() at time zone
+'America/Bogota')::date`, sin depender de un `set` que un futuro `create or replace` puede
+volver a perder— en el PR
+[#31](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/31), con `test:calendar` en
+9/9 y el resto de suites tocadas en verde. **Falta fusionarlo.** Mientras siga abierto, quien
+corra las suites de `scripts/` sobre `main` va a ver esta en rojo y no es una regresión suya.
+
+Tres tickets quedaron abiertos en Jira el 2026-09-10/11, sin `tasks.md` propio porque no son
+parte de ningún change de OpenSpec en curso:
+
+- **KAN-17** — el defecto de arriba. PR #31 abierto, mergeable.
+- **KAN-15** — `listPatientsWithMonthAttendance` trae todos los perfiles activos y pagina en
+  memoria (`all.slice(...)`), el mismo patrón que D4 (KAN-12) pero en `/attendance`. Prioridad
+  baja: el tope de PostgREST (mil filas) exige mil pacientes activos, lejos del volumen de la
+  demo. Coordinar con **14.7/14.8** de `improve-frontend-ux` y con **B.2** más abajo: es el
+  mismo patrón de paginación.
+- **KAN-16** — las suites de `scripts/` (29 comandos `test:*` en `package.json`) no declaran
+  de qué semillas dependen. Es el mismo mecanismo que ya cuesta tiempo en **A.4** y **A.5**:
+  tras un `db:reset` limpio,
+  `test:overview` falla 3/5 con «La semilla no tiene ninguna rutina con tres ejercicios» en
+  vez de decir que falta `npm run seed:progress-demo`. Se cierra añadiendo a la cabecera de
+  cada suite qué comandos de semilla exige, y mejor aún, haciendo que la propia suite lo
+  compruebe y lo diga.
 
 ---
 
@@ -45,7 +84,7 @@ Nada de esto está en un `tasks.md`, y es lo que más riesgo acumula.
 
 ### A.1 — [oper.] La CI de GitHub Actions no corre. **Prioridad alta.**
 
-Las **40 ejecuciones** registradas desde la primera del 2026-09-05 están en
+Las **165 ejecuciones** registradas desde la primera del 2026-09-05 están en
 `startup_failure`, en 0 segundos, sin generar jobs, logs ni check-runs. La API devuelve
 `"path": "BuildFailed"` y `gh run view` lo atribuye engañosamente al archivo del workflow.
 
@@ -55,7 +94,7 @@ workflow figura `active` y en su ruta, Actions están habilitadas (`allowed_acti
 minutos del plan), confirmada por Yordy el 2026-09-08.
 
 **Consecuencia:** donde [`CLAUDE.md`](../CLAUDE.md) §11 dice «CI los repite y bloquea el merge
-si fallan», eso no ocurre. Los 18 PRs fusionados hasta hoy entraron sin ninguna verificación
+si fallan», eso no ocurre. Los 30 PRs fusionados hasta hoy entraron sin ninguna verificación
 automática. **La única validación real es la que se corre a mano antes de abrir el PR.**
 
 Mientras siga así, el procedimiento obligatorio antes de cada PR es:
@@ -170,16 +209,18 @@ Rama `docs/cierre-frontend`. Se ejecuta **al final**, cuando 16 y 14 estén dent
 
 Ninguna de estas se puede cerrar leyendo código.
 
-### C.1 — La pasada con el teléfono real. **Tres casillas de tres sitios distintos, una sola sesión.**
+### C.1 — La pasada con el teléfono real. **Cuatro casillas de cuatro sitios distintos, una sola sesión.**
 
-Este es el atajo que más rinde: las tres esperan el mismo teléfono.
+Este es el atajo que más rinde: las cuatro esperan el mismo teléfono y el mismo recorrido
+—alta de paciente → registro → asignación → ejecución de sesión.
 
 - **13.5** (`improve-frontend-ux`) — Recorrer los caminos del paciente y registrar el
   resultado.
 - **6.1** (`add-routine-execution`) — Ejecutar los **caminos 3, 4 y 5** de
   [`docs/07`](07-plan-de-verificacion.md) —snapshot de rutina, ejecución desde el celular y
-  alertas— en un teléfono real. **Es la única casilla abierta de los cuatro slices
-  funcionales.**
+  alertas— en un teléfono real. **Es la única casilla abierta de `add-routine-execution`.**
+- **1.2** (`simplify-navigation-and-panel`) — Es el mismo recorrido: su propio enunciado remite
+  a cerrar estas mismas casillas. Se marca sola al hacer las otras.
 - **Camino 8, PWA** — El manifest, los iconos y el service worker están implementados y
   verificados en navegador desde el 2026-09-05; falta el recorrido de instalación en un
   teléfono real.
@@ -197,7 +238,13 @@ el servidor local.
 - **11.7** *(parcial)* — Las seis confirmaciones de `ConfirmSubmit` con JavaScript **activado y
   desactivado**. Por HTTP está verificado que las seis pantallas conservan sus `<form action>`
   con sus marcadores; falta el recorrido visual.
+- **6.3** — Verificar que `/evolution/[patientId]` conserva `<option value="weight">Peso</option>`
+  e `<option value="bmi">IMC</option>`, y que la gráfica sigue sin montarse cuando no hay datos.
 - **6.5** — Desde cualquier sección de un paciente se llega a las otras cinco en un toque.
+- **6.6** — `npm run test:routines`, `test:routines:items`, `test:attendance`,
+  `test:screenings` y `test:evolution` en verde, más los cuatro de CI. Cierra la sección 6 de
+  `improve-frontend-ux` (montaje de cabecera y pestañas en la ficha del paciente), que hasta
+  ahora no aparecía en este documento.
 
 ---
 
@@ -242,11 +289,23 @@ el servidor local.
 
 ## Orden sugerido
 
-1. **A.1 y A.2** — decidir qué se hace con la CI y con el despliegue. Todo lo demás se
+Las cuatro fases de [`16-plan-de-mejora.md`](16-plan-de-mejora.md) ya están fusionadas (Fase 2:
+KAN-11/5/7; Fase 3: KAN-9/10; Fase 4: KAN-6/8/13/14) salvo el paso a mano de su Fase 1
+(`simplify-navigation-and-panel` 1.2), que es la misma pasada con el teléfono de **C.1**. Con
+eso, «adelgazar» dejó de ser el paso previo que bloqueaba todo lo demás, que es justo lo que
+[`16`](16-plan-de-mejora.md) §«Lo que no entra» daba por hecho al apartar 14.x y 16.x para
+«después de adelgazar»: los dos documentos ya dicen lo mismo, en vez de contradecirse.
+
+1. **KAN-17** — fusionar el [PR #31](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/31).
+   Es la única suite en rojo de las 27 hoy, y mientras siga abierto nadie puede confiar en
+   `test:calendar`.
+2. **A.1 y A.2** — decidir qué se hace con la CI y con el despliegue. Todo lo demás se
    construye encima de esa señal, y hoy no existe.
-2. **C.1** — la pasada con el teléfono: media hora, cierra tres casillas y es lo único que
-   valida de verdad la experiencia del paciente, que es el usuario que importa.
-3. **B.1** — la sección 16, el bulto de código que queda.
-4. **B.2** — la sección 14.
-5. **A.4** — el fix de `test:memberships`, en su propia rama, cuando apetezca.
-6. **B.3** — la sección 13 cierra el change.
+3. **C.1** — la pasada con el teléfono: media hora, cierra cuatro casillas de tres `tasks.md`
+   distintos y es lo único que valida de verdad la experiencia del paciente, que es el usuario
+   que importa.
+4. **B.1** — la sección 16 de `improve-frontend-ux`, el bulto de código que queda.
+5. **B.2** — la sección 14, coordinada con **KAN-15** (mismo patrón de paginación en
+   `/attendance`).
+6. **A.4 y KAN-16** — los dos arreglos de suites, en su propia rama, cuando apetezca.
+7. **B.3** — la sección 13 cierra el change.
