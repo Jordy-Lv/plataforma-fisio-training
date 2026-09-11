@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
 
 import { Workspace } from "@/components/auth/Workspace";
 import { SessionProgress } from "@/components/routines/SessionProgress";
@@ -49,6 +48,7 @@ export default async function Page({
     items.length > 0
       ? await replacementExercises(
           items.flatMap((item) => item.exercises?.muscle_groups ?? []),
+          items.map((item) => item.exercise_id),
         )
       : [];
   const logs = new Map(
@@ -96,15 +96,14 @@ export default async function Page({
               // la `key`, React remontaba el bloque y con él se perdía el
               // «Registro guardado» que vive en su `useActionState`
               // (docs/11, §5).
-              <Suspense key={item.id} fallback={null}>
               <SessionItemForm
+                key={item.id}
                 sessionId={session.id}
                 item={item}
                 log={logs.get(item.id)}
                 catalog={catalog}
                 defaultOpen={item.id === primeroPendiente}
               />
-              </Suspense>
             ))}
           </div>
         </>

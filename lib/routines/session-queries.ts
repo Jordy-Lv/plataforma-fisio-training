@@ -80,20 +80,36 @@ export type ExecutionItem = Awaited<ReturnType<typeof executionExercises>>[numbe
  * descarga a mitad de entrenamiento. Con `overlaps` la base devuelve solo los
  * afines, y el tope de 200 acota el caso de un día que toca medio cuerpo.
  *
- * Sin grupos —un día cuyos ejercicios no están etiquetados— cae en el catálogo
- * ordenado por nombre, también acotado: es preferible una lista corta a una
- * pantalla que no carga.
+ * Sin grupos —un día cuyos ejercicios no están etiquetados, típico de un
+ * ejercicio personalizado— cae en el catálogo ordenado por nombre, también
+ * acotado: es preferible una lista corta a una pantalla que no carga.
+ *
+ * Ese tope alfabético, sin embargo, no puede esconder los ejercicios que ya
+ * están prescritos ese día: son la sustitución más obvia entre sí y antes
+ * quedaban fuera si su nombre caía después del corte. `alwaysInclude` los
+ * trae aparte cuando el tope los dejó fuera, sin ampliar el límite general.
  *
  * `muscle_groups` viaja con cada fila para que el formulario pueda acotar
  * todavía más, al grupo del ejercicio concreto que se está registrando.
  */
-export async function replacementExercises(muscleGroups?: string[], limit = 200) {
+export async function replacementExercises(
+  muscleGroups?: string[],
+  alwaysInclude: string[] = [],
+  limit = 200,
+) {
   const supabase = await createClient();
   const groups = [...new Set(muscleGroups ?? [])];
   let query = supabase.from("exercises").select("id, name, muscle_groups").order("name").limit(limit);
   if (groups.length > 0) query = query.overlaps("muscle_groups", groups);
   const { data, error } = await query;
   if (error) throw new Error(`No se pudo consultar el catálogo: ${error.message}`);
-  return data ?? [];
+  const result = data ?? [];
+  const missing = [...new Set(alwaysInclude)].filter(
+    (id) => !result.some((exercise) => exercise.id === id),
+  );
+  if (missing.length === 0) return result;
+  const extra = await supabase.from("exercises").select("id, name, muscle_groups").in("id", missing);
+  if (extra.error) throw new Error(`No se pudo consultar el catálogo: ${extra.error.message}`);
+  return [...result, ...extra.data].sort((a, b) => a.name.localeCompare(b.name, "es"));
 }
 export type ReplacementExercise = Awaited<ReturnType<typeof replacementExercises>>[number];
