@@ -13,6 +13,7 @@ import { ButtonLink } from "@/components/ui/ButtonLink";
 import { cardVariants } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SheetModal } from "@/components/ui/SheetModal";
+import { careTeamSummary, toCareTeam } from "@/lib/auth/care-team";
 import { specialtyLabels } from "@/lib/auth/people-schemas";
 
 /**
@@ -53,9 +54,24 @@ export async function PeoplePanel({
   const patients = people.filter((person) => person.role === "patient");
   const team = people.filter((person) => person.role === "professional");
   const isAdmin = role === "admin";
+  /**
+   * Los nombres por id, que es lo que la lista no trae: `care_assignments`
+   * guarda uuids. Solo están los perfiles que el actor puede leer, y eso lo
+   * decide la RLS: al profesional le oculta tanto la asignación del otro
+   * profesional como su perfil, así que el mapa completo es del administrador.
+   */
+  const nombres = new Map(people.map((person) => [person.id, person.full_name]));
   /** El nombre de una persona por su id, para los acompañamientos vigentes. */
-  const nombre = (id: string) =>
-    people.find((person) => person.id === id)?.full_name || "Sin nombre";
+  const nombre = (id: string) => nombres.get(id) || "Sin nombre";
+  /**
+   * Quién acompaña a un paciente (KAN-6), resuelto sobre las filas ya cargadas:
+   * pedir el equipo tarjeta a tarjeta sería una consulta por paciente.
+   */
+  const equipoDe = (patientId: string) =>
+    toCareTeam(
+      assignments.filter((a) => a.patient_id === patientId),
+      nombres,
+    );
 
   return (
     <Workspace
@@ -121,10 +137,7 @@ export async function PeoplePanel({
                           {person.full_name || "Sin nombre"}
                         </h3>
                         <p className="mt-1 text-sm text-muted-foreground">
-                          {assignments
-                            .filter((a) => a.patient_id === person.id)
-                            .map((a) => specialtyLabels[a.kind])
-                            .join(" y ") || "Sin profesional asignado"}
+                          {careTeamSummary(equipoDe(person.id))}
                           {person.phone ? ` · ${person.phone}` : ""}
                         </p>
                       </div>
