@@ -53,7 +53,23 @@ const templateFields = {
     .max(7, "Los días por semana deben estar entre 1 y 7."),
 };
 
-export const createTemplateSchema = z.object(templateFields);
+const dayTitle = z
+  .string()
+  .trim()
+  .max(80, "El título del día admite como máximo 80 caracteres.")
+  .transform((value) => value || null);
+
+/**
+ * El alta admite además el **primer día**, opcional (KAN-8). Crear una
+ * plantilla asignable eran dos fases obligatorias —cabecera, redirección y
+ * luego añadir día—; con un título aquí, la plantilla nace con su día 1 y solo
+ * queda ponerle ejercicios. Vacío significa «lo añado después» y el flujo es
+ * el de siempre: por eso el día no se crea salvo que se escriba algo.
+ */
+export const createTemplateSchema = z.object({
+  ...templateFields,
+  firstDayTitle: dayTitle,
+});
 
 export const updateTemplateSchema = z.object({
   ...templateFields,
@@ -63,12 +79,6 @@ export const updateTemplateSchema = z.object({
 export const templateIdSchema = z.object({
   id: uuid("Selecciona una plantilla válida."),
 });
-
-const dayTitle = z
-  .string()
-  .trim()
-  .max(80, "El título del día admite como máximo 80 caracteres.")
-  .transform((value) => value || null);
 
 export const addDaySchema = z.object({
   templateId: uuid("Selecciona una plantilla válida."),
@@ -148,6 +158,8 @@ export function templateFormValues(form: FormData) {
     level: blankToNull(form.get("level")),
     environment: blankToNull(form.get("environment")),
     daysPerWeek: form.get("daysPerWeek") ?? undefined,
+    // Solo lo lee `createTemplateSchema`; al editar, Zod lo descarta.
+    firstDayTitle: form.get("firstDayTitle") ?? "",
   };
 }
 

@@ -89,8 +89,34 @@ export async function createTemplate(
     return { error: `No se pudo crear la plantilla: ${error.message}` };
   if (!data) return { error: sinPermiso };
 
+  // El primer día, si se pidió (KAN-8). Va aquí y no en una segunda pantalla
+  // para ahorrar una de las dos fases obligatorias del alta. Sin título no se
+  // crea nada: el flujo se queda como estaba.
+  //
+  // Es el día 1 por construcción —la plantilla acaba de nacer y no tiene
+  // ninguno—, así que no hace falta releer `template_days` como en
+  // `addTemplateDay`.
+  let conDia = false;
+  if (values.firstDayTitle) {
+    const { error: diaError } = await supabase
+      .from("template_days")
+      .insert({
+        template_id: data.id,
+        day_number: 1,
+        title: values.firstDayTitle,
+      });
+    // La plantilla ya existe: no se puede volver atrás desde aquí sin dejar al
+    // administrador sin ella. El fallo viaja en la URL y la ficha lo cuenta,
+    // que es preferible a tragárselo (CLAUDE.md §10).
+    if (diaError) {
+      revalidatePath("/templates");
+      redirect(`/templates/${data.id}?nueva=sindia`);
+    }
+    conDia = true;
+  }
+
   revalidatePath("/templates");
-  redirect(`/templates/${data.id}?nueva=1`);
+  redirect(`/templates/${data.id}?nueva=${conDia ? "dia" : "1"}`);
 }
 
 export async function updateTemplate(

@@ -106,7 +106,16 @@ export default async function Page({
   if (!template) notFound();
 
   const query = await searchParams;
-  const recienCreada = query.nueva === "1";
+  // El acuse del alta distingue los tres desenlaces posibles (KAN-8): sin día,
+  // con su día 1, o con la plantilla creada y el día no.
+  const recienCreada =
+    query.nueva === "1" || query.nueva === "dia" || query.nueva === "sindia";
+  const acuseDelAlta =
+    query.nueva === "dia"
+      ? "Plantilla creada como borrador, con su día 1. Añádele sus ejercicios."
+      : query.nueva === "sindia"
+        ? "Plantilla creada como borrador, pero su primer día no se pudo crear. Añádelo aquí abajo."
+        : "Plantilla creada como borrador. Añádele sus días y sus ejercicios.";
   const puedeEditar = profile.role === "admin";
 
   // El buscador es único y permanente. Con `?dia=<dayId>` se enfoca en ese día
@@ -157,13 +166,15 @@ export default async function Page({
           role="status"
           className="mb-6 rounded-lg bg-brand-soft p-3 text-sm text-brand-soft-foreground"
         >
-          Plantilla creada como borrador. Añádele sus días y sus ejercicios.
+          {acuseDelAlta}
         </p>
       )}
-      <FlashToast
-        param="nueva"
-        message="Plantilla creada como borrador. Añádele sus días y sus ejercicios."
-      />
+      {/*
+        Un `FlashToast` por valor: cada uno limpia `?nueva` solo cuando le toca.
+      */}
+      <FlashToast param="nueva" value="1" message={acuseDelAlta} />
+      <FlashToast param="nueva" value="dia" message={acuseDelAlta} />
+      <FlashToast param="nueva" value="sindia" message={acuseDelAlta} />
 
       <div className="flex flex-wrap gap-1.5">
         <Badge>{labelFor(templateKindLabels, template.kind)}</Badge>
