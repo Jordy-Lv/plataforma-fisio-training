@@ -12,8 +12,10 @@ import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { cardVariants } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Notice } from "@/components/ui/Notice";
 import { SheetModal } from "@/components/ui/SheetModal";
 import { careTeamSummary, toCareTeam } from "@/lib/auth/care-team";
+import { listPeopleDirectory } from "@/lib/auth/people-queries";
 import { specialtyLabels } from "@/lib/auth/people-schemas";
 
 /**
@@ -34,23 +36,43 @@ export async function PeoplePanel({
 }) {
   const profile = await requireRole(role);
   const supabase = await createClient();
-  const [peopleResult, assignmentsResult] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("id, full_name, role, specialty, phone, is_active")
-      .in("role", role === "admin" ? ["professional", "patient"] : ["patient"])
-      .order("full_name"),
+  const [directory, assignmentsResult] = await Promise.all([
+    // La consulta del directorio vivía aquí duplicada; ahora es la misma que
+    // usan `/pro/sessions` y `/pro/alerts` (KAN-14).
+    listPeopleDirectory(role === "admin" ? "everyone" : "patients"),
     supabase
       .from("care_assignments")
       .select("id, patient_id, professional_id, kind")
       .is("ended_at", null),
   ]);
-  if (peopleResult.error || assignmentsResult.error)
+  if (assignmentsResult.error)
     throw new Error(
       "No se pudo cargar la lista de personas. Inténtalo de nuevo.",
     );
-  const people = peopleResult.data;
+  const people = directory.people;
   const assignments = assignmentsResult.data;
+  /**
+   * Cuánta gente quedó fuera del techo de PostgREST. Antes el listado se
+   * truncaba en silencio y quien no cupiera desaparecía sin rastro, también
+   * del buscador; ahora la pantalla lo dice.
+   */
+  const fuera = directory.total - people.length;
+  /**
+   * El aviso del techo. Dice la verdad y nada más: a quien no se cargó **no se
+   * llega desde aquí**, tampoco buscándolo, porque el buscador de esta pantalla
+   * filtra en el cliente sobre lo ya pintado. Llevarlo al servidor exige
+   * filtros en la URL, y eso es la deuda 3.3 de `docs/15`, congelada mientras
+   * `/people` sean cuatro `SheetModal`. Prometer una búsqueda que no existe
+   * sería peor que el silencio de antes.
+   */
+  const avisoDeTecho =
+    fuera > 0 ? (
+      <Notice tone="warning">
+        Se han cargado {people.length} personas por orden alfabético y quedan{" "}
+        {fuera} sin mostrar. A esas no se llega todavía desde esta lista:
+        ábrelas por su ficha si tienes el enlace.
+      </Notice>
+    ) : null;
   const patients = people.filter((person) => person.role === "patient");
   const team = people.filter((person) => person.role === "professional");
   const isAdmin = role === "admin";
@@ -118,6 +140,7 @@ export async function PeoplePanel({
           action="Buscar un paciente"
         >
           <PeopleFilter searchPlaceholder="Buscar un paciente por su nombre">
+            {avisoDeTecho}
             {patients.length === 0 ? (
               <EmptyState title="Aún no hay pacientes registrados">
                 Regístralos desde la tarjeta «
@@ -186,6 +209,7 @@ export async function PeoplePanel({
                 { value: "physio", label: "Fisioterapeutas" },
               ]}
             >
+              {avisoDeTecho}
               {team.length === 0 ? (
                 <EmptyState title="Aún no hay profesionales">
                   Regístralos desde la tarjeta «Registrar persona».

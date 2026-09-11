@@ -1,5 +1,6 @@
 import "server-only";
 
+import type { Database } from "@/lib/db/types";
 import { createClient } from "@/lib/supabase/server";
 import { readPage } from "@/lib/shared/read-pages";
 import { sanitizeSearch } from "@/lib/shared/search";
@@ -23,8 +24,9 @@ const personColumns = "id, full_name, role, specialty, phone, is_active";
 export type Person = {
   id: string;
   full_name: string | null;
-  role: "admin" | "professional" | "patient";
-  specialty: string | null;
+  role: Database["public"]["Enums"]["user_role"];
+  /** El enum real de la columna, no `string`: los desplegables lo estrechan. */
+  specialty: Database["public"]["Enums"]["professional_specialty"] | null;
   phone: string | null;
   is_active: boolean;
 };
@@ -38,24 +40,68 @@ export type PeopleFilters = {
 /** A quién incluye el directorio: el profesional solo ve pacientes. */
 export type PeopleScope = "patients" | "everyone";
 
-export async function listPeople(
+/**
+ * El techo del directorio de `/people`. No es un tamaño de página: es el tope
+ * duro de PostgREST hecho explícito, para poder **contar** cuántas filas
+ * quedaron fuera en vez de truncar en silencio (KAN-14).
+ */
+export const directoryCeiling = maxRows;
+
+/** El armado de la consulta, compartido por las dos lecturas del directorio. */
+function peopleQuery(
+  supabase: Awaited<ReturnType<typeof createClient>>,
   scope: PeopleScope,
-  filters: PeopleFilters = {},
-): Promise<Person[]> {
-  const supabase = await createClient();
+  filters: PeopleFilters,
+  count?: "exact",
+) {
   let query = supabase
     .from("profiles")
-    .select(personColumns)
+    .select(personColumns, count ? { count } : undefined)
     .in("role", scope === "everyone" ? ["professional", "patient"] : ["patient"])
     .order("full_name");
   const term = sanitizeSearch(filters.q ?? "");
   if (term) query = query.ilike("full_name", `%${term}%`);
   if (filters.state) query = query.eq("is_active", filters.state === "active");
+  return query;
+}
 
-  const { data, error } = await query;
+export async function listPeople(
+  scope: PeopleScope,
+  filters: PeopleFilters = {},
+): Promise<Person[]> {
+  const supabase = await createClient();
+  const { data, error } = await peopleQuery(supabase, scope, filters);
   if (error)
     throw new Error(`No se pudieron consultar las personas: ${error.message}`);
   return (data ?? []) as Person[];
+}
+
+/**
+ * Lo mismo, pero diciendo **cuántas personas hay en total**.
+ *
+ * `/people` filtra en el cliente sobre una lista ya pintada —la deuda 3.3 de
+ * `docs/15` sigue congelada: con las cuatro tarjetas en `SheetModal`, un filtro
+ * en la URL navegaría y cerraría el modal en cada tecla—, así que el listado no
+ * se pagina: estrecharlo dejaría fuera del buscador a quien no cupiera en la
+ * página. Lo que sí se arregla es el defecto real: hasta ahora la consulta se
+ * comía el tope de PostgREST sin avisar y la gente sobrante desaparecía sin
+ * rastro. Con el total a la vista, la pantalla puede decirlo.
+ */
+export async function listPeopleDirectory(
+  scope: PeopleScope,
+  filters: PeopleFilters = {},
+): Promise<{ people: Person[]; total: number }> {
+  const supabase = await createClient();
+  const { data, error, count } = await peopleQuery(
+    supabase,
+    scope,
+    filters,
+    "exact",
+  ).range(0, directoryCeiling - 1);
+  if (error)
+    throw new Error(`No se pudieron consultar las personas: ${error.message}`);
+  const people = (data ?? []) as Person[];
+  return { people, total: count ?? people.length };
 }
 
 /** El estado de la rutina de un paciente, tal y como se pinta en la tarjeta. */
