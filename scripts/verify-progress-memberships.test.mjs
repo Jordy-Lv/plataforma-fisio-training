@@ -57,10 +57,17 @@ async function screenAs(role) {
 const textOf = (html) =>
   decode(html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " "));
 
-/** Una fecha relativa a hoy en el formato de una columna `date`. */
+/**
+ * Una fecha relativa a hoy en el formato de una columna `date`, contada desde
+ * el "hoy" de Bogotá: `daysUntil()` (lib/progress/membership-vocabulary.ts)
+ * cuenta el plazo desde ahí, no desde UTC, y entre las 19:00 y las 24:00 de
+ * Bogotá el día UTC ya avanzó.
+ */
 const dateIn = (days) => {
-  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota" }).format(new Date());
-  const d = new Date(`${today}T12:00:00Z`);
+  const bogotaToday = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Bogota",
+  }).format(new Date());
+  const d = new Date(`${bogotaToday}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 };

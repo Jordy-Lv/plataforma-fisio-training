@@ -1,4 +1,4 @@
-import { templateList } from "@/lib/catalog/template-list";
+import { templateList, templateOrderLabels } from "@/lib/catalog/template-list";
 import { FlashToast } from "@/components/ui/FlashToast";
 import { ListFilters } from "@/components/ui/ListFilters";
 import { Pagination } from "@/components/ui/Pagination";
@@ -45,8 +45,11 @@ export default async function Page({
     { name: "environment", label: "Entorno", options: environmentLabels },
     { name: "status", label: "Estado", options: { active: "Activas", draft: "Borradores" } },
     { name: "incomplete", label: "Construcción", options: { "1": "Incompletas" } },
+    { name: "orden", label: "Orden", options: templateOrderLabels, required: true },
   ];
-  const chips = Object.entries(filters).filter(([key, value]) => key !== "page" && value).map(([key, value]) => {
+  // `orden` no es un filtro —no restringe resultados, solo su orden— así que
+  // no genera píldora, igual que `page`.
+  const chips = Object.entries(filters).filter(([key, value]) => key !== "page" && key !== "orden" && value).map(([key, value]) => {
     const choice = choices.find((choice) => choice.name === key);
     const options: Record<string, string> = choice?.options ?? {};
     return { label: options[value === true ? "1" : String(value)] ?? String(value),

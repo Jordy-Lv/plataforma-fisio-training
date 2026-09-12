@@ -5,7 +5,11 @@ import { Chip } from "@/components/ui/Chip";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { cardVariants } from "@/components/ui/Card";
 
-type Choice = { name: string; label: string; options: Record<string, string> };
+/**
+ * `required` es para un `<select>` que nunca está «sin elegir» —el orden de un
+ * listado, por ejemplo—: sin él se ofrecería un «Todos» que no filtra nada.
+ */
+type Choice = { name: string; label: string; options: Record<string, string>; required?: boolean };
 
 /**
  * La barra de filtros de un listado: un `<form method="get">` renderizado en el
@@ -33,7 +37,7 @@ export function ListFilters({
       {choices.length > 0 && <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {choices.map((choice) => <Field key={choice.name} label={choice.label}>
           <Select name={choice.name} defaultValue={values[choice.name] === true ? "1" : String(values[choice.name] ?? "")}>
-            <option value="">Todos</option>
+            {!choice.required && <option value="">Todos</option>}
             {Object.entries(choice.options).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
           </Select>
         </Field>)}

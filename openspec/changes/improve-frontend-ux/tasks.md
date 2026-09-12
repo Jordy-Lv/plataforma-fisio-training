@@ -214,11 +214,15 @@ esto es lo que hace que una lista quepa.
 - [x] 14.4 Verificar que en vista de tarjetas `/exercises` conserva el `<h2 class="text-base font-semibold leading-6">` que lee `verify-catalog-list.test.mjs`, y que en vista de lista el mismo `<h2>` sigue siendo el primer elemento con el nombre del ejercicio
 - [x] 14.5 Plegar la evidencia de cada alerta en `/pro/alerts`: la primera sesión visible, el resto tras un `<details>` con el rótulo «Ver las otras N sesiones». La alerta baja de 658 px a unos 240
 - [x] 14.6 Verificar que `/pro/alerts` conserva el formulario con `value="<alertId>"` y que la evidencia plegada sigue en el HTML del servidor —`<details>` sin JavaScript se abre igual—, no en un portal
-  - `EvidenceItem` extraído; la primera sesión se ve, el resto va en `<details>`. `test:routines:sessions` 18/18 contra la app viva: «Camino 5: sesión 3» (3ª sesión, plegada) y el formulario `value="<alertId>"` siguen en el HTML. **Falta medir el px antes/después en Chrome (14.9).**
-- [ ] 14.7 Añadir `orden` a `exerciseList`, `templateList` y a los listados de seguimiento, con las claves que cada pantalla puede ordenar y sin tocar el `.order("priority")` de `/rules`
-- [ ] 14.8 Ordenación por defecto explícita en cada listado, documentada en un comentario junto a su `createListParams`
-- [ ] 14.9 Medir de nuevo `/exercises` y `/pro/alerts` en Chrome a 1440×900 y 606×667 y registrar las cifras en `docs/12-medicion-de-densidad.md`
-- [ ] 14.10 `npm run test:catalog`, `test:catalog:custom` y `test:routines:sessions` en verde, más los cuatro de CI
+  - `EvidenceItem` extraído; la primera sesión se ve, el resto va en `<details>`. `test:routines:sessions` 18/18 contra la app viva: «Camino 5: sesión 3» (3ª sesión, plegada) y el formulario `value="<alertId>"` siguen en el HTML. Medido en Chrome en 14.9: 346 px (antes 658).
+- [x] 14.7 Añadir `orden` a `exerciseList`, `templateList` y a los listados de seguimiento, con las claves que cada pantalla puede ordenar y sin tocar el `.order("priority")` de `/rules`
+  - `orderParam(values, fallback)` en `lib/shared/list-params.ts`, mismo patrón que `vista`: siempre lleva un valor, así que va en `notFilters` de cada `createListParams`. Claves: ejercicios `nombre` (por defecto) · `recientes`; plantillas `tipo` (por defecto, `kind`+`name`) · `nombre` · `recientes`; asistencia `nombre` (por defecto) · `reciente` · `dias`; tamizaje `nombre` (por defecto) · `reciente`; membresías `vencimiento` (por defecto) · `nombre` —este último reordena **dentro** de «Próximas a vencer»/«Vencidas»/«Resto», que siguen siendo contrato de `test:memberships`, nunca entre secciones—. `ListFilters` ganó `required` en `Choice` para que el `<select>` de orden no ofrezca un «Todos» que no existe.
+- [x] 14.8 Ordenación por defecto explícita en cada listado, documentada en un comentario junto a su `createListParams`
+  - Comentario en cada `*-list.ts` (`schemas.ts` para ejercicios) junto al array de claves, antes de `createListParams`.
+- [x] 14.9 Medir de nuevo `/exercises` y `/pro/alerts` en Chrome a 1440×900 y 606×667 y registrar las cifras en `docs/12-medicion-de-densidad.md`
+  - Sección «1 quater» del documento. `/pro/alerts` baja un 41 % (8.387→4.921 px en escritorio, 8.623→5.081 en móvil); `/exercises` sube un poco (banda de pestañas + conmutador de vista + selector de orden encima de la rejilla), la tarjeta no cambió de tamaño.
+- [x] 14.10 `npm run test:catalog`, `test:catalog:custom` y `test:routines:sessions` en verde, más los cuatro de CI
+  - 9/9, 12/12 y 19/19 contra la app viva. Además, por tocar sus listados: `test:templates` 20/20, `test:attendance` 8/8, `test:screenings` 8/8, `test:memberships` 11/11.
 
 Añadidas tras la revisión de Yordy en Safari (2026-09-07): las pantallas de edición abrían
 con **todos los formularios de todos los ejercicios desplegados a la vez**. Mismo patrón que
@@ -257,9 +261,13 @@ ningún `<form>` dentro. **Ninguna de estas tareas mueve un formulario a un diá
 Las pestañas de las secciones 5 y 6 resuelven moverse **dentro** de un paciente. Esto
 resuelve llegar hasta él.
 
-- [ ] 16.1 Crear `lib/auth/patient-search.ts` con `searchPatients(term, limit = 8)`, acotado por RLS y sin `select("*")`
-- [ ] 16.2 Buscador de paciente en la cabecera de `AppShell` para `admin` y `professional`: `<form method="get">` que apunta a `/people`, con sugerencias tras dos caracteres y salto directo a la ficha
-- [ ] 16.3 **Antes de montarlo**, verificar que el formulario nuevo queda *después* del de cerrar sesión en el HTML del servidor: `auth-http.mjs` toma el primer `<form>` que contiene el marcador y `AppShell` documenta que solo puede haber uno
+- [x] 16.1 Crear `lib/auth/patient-search.ts` con `searchPatients(term, limit = 8)`, acotado por RLS y sin `select("*")`
+  - Server action de solo lectura (`"use server"`), invocada directamente desde el cliente —no ligada a un `<form>`—, con el término validado por Zod. Sin scope explícito en TypeScript: pide `role = patient` y dej a que RLS (`treats_patient`/`is_admin`) decida qué fila entra.
+- [x] 16.2 Buscador de paciente en la cabecera de `AppShell` para `admin` y `professional`: `<form method="get">` que apunta a `/people`, con sugerencias tras dos caracteres y salto directo a la ficha
+  - `components/auth/PatientSearch.tsx` (cliente): `<form method="get" action="/people">` con `name="q"` como mejora progresiva; con JavaScript, a los dos caracteres (debounce de 250 ms) aparece un listado de sugerencias (`role="listbox"`) que enlaza directo a `/people/[id]`. No se tocó `/people/page.tsx`: el `q` de la URL queda sin usar sin JS, que es el mismo nivel de degradación que ya tienen los filtros de la sección 3.3.
+  - Oculto para `patient` (`role !== "patient"` en `AppShell`).
+- [x] 16.3 **Antes de montarlo**, verificar que el formulario nuevo queda *después* del de cerrar sesión en el HTML del servidor: `auth-http.mjs` toma el primer `<form>` que contiene el marcador y `AppShell` documenta que solo puede haber uno
+  - Varias suites llaman `submit(ruta, valores)` **sin marcador** (`marker` por defecto `""`), que hace *match* con el primer `<form>` del documento. `PatientSearch` se declara en una segunda fila del header, después del `<form action={signOut}>` en el JSX —no solo visualmente—, así que ese primer formulario sigue siendo el de cerrar sesión. Confirmado con `test:auth:screens` (10/10) y `test:people` (10/10) en verde.
 - [x] 16.4 Crear `app/(people)/people/page.tsx` con el directorio completo —la consulta de `listPeople` de 3.1, con sus filtros y su paginación— y mover ahí la lista y el alta que hoy viven en `PeoplePanel`
   - Hecho tras la revisión de Yordy («no siento que sea la sección para crear un paciente»). `/people/page.tsx` = `PeoplePanel`, rol resuelto con `requireStaff`. `nav-items.ts` gana «Personas» (admin) y «Pacientes» (professional).
   - Segunda pasada, también por revisión de Yordy: `PeoplePanel` se resume en **cuatro tarjetas** que abren un modal —Registrar persona, Pacientes (con buscador), Equipo (con filtro entrenador/fisioterapeuta), Asignar acompañamiento—. El modal es `components/ui/SheetModal.tsx`: **sin portal**, así que las listas y los formularios de baja siguen en el HTML del servidor y `verify-people-onboarding` los encuentra (10/10). `components/auth/PeopleFilter.tsx` filtra en el cliente sobre `<li data-name data-specialty>` ya renderizados; sin JavaScript la lista se ve entera. Orden de tarjetas registrar → pacientes → equipo → asignar para que las bajas queden antes del `<option value="<uuid>">` de la asignación. «Dar de alta» pasó a «Registrar una persona / un paciente»; el botón, a «Registrar paciente/profesional». La paginación y los filtros por URL de 3.1 siguen pendientes.
@@ -271,7 +279,8 @@ resuelve llegar hasta él.
   - El archivo real es `scripts/verify-people-onboarding.test.mjs`. Movidas a `/people` las seis operaciones de personas (alta admin, alta profesional, «Personas y equipo», el paciente listado, baja sin confirmar y baja); añadido `/people` a la lista de rutas que rebotan a un paciente sin onboarding. Las redirecciones de login siguen a `/admin` y `/pro`. `test:people` 10/10.
 - [x] 16.7 Verificar que en `/people` el primer formulario con `value="<uuid de la persona>"` sigue siendo el de la baja y que el del alta conserva `name="fullName"`
   - `test:people` «Camino 1» lo recorre en `/people` y pasa: la baja se localiza por `value="<proId>"` y el alta por `name="fullName"`.
-- [ ] 16.8 Comprobar a mano que desde cualquier pantalla del personal se llega a un paciente escribiendo su nombre, sin pasar por ningún listado
+- [x] 16.8 Comprobar a mano que desde cualquier pantalla del personal se llega a un paciente escribiendo su nombre, sin pasar por ningún listado
+  - Verificado en navegador contra `next start` (puerto 3000) con las cuatro semillas: como `admin` (Ana Jefa) y como `professional` (Beto Entrenador) el buscador vive en la cabecera de todo el chrome, así que está disponible desde `/admin` y `/pro` por igual. Escribir «Diego» sugiere «Diego Paciente» y el clic navega directo a `/people/[id]`; escribir «Elena» —paciente sin asignar a Beto— responde «Nadie coincide», RLS se ocupa sin que el componente lo repita.
 - [x] 16.9 `npm run test:people` y `test:overview` en verde, más los cuatro de CI
   - `test:people` 10/10 y `test:overview` 5/5 contra el build de producción (puerto 3210); typecheck, lint, test:design 4/4 y build en verde.
 

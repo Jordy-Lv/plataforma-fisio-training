@@ -7,6 +7,10 @@
   a mano, una tipografía escrita a mano y una pantalla sin sus estados— no fallan
   en `typecheck` ni en `lint`: se ven semanas después, cuando cambiar un token ya
   no cambia toda la aplicación.
+
+  No requiere Supabase local ni ninguna semilla: es una lectura de archivos.
+
+  Uso:  npm run test:design
 */
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync, statSync } from "node:fs";

@@ -4,7 +4,13 @@
  * con lo que dice la base, que solo el administrador llegue a ellas y que el
  * estado vacío explique qué hacer.
  *
- * Requiere Supabase local encendido con su semilla y `npm run dev` en marcha.
+ * Requiere Supabase local encendido con la semilla base (`npm run db:reset`)
+ * y `npm run dev` en marcha. Además, tres de los cinco subtests necesitan una
+ * rutina real con al menos tres ejercicios en un día, que la semilla base no
+ * trae: hace falta `npm run seed:exercises`, `npm run seed:templates` y
+ * `npm run seed:progress-demo` en ese orden (cada uno depende del anterior).
+ * Sin eso fallan con «La semilla no tiene ninguna rutina con tres ejercicios».
+ *
  * Todo lo que crea se borra al terminar: las sesiones por el identificador con
  * el que se insertaron y la asistencia por su marca.
  *
@@ -202,7 +208,11 @@ function rutinaConTresEjercicios() {
      having count(i.id) >= 3
       limit 1`,
   ).trim();
-  assert.ok(fila, "La semilla no tiene ninguna rutina con tres ejercicios");
+  assert.ok(
+    fila,
+    "La semilla no tiene ninguna rutina con tres ejercicios. Ejecuta " +
+      "npm run seed:exercises && npm run seed:templates && npm run seed:progress-demo.",
+  );
   const [routineId, dayId, patientId, ...items] = fila.split("|");
   return { routineId, dayId, patientId, items };
 }
@@ -400,7 +410,10 @@ test("Panorama del negocio", { timeout: 480_000 }, async (t) => {
       `select string_agg(id::text, ',') from public.profiles
         where role = 'patient' and is_active`,
     ).trim();
-    assert.ok(activos, "La semilla no tiene pacientes activos");
+    assert.ok(
+      activos,
+      "La semilla no tiene pacientes activos. Ejecuta npm run db:reset.",
+    );
     const ids = activos
       .split(",")
       .map((id) => `'${id}'::uuid`)

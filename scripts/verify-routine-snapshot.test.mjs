@@ -1,3 +1,15 @@
+/**
+ * Verifica la copia transaccional de rutinas (el snapshot): que `template_days`
+ * y `template_items` se copian tal cual a `routine_days`/`routine_items` y
+ * que editar la copia no toca la plantilla de origen.
+ *
+ * Requiere solo Supabase local encendido (`npx supabase start`): no depende
+ * de ninguna semilla, ni siquiera de la base (`supabase/seed.sql`). Crea sus
+ * propias cuentas por `signUp`, su propio ejercicio y sus propias plantillas,
+ * y los borra al terminar.
+ *
+ * Uso:  npm run test:routines:snapshot
+ */
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";

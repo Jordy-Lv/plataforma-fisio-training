@@ -41,9 +41,11 @@ export async function listExercises(filters: ExerciseFilters, options?: { pageSi
 
   let query = supabase
     .from("exercises")
-    .select(columns, { count: "exact" })
-    .order("name")
-    .range(from, from + size - 1);
+    .select(columns, { count: "exact" });
+  query = filters.orden === "recientes"
+    ? query.order("created_at", { ascending: false })
+    : query.order("name");
+  query = query.range(from, from + size - 1);
 
   const term = filters.q ? sanitizeSearch(filters.q) : "";
   if (term) query = query.ilike("name", `%${term}%`);

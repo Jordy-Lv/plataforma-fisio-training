@@ -1,3 +1,15 @@
+/**
+ * Verifica el alta y la gestión de personas y el onboarding del paciente:
+ * quién crea a quién, el paso a paso del registro guiado y el aislamiento
+ * entre profesionales y pacientes ajenos.
+ *
+ * Requiere Supabase local encendido con la semilla base (`npm run db:reset`)
+ * y `npm run dev` en marcha. No necesita catálogo, plantillas ni reglas
+ * sembradas: usa las cuentas de la semilla base (`admin@demo.local`,
+ * `entrenador@demo.local`) y crea las suyas propias por RPC/`signUp`.
+ *
+ * Uso:  npm run test:people
+ */
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { createClient } from "@supabase/supabase-js";
