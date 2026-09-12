@@ -1,3 +1,10 @@
+/**
+ * Verifica las funciones puras del calendario de rutinas: rango semanal,
+ * fusión de eventos programados y ejecutados, fechas hábiles de programación
+ * y el objetivo semanal. No hace falta Supabase ni ninguna semilla.
+ *
+ * Uso:  npm run test:calendar:dates
+ */
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {

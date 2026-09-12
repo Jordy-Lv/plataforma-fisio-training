@@ -1,3 +1,16 @@
+/**
+ * Verifica el motor de asignación conectado a la base: la decisión por API,
+ * el aislamiento por rol, la reevaluación ante cambios y los caminos D1 sin
+ * regla compatible o con el tamizaje incompleto.
+ *
+ * Requiere Supabase local encendido con la semilla base (`npm run db:reset`)
+ * y `npm run dev` en marcha. No necesita catálogo, plantillas ni reglas
+ * sembradas: crea sus propios ejercicios, plantillas, reglas y personas, y
+ * los borra al terminar (la regla propia del fixture es la que usan los
+ * subtests que exigen «alguna regla activa»).
+ *
+ * Uso:  npm run test:routines
+ */
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { writeFileSync } from "node:fs";
