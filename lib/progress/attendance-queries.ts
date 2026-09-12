@@ -83,7 +83,7 @@ export async function listPatientsWithMonthAttendance(
   // «Vino» y «no vino» dependen de las filas embebidas, no de una columna: el
   // recorte va aquí y no en PostgREST. La lista es la de pacientes activos del
   // negocio, así que cabe en memoria sin problema.
-  const all = (data ?? [])
+  const filtered = (data ?? [])
     .map(({ attendance, ...patient }) => ({
       ...patient,
       days: attendance.length,
@@ -96,6 +96,11 @@ export async function listPatientsWithMonthAttendance(
           ? patient.days === 0
           : true,
     );
+  // `nombre` ya sale así de la consulta; los otros dos exigen leer el resumen
+  // que se calculó arriba, así que se ordenan aquí y no en PostgREST.
+  const all = filters.orden === "dias" ? [...filtered].sort((a, b) => b.days - a.days)
+    : filters.orden === "reciente" ? [...filtered].sort((a, b) => (b.last ?? "").localeCompare(a.last ?? ""))
+    : filtered;
   const { from, to } = attendanceList.range(filters);
   return {
     // El panorama del negocio suma sobre todos los pacientes del mes, no sobre

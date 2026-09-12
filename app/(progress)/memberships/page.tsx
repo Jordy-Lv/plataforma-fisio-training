@@ -21,7 +21,7 @@ import {
   formatCurrency,
 } from "@/lib/progress/plan-vocabulary";
 import { formatDate } from "@/lib/progress/vocabulary";
-import { membershipList, type MembershipFilters } from "@/lib/progress/membership-list";
+import { membershipList, membershipOrderLabels, type MembershipFilters } from "@/lib/progress/membership-list";
 import { ListFilters } from "@/components/ui/ListFilters";
 import { Pagination } from "@/components/ui/Pagination";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -134,6 +134,7 @@ async function AdminView({ name, filters }: { name?: string | null; filters: Mem
   const choices = [
     { name: "status", label: "Estado", options: membershipStatusLabels },
     { name: "plan", label: "Plan", options: Object.fromEntries(plans.map((plan) => [plan.id, plan.name])) },
+    { name: "orden", label: "Orden", options: membershipOrderLabels, required: true },
   ];
 
   const expiringSoon = memberships.filter((m) => m.status === "expiring_soon");
@@ -268,9 +269,14 @@ async function AdminView({ name, filters }: { name?: string | null; filters: Mem
 
 async function ProfessionalView({ name, filters }: { name?: string | null; filters: MembershipFilters }) {
   const patients = await listPatientsWithMembership(filters);
-  const choices = [{ name: "status", label: "Estado", options: membershipStatusLabels }];
+  const choices = [
+    { name: "status", label: "Estado", options: membershipStatusLabels },
+    { name: "orden", label: "Orden", options: membershipOrderLabels, required: true },
+  ];
+  // `orden` no es un filtro —no restringe resultados, solo su orden— así que
+  // no genera píldora, igual que `page` y `plan` (que aquí no se usa).
   const chips = Object.entries(filters)
-    .filter(([key, value]) => key !== "page" && key !== "plan" && value)
+    .filter(([key, value]) => key !== "page" && key !== "plan" && key !== "orden" && value)
     .map(([key, value]) => ({
       label: key === "status" ? membershipStatusLabels[value as keyof typeof membershipStatusLabels] : String(value),
       href: membershipList.href(filters, { [key]: undefined, page: 1 }),

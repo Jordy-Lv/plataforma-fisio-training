@@ -214,11 +214,15 @@ esto es lo que hace que una lista quepa.
 - [x] 14.4 Verificar que en vista de tarjetas `/exercises` conserva el `<h2 class="text-base font-semibold leading-6">` que lee `verify-catalog-list.test.mjs`, y que en vista de lista el mismo `<h2>` sigue siendo el primer elemento con el nombre del ejercicio
 - [x] 14.5 Plegar la evidencia de cada alerta en `/pro/alerts`: la primera sesión visible, el resto tras un `<details>` con el rótulo «Ver las otras N sesiones». La alerta baja de 658 px a unos 240
 - [x] 14.6 Verificar que `/pro/alerts` conserva el formulario con `value="<alertId>"` y que la evidencia plegada sigue en el HTML del servidor —`<details>` sin JavaScript se abre igual—, no en un portal
-  - `EvidenceItem` extraído; la primera sesión se ve, el resto va en `<details>`. `test:routines:sessions` 18/18 contra la app viva: «Camino 5: sesión 3» (3ª sesión, plegada) y el formulario `value="<alertId>"` siguen en el HTML. **Falta medir el px antes/después en Chrome (14.9).**
-- [ ] 14.7 Añadir `orden` a `exerciseList`, `templateList` y a los listados de seguimiento, con las claves que cada pantalla puede ordenar y sin tocar el `.order("priority")` de `/rules`
-- [ ] 14.8 Ordenación por defecto explícita en cada listado, documentada en un comentario junto a su `createListParams`
-- [ ] 14.9 Medir de nuevo `/exercises` y `/pro/alerts` en Chrome a 1440×900 y 606×667 y registrar las cifras en `docs/12-medicion-de-densidad.md`
-- [ ] 14.10 `npm run test:catalog`, `test:catalog:custom` y `test:routines:sessions` en verde, más los cuatro de CI
+  - `EvidenceItem` extraído; la primera sesión se ve, el resto va en `<details>`. `test:routines:sessions` 18/18 contra la app viva: «Camino 5: sesión 3» (3ª sesión, plegada) y el formulario `value="<alertId>"` siguen en el HTML. Medido en Chrome en 14.9: 346 px (antes 658).
+- [x] 14.7 Añadir `orden` a `exerciseList`, `templateList` y a los listados de seguimiento, con las claves que cada pantalla puede ordenar y sin tocar el `.order("priority")` de `/rules`
+  - `orderParam(values, fallback)` en `lib/shared/list-params.ts`, mismo patrón que `vista`: siempre lleva un valor, así que va en `notFilters` de cada `createListParams`. Claves: ejercicios `nombre` (por defecto) · `recientes`; plantillas `tipo` (por defecto, `kind`+`name`) · `nombre` · `recientes`; asistencia `nombre` (por defecto) · `reciente` · `dias`; tamizaje `nombre` (por defecto) · `reciente`; membresías `vencimiento` (por defecto) · `nombre` —este último reordena **dentro** de «Próximas a vencer»/«Vencidas»/«Resto», que siguen siendo contrato de `test:memberships`, nunca entre secciones—. `ListFilters` ganó `required` en `Choice` para que el `<select>` de orden no ofrezca un «Todos» que no existe.
+- [x] 14.8 Ordenación por defecto explícita en cada listado, documentada en un comentario junto a su `createListParams`
+  - Comentario en cada `*-list.ts` (`schemas.ts` para ejercicios) junto al array de claves, antes de `createListParams`.
+- [x] 14.9 Medir de nuevo `/exercises` y `/pro/alerts` en Chrome a 1440×900 y 606×667 y registrar las cifras en `docs/12-medicion-de-densidad.md`
+  - Sección «1 quater» del documento. `/pro/alerts` baja un 41 % (8.387→4.921 px en escritorio, 8.623→5.081 en móvil); `/exercises` sube un poco (banda de pestañas + conmutador de vista + selector de orden encima de la rejilla), la tarjeta no cambió de tamaño.
+- [x] 14.10 `npm run test:catalog`, `test:catalog:custom` y `test:routines:sessions` en verde, más los cuatro de CI
+  - 9/9, 12/12 y 19/19 contra la app viva. Además, por tocar sus listados: `test:templates` 20/20, `test:attendance` 8/8, `test:screenings` 8/8, `test:memberships` 11/11.
 
 Añadidas tras la revisión de Yordy en Safari (2026-09-07): las pantallas de edición abrían
 con **todos los formularios de todos los ejercicios desplegados a la vez**. Mismo patrón que

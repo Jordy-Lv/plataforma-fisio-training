@@ -71,15 +71,39 @@ cerrado. Un `<details>` cerrado emite igual su contenido en el HTML del servidor
 ninguna suite se rompe (`test:routines:items` 9/9, `test:templates` 19/19,
 `test:routines:sessions` 18/18, medidos contra la app viva).
 
-| Pantalla | Antes | Después (pendiente medir en Chrome) |
+| Pantalla | Antes | Después |
 |---|---|---|
-| `/templates/[id]` (2 días) | 8.313 px · 9,24 pantallas · 59 `<form>` | ~1 línea por ejercicio + `<details>` |
-| `/pro/routines/[patientId]` (16 ejercicios) | 5.041 px · 5,60 pantallas · 17 `<form>` | ~1 línea por ejercicio + `<details>` |
-| Alerta en `/pro/alerts` (3 sesiones) | 658 px (420 de evidencia) | 1ª sesión visible + `<details>` «Ver las otras N» |
+| `/templates/[id]` (2 días) | 8.313 px · 9,24 pantallas · 59 `<form>` | ~1 línea por ejercicio + `<details>` (pendiente medir en Chrome, tarea 17.8) |
+| `/pro/routines/[patientId]` (16 ejercicios) | 5.041 px · 5,60 pantallas · 17 `<form>` | ~1 línea por ejercicio + `<details>` (pendiente medir en Chrome, tarea 17.8) |
+| Alerta en `/pro/alerts` (3 sesiones) | 658 px (420 de evidencia) | **346 px** (1440×900) · **338 px** (606×667): 1ª sesión visible + el enlace «Ver las 3 sesiones» |
 
 Los `<form>` no desaparecen ni cambian de orden: el de quitar un ejercicio sigue siendo el
 primero del ítem y fuera del `<details>`; el de marcar una alerta como leída sigue tras la
-evidencia. **Falta la medición en Chrome del antes y el después** (tareas 14.9 y 17.8).
+evidencia. **Medida en Chrome la fila de `/pro/alerts` (tarea 14.9, 2026-09-12)**: sigue
+pendiente `/templates/[id]` y `/pro/routines/[patientId]` (tarea 17.8, de otra sección).
+
+## 1 quater. `/exercises` y `/pro/alerts` después de la fase 5 (14.9, 2026-09-12)
+
+Repite la medición de la sección 1 con las mismas ventanas (1440×900 y 606×667, sesión de
+administrador), después de las secciones 14.1–14.8. Doce alertas de tipo `pain` con tres
+sesiones de evidencia cada una, sembradas directamente en `alerts` con el mismo `payload`
+que arma el motor real (`lib/routines/alert-queries.ts`) y borradas al terminar; el
+catálogo es el de siempre, 868 ejercicios.
+
+| Ruta | Filas | Alto (1440×900) | Pantallas | Alto (606×667) | Pantallas |
+|---|---|---|---|---|---|
+| `/exercises` (antes) | 24 tarjetas | 4.507 px | 5,01 | 15.561 px | 23,33 |
+| **`/exercises` (después)** | 24 tarjetas | **4.606 px** | **5,12** | **16.175 px** | **24,25** |
+| `/pro/alerts` (antes) | 12 alertas | 8.387 px | 9,32 | 8.623 px | 12,93 |
+| **`/pro/alerts` (después)** | 12 alertas | **4.921 px** | **5,47** | **5.081 px** | **7,62** |
+
+`/pro/alerts` es la que mejora de verdad: **41 % menos pantallas en escritorio y 41 % menos
+en móvil**, resultado directo de plegar la evidencia (14.5) tras «Ver las N sesiones» en vez
+de mostrar las tres sesiones completas siempre. La tarjeta de ejercicio no cambió de tamaño
+—429 px en escritorio, 597 en móvil, igual que en la sección 1—: `/exercises` sube unos 100
+y 600 px respectivamente porque la pantalla ahora monta la banda de pestañas
+(Ejercicios/Plantillas), el conmutador de vista y el nuevo selector de orden (14.7) *antes*
+de la rejilla, no porque una fila pese más.
 
 ## 2. Alto de una fila
 

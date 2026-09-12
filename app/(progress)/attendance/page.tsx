@@ -4,7 +4,7 @@ import { cn } from "cn";
 import { Workspace } from "@/components/auth/Workspace";
 import { requireStaff } from "@/lib/progress/access";
 import { listPatientsWithMonthAttendance } from "@/lib/progress/attendance-queries";
-import { attendanceList, shiftMonth } from "@/lib/progress/attendance-list";
+import { attendanceList, attendanceOrderLabels, shiftMonth } from "@/lib/progress/attendance-list";
 import { formatDate, formatMonth, formatTimes } from "@/lib/progress/vocabulary";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
@@ -32,6 +32,7 @@ export default async function Page({
 
   const choices = [
     { name: "attended", label: "Asistencia", options: attendedLabels },
+    { name: "orden", label: "Orden", options: attendanceOrderLabels, required: true },
   ];
   const chips = [
     filters.month
