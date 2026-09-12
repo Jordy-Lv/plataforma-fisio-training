@@ -48,6 +48,7 @@ export default async function Page({
     items.length > 0
       ? await replacementExercises(
           items.flatMap((item) => item.exercises?.muscle_groups ?? []),
+          items.map((item) => item.exercise_id),
         )
       : [];
   const logs = new Map(

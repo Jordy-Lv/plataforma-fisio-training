@@ -141,7 +141,15 @@ test("Evolución: agregación, estados y progresión", { timeout: 180_000 }, asy
     assert.match(visible, /Qué se dibuja/, "Falta el selector de métrica");
     assert.match(html, /<option value="weight"[^>]*>Peso<\/option>/);
     assert.match(html, /<option value="bmi"[^>]*>IMC<\/option>/);
-    assert.ok(html.includes("recharts"), "La gráfica debe montarse");
+    assert.match(
+      html,
+      /<svg[^>]+role="img"[^>]+aria-label="Peso:/,
+      "La gráfica debe montarse",
+    );
+    assert.ok(
+      !html.includes("recharts"),
+      "La gráfica no debe cargar la librería pesada de gráficas",
+    );
     assert.ok(
       !html.includes('value="waist_cm"'),
       "Una medida que nadie tomó no debe ofrecerse",

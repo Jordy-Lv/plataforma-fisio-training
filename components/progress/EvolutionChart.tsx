@@ -1,25 +1,99 @@
 "use client";
 
 import { useState } from "react";
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import { cn } from "cn";
 import { cardVariants } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Field, Select } from "@/components/ui/Field";
 import type { Series } from "@/lib/progress/evolution";
-import { formatNumber, formatShortDate } from "@/lib/progress/vocabulary";
+
+const MONTHS = [
+  "ene",
+  "feb",
+  "mar",
+  "abr",
+  "may",
+  "jun",
+  "jul",
+  "ago",
+  "sept",
+  "oct",
+  "nov",
+  "dic",
+];
+
+const CHART = {
+  width: 640,
+  height: 260,
+  top: 24,
+  right: 28,
+  bottom: 44,
+  left: 54,
+};
+
+function formatChartNumber(value: number) {
+  const rounded = Math.round(value * 10) / 10;
+  const formatted = Number.isInteger(rounded)
+    ? rounded.toFixed(0)
+    : rounded.toFixed(1);
+
+  return formatted.replace(".", ",");
+}
+
+function formatChartDate(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+
+  if (!year || !month || !day) {
+    return value;
+  }
+
+  return `${day} ${MONTHS[month - 1] ?? ""}`.trim();
+}
 
 /** Cómo se escribe un valor con su unidad, que a veces no hay (el IMC). */
-const conUnidad = (value: number, unit: string) =>
-  unit ? `${formatNumber(value)} ${unit}` : formatNumber(value);
+const conUnidad = (value: number, unit: string) => {
+  const formatted = formatChartNumber(value);
+
+  return unit ? `${formatted} ${unit}` : formatted;
+};
+
+function tickIndexes(length: number) {
+  return Array.from(new Set([0, Math.floor((length - 1) / 2), length - 1])).filter(
+    (index) => index >= 0,
+  );
+}
+
+function chartGeometry(points: Series["points"]) {
+  const plotWidth = CHART.width - CHART.left - CHART.right;
+  const plotHeight = CHART.height - CHART.top - CHART.bottom;
+  const values = points.map((point) => point.value);
+  const minRaw = Math.min(...values);
+  const maxRaw = Math.max(...values);
+  const span = maxRaw - minRaw;
+  const padding =
+    span === 0 ? Math.max(Math.abs(maxRaw) * 0.08, 1) : span * 0.12;
+  const min = minRaw - padding;
+  const max = maxRaw + padding;
+  const range = max - min || 1;
+
+  const plotted = points.map((point, index) => {
+    const x = CHART.left + (plotWidth * index) / Math.max(points.length - 1, 1);
+    const y = CHART.top + ((max - point.value) / range) * plotHeight;
+
+    return { ...point, x, y };
+  });
+
+  const yTicks = [max, (max + min) / 2, min].map((value) => ({
+    value,
+    y: CHART.top + ((max - value) / range) * plotHeight,
+  }));
+  const xTicks = tickIndexes(points.length)
+    .map((index) => plotted[index])
+    .filter((point): point is (typeof plotted)[number] => Boolean(point));
+  const linePoints = plotted.map((point) => `${point.x},${point.y}`).join(" ");
+
+  return { plotted, yTicks, xTicks, linePoints };
+}
 
 /**
  * Una gráfica de evolución con selector de métrica. Las series llegan ya
@@ -48,7 +122,48 @@ export function EvolutionChart({
       <EmptyState title="Todavía no hay nada que dibujar">{empty}</EmptyState>
     );
 
-  const último = active.points[active.points.length - 1];
+  const ultimo = active.points.at(-1);
+
+  if (!ultimo)
+    return (
+      <EmptyState title="Todavía no hay nada que dibujar">{empty}</EmptyState>
+    );
+
+  if (active.points.length < 2)
+    return (
+      <div className="grid gap-4">
+        {series.length > 1 && (
+          <Field label="Qué se dibuja" className="sm:max-w-xs">
+            <Select
+              value={active.key}
+              onChange={(event) => setSelected(event.target.value)}
+            >
+              {series.map((item) => (
+                <option key={item.key} value={item.key}>
+                  {item.label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        )}
+
+        <EmptyState
+          title={
+            <span className="text-2xl">
+              {conUnidad(ultimo.value, active.unit)}
+            </span>
+          }
+        >
+          <p className="text-sm text-muted-foreground">
+            {active.label} · {formatChartDate(ultimo.on)}
+          </p>
+          <p className="mt-3">{single}</p>
+        </EmptyState>
+      </div>
+    );
+
+  const first = active.points[0]!;
+  const { plotted, yTicks, xTicks, linePoints } = chartGeometry(active.points);
 
   return (
     <div className="grid gap-4">
@@ -67,76 +182,113 @@ export function EvolutionChart({
         </Field>
       )}
 
-      {active.points.length < 2 ? (
-        <EmptyState
-          title={
-            <span className="text-2xl">
-              {conUnidad(último.value, active.unit)}
-            </span>
-          }
-        >
-          <p className="text-sm text-muted-foreground">
-            {active.label} · {formatShortDate(último.on)}
-          </p>
-          <p className="mt-3">{single}</p>
-        </EmptyState>
-      ) : (
-        // `ResponsiveContainer` mide el ancho que le den: el contenedor no
-        // puede tener ancho propio o la gráfica desborda en el teléfono.
-        <div
-          className={cn(
-            cardVariants({ padding: "none" }),
-            "w-full overflow-hidden p-4 pl-0",
-          )}
-        >
-          <ResponsiveContainer width="100%" height={260}>
-            <LineChart
-              data={active.points}
-              margin={{ top: 8, right: 12, bottom: 4, left: 4 }}
-            >
-              <CartesianGrid stroke="var(--border)" vertical={false} />
-              <XAxis
-                dataKey="on"
-                tickFormatter={formatShortDate}
-                tickMargin={8}
-                minTickGap={16}
-                stroke="var(--muted-foreground)"
-                fontSize={12}
-              />
-              <YAxis
-                width={48}
-                domain={["dataMin - 2", "dataMax + 2"]}
-                tickFormatter={(value: number) => formatNumber(value)}
-                stroke="var(--muted-foreground)"
-                fontSize={12}
-              />
-              <Tooltip
-                labelFormatter={(label) => formatShortDate(String(label))}
-                formatter={(value) => [
-                  conUnidad(Number(value), active.unit),
-                  active.label,
-                ]}
-                contentStyle={{
-                  background: "var(--surface)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "0.75rem",
-                  color: "var(--foreground)",
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="value"
-                name={active.label}
+      <div
+        className={cn(cardVariants({ padding: "none" }), "w-full overflow-hidden")}
+      >
+        <div className="p-4">
+          <svg
+            role="img"
+            aria-label={`${active.label}: de ${conUnidad(first.value, active.unit)} a ${conUnidad(
+              ultimo.value,
+              active.unit,
+            )}`}
+            className="h-[260px] w-full"
+            viewBox={`0 0 ${CHART.width} ${CHART.height}`}
+            preserveAspectRatio="none"
+          >
+            <line
+              x1={CHART.left}
+              x2={CHART.width - CHART.right}
+              y1={CHART.height - CHART.bottom}
+              y2={CHART.height - CHART.bottom}
+              stroke="var(--border)"
+              strokeWidth="1"
+            />
+
+            {yTicks.map((tick) => (
+              <g key={`${active.key}-${tick.value}`}>
+                <line
+                  x1={CHART.left}
+                  x2={CHART.width - CHART.right}
+                  y1={tick.y}
+                  y2={tick.y}
+                  stroke="var(--border)"
+                  strokeDasharray="4 5"
+                  strokeWidth="1"
+                />
+                <text
+                  x={CHART.left - 10}
+                  y={tick.y + 4}
+                  textAnchor="end"
+                  fontSize="12"
+                  fill="var(--muted-foreground)"
+                >
+                  {conUnidad(tick.value, active.unit)}
+                </text>
+              </g>
+            ))}
+
+            {xTicks.map((tick) => (
+              <text
+                key={`${active.key}-${tick.on}`}
+                x={tick.x}
+                y={CHART.height - 12}
+                textAnchor="middle"
+                fontSize="12"
+                fill="var(--muted-foreground)"
+              >
+                {formatChartDate(tick.on)}
+              </text>
+            ))}
+
+            <polyline
+              points={linePoints}
+              fill="none"
+              stroke="var(--brand)"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="3"
+              vectorEffect="non-scaling-stroke"
+            />
+
+            {plotted.map((point) => (
+              <circle
+                key={`${active.key}-${point.on}`}
+                cx={point.x}
+                cy={point.y}
+                r="4"
+                fill="var(--surface)"
                 stroke="var(--brand)"
-                strokeWidth={2}
-                dot={{ r: 3, fill: "var(--brand)" }}
-                activeDot={{ r: 5 }}
-                isAnimationActive={false}
+                strokeWidth="2.5"
+                vectorEffect="non-scaling-stroke"
               />
-            </LineChart>
-          </ResponsiveContainer>
+            ))}
+          </svg>
         </div>
-      )}
+
+        <div
+          className="grid gap-3 border-t border-border px-4 py-3 text-sm sm:grid-cols-3"
+        >
+          <p className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground">Inicio</span>
+            <span className="font-semibold text-foreground">
+              {conUnidad(first.value, active.unit)} · {formatChartDate(first.on)}
+            </span>
+          </p>
+          <p className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground">Último</span>
+            <span className="font-semibold text-foreground">
+              {conUnidad(ultimo.value, active.unit)} · {formatChartDate(ultimo.on)}
+            </span>
+          </p>
+          <p className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground">Registros</span>
+            <span className="font-semibold text-foreground">
+              {active.points.length}
+            </span>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

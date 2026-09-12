@@ -29,6 +29,9 @@ const password = "demo1234";
 
 /** Distingue las filas de esta ejecución de cualquier otra. */
 const marca = `panorama-${crypto.randomUUID().slice(0, 8)}`;
+const fixtureRoutine = crypto.randomUUID();
+const fixtureDay = crypto.randomUUID();
+const fixtureExercise = crypto.randomUUID();
 
 /** El mismo "hoy" que usa la aplicación: el del negocio en Colombia. */
 const hoy = new Intl.DateTimeFormat("en-CA", {
@@ -191,7 +194,7 @@ async function cuadra(client, mensaje) {
   }
 }
 
-/** Una rutina real con al menos tres ejercicios en un día, y su paciente. */
+/** La rutina temporal de esta prueba, independiente de los datos de la demo. */
 function rutinaConTresEjercicios() {
   const fila = sql(
     `select r.id || '|' || d.id || '|' || r.patient_id || '|' ||
@@ -200,7 +203,7 @@ function rutinaConTresEjercicios() {
        join public.routine_days d on d.routine_id = r.id
        join public.routine_items i on i.routine_day_id = d.id
        join public.profiles p on p.id = r.patient_id
-      where p.role = 'patient' and p.is_active
+      where p.role = 'patient' and p.is_active and r.id = '${fixtureRoutine}'
       group by r.id, d.id, r.patient_id
      having count(i.id) >= 3
       limit 1`,
@@ -262,7 +265,15 @@ test("Panorama del negocio", { timeout: 480_000 }, async (t) => {
           .join(", ")})`,
       );
     sql(`delete from public.attendance where notes like '%${marca}%'`);
+    sql(`delete from public.routines where id='${fixtureRoutine}';
+      delete from public.exercises where id='${fixtureExercise}'`);
   });
+  sql(`insert into public.exercises(id,name,is_custom) values('${fixtureExercise}','Ejercicio ${marca}',true);
+    insert into public.routines(id,patient_id,kind,name,status)
+      values('${fixtureRoutine}','00000000-0000-4000-a000-000000000004','training','Rutina ${marca}','completed');
+    insert into public.routine_days(id,routine_id,day_number) values('${fixtureDay}','${fixtureRoutine}',1);
+    insert into public.routine_items(routine_day_id,exercise_id,position,sets,reps)
+      select '${fixtureDay}','${fixtureExercise}',position,3,10 from generate_series(1,3) position;`);
 
   await t.test("Las tres cifras coinciden con la base", async () => {
     const client = await screenAs("admin");

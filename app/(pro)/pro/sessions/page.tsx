@@ -38,7 +38,9 @@ export default async function Page({
   // Los informes de esta página, en una sola consulta: cada tarjeta abre lo que
   // el paciente registró sin cambiar de pantalla (15.4). Nunca una consulta por
   // tarjeta —el listado pagina de veinte en veinte y el `in` los trae juntos—.
-  const reports = await sessionReports(sessions.map((session) => session.id));
+  const reports = sessions.length
+    ? await sessionReports(sessions.map((session) => session.id))
+    : new Map();
 
   const chips = [
     filters.status ? { key: "status", label: statusLabels[filters.status], removeLabel: "Quitar el estado" } : null,

@@ -3,8 +3,10 @@
 // Se ejecuta contra la API de Supabase con el token de sesión de cada persona,
 // nunca a través de la interfaz: la interfaz puede estar ocultando un botón
 // mientras la fila sigue siendo accesible. Requiere Supabase local encendido
-// y la semilla aplicada (`npm run db:reset`).
+// y los profesionales de la semilla. Crea pacientes propios y los retira al terminar;
+// no borra sesiones ni alertas de las cuentas usadas para presentar la demo.
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { test } from "node:test";
@@ -13,8 +15,9 @@ import { createClient } from "@supabase/supabase-js";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 
-const DIEGO = "00000000-0000-4000-a000-000000000004";
-const ELENA = "00000000-0000-4000-a000-000000000005";
+let DIEGO;
+let ELENA;
+const fixture = Object.fromEntries(["exercise", "routine", "otherRoutine", "day", "otherDay", "item", "otherItem", "session"].map((key) => [key, randomUUID()]));
 
 const CONTENEDOR = "supabase_db_plataforma-fisio-training";
 
@@ -31,37 +34,37 @@ function sql(consulta) {
 function prepararEscenario() {
   return sql(`
     insert into public.exercises (id, name, is_custom, contraindications)
-      values ('00000000-0000-4000-e000-000000000001', 'Sentadilla de prueba', true, '{knee}')
+      values ('${fixture.exercise}', 'Sentadilla de prueba', true, '{knee}')
       on conflict (id) do nothing;
 
     insert into public.routines (id, patient_id, kind, name)
-      values ('00000000-0000-4000-b000-000000000001', '${DIEGO}', 'training', 'Rutina de prueba')
+      values ('${fixture.routine}', '${DIEGO}', 'training', 'Rutina de prueba')
       on conflict (id) do nothing;
     insert into public.routine_days (id, routine_id, day_number, title)
-      values ('00000000-0000-4000-c000-000000000001', '00000000-0000-4000-b000-000000000001', 1, 'Día 1')
+      values ('${fixture.day}', '${fixture.routine}', 1, 'Día 1')
       on conflict (id) do nothing;
     insert into public.routine_items (id, routine_day_id, exercise_id, position, sets, reps)
-      values ('00000000-0000-4000-d000-000000000001', '00000000-0000-4000-c000-000000000001',
-              '00000000-0000-4000-e000-000000000001', 1, 3, 10)
+      values ('${fixture.item}', '${fixture.day}',
+              '${fixture.exercise}', 1, 3, 10)
       on conflict (id) do nothing;
 
     -- Rutina, sesión y registro de Elena: lo que Diego no debe poder ver.
     insert into public.routines (id, patient_id, kind, name)
-      values ('00000000-0000-4000-b000-000000000002', '${ELENA}', 'training', 'Rutina de Elena')
+      values ('${fixture.otherRoutine}', '${ELENA}', 'training', 'Rutina de Elena')
       on conflict (id) do nothing;
     insert into public.routine_days (id, routine_id, day_number)
-      values ('00000000-0000-4000-c000-000000000002', '00000000-0000-4000-b000-000000000002', 1)
+      values ('${fixture.otherDay}', '${fixture.otherRoutine}', 1)
       on conflict (id) do nothing;
     insert into public.routine_items (id, routine_day_id, exercise_id, position)
-      values ('00000000-0000-4000-d000-000000000002', '00000000-0000-4000-c000-000000000002',
-              '00000000-0000-4000-e000-000000000001', 1)
+      values ('${fixture.otherItem}', '${fixture.otherDay}',
+              '${fixture.exercise}', 1)
       on conflict (id) do nothing;
     insert into public.sessions (id, routine_id, routine_day_id, patient_id, status)
-      values ('00000000-0000-4000-f000-000000000002', '00000000-0000-4000-b000-000000000002',
-              '00000000-0000-4000-c000-000000000002', '${ELENA}', 'completed')
+      values ('${fixture.session}', '${fixture.otherRoutine}',
+              '${fixture.otherDay}', '${ELENA}', 'completed')
       on conflict (id) do nothing;
     insert into public.session_logs (session_id, routine_item_id, patient_id, status, pain_level, pain_location)
-      select '00000000-0000-4000-f000-000000000002', '00000000-0000-4000-d000-000000000002', '${ELENA}', 'done', 8, 'knee'
+      select '${fixture.session}', '${fixture.otherItem}', '${ELENA}', 'done', 8, 'knee'
       where not exists (select 1 from public.session_logs where patient_id = '${ELENA}');
 
     insert into public.alerts (type, patient_id, recipient_id, severity)
@@ -75,8 +78,8 @@ function limpiarEscenario() {
     delete from public.alerts where patient_id in ('${DIEGO}', '${ELENA}');
     delete from public.session_logs where patient_id in ('${DIEGO}', '${ELENA}');
     delete from public.sessions where patient_id in ('${DIEGO}', '${ELENA}');
-    delete from public.routines where id in ('00000000-0000-4000-b000-000000000001', '00000000-0000-4000-b000-000000000002');
-    delete from public.exercises where id = '00000000-0000-4000-e000-000000000001';
+    delete from public.routines where id in ('${fixture.routine}', '${fixture.otherRoutine}');
+    delete from public.exercises where id = '${fixture.exercise}';
   `);
 }
 
@@ -90,8 +93,34 @@ test("Camino 9 — aislamiento de datos entre pacientes", { timeout: 120_000 }, 
   );
   assert.ok(["127.0.0.1", "localhost"].includes(new URL(status.API_URL).hostname));
 
+  const temporary = [];
+  t.after(async () => {
+    if (DIEGO && ELENA) limpiarEscenario();
+    for (const person of temporary) {
+      await person.client.auth.signOut();
+      sql(`delete from auth.users where id='${person.id}'`);
+    }
+  });
+  async function patient() {
+    const email = `rls-${randomUUID()}@demo.local`;
+    const client = createClient(status.API_URL, status.ANON_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const result = await client.auth.signUp({ email, password: "demo1234" });
+    assert.equal(result.error, null);
+    const person = { client, email, id: result.data.user.id };
+    temporary.push(person);
+    sql(`insert into public.patient_details(profile_id,goal,level,environment,equipment,onboarding_step)
+      values('${person.id}','general_health','beginner','home','{none}',3)`);
+    return person;
+  }
+  const owner = await patient(), other = await patient();
+  DIEGO = owner.id;
+  ELENA = other.id;
+  sql(`insert into public.care_assignments(patient_id,professional_id,kind) values
+    ('${DIEGO}','00000000-0000-4000-a000-000000000002','training'),
+    ('${DIEGO}','00000000-0000-4000-a000-000000000003','physio')`);
   prepararEscenario();
-  t.after(limpiarEscenario);
 
   const sesion = async (email) => {
     const cliente = createClient(status.API_URL, status.ANON_KEY, {
@@ -102,7 +131,7 @@ test("Camino 9 — aislamiento de datos entre pacientes", { timeout: 120_000 }, 
     return cliente;
   };
 
-  const diego = await sesion("paciente@demo.local");
+  const diego = owner.client;
   const beto = await sesion("entrenador@demo.local");
   const carla = await sesion("fisio@demo.local");
 
@@ -147,11 +176,11 @@ test("Camino 9 — aislamiento de datos entre pacientes", { timeout: 120_000 }, 
     const { data, error } = await diego
       .from("routine_items")
       .update({ sets: 99 })
-      .eq("id", "00000000-0000-4000-d000-000000000001")
+      .eq("id", fixture.item)
       .select();
     assert.deepEqual(data ?? [], [], "el paciente ejecuta su rutina, no la edita");
     assert.equal(error, null);
-    assert.equal(sql(`select sets from public.routine_items where id = '00000000-0000-4000-d000-000000000001'`), "3");
+    assert.equal(sql(`select sets from public.routine_items where id = '${fixture.item}'`), "3");
   });
 
   await t.test("5. paciente consulta alerts", async () => {
@@ -162,8 +191,8 @@ test("Camino 9 — aislamiento de datos entre pacientes", { timeout: 120_000 }, 
 
   await t.test("6. paciente inserta una sesión a nombre de otro", async () => {
     const { error } = await diego.from("sessions").insert({
-      routine_id: "00000000-0000-4000-b000-000000000002",
-      routine_day_id: "00000000-0000-4000-c000-000000000002",
+      routine_id: fixture.otherRoutine,
+      routine_day_id: fixture.otherDay,
       patient_id: ELENA,
       status: "in_progress",
     });

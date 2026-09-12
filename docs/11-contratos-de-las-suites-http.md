@@ -208,7 +208,7 @@ Además de los formularios, hay texto y HTML que las suites leen literalmente.
 | `aria-label="Páginas del catálogo"` y el texto `Siguiente` | `/exercises` | `test:catalog` |
 | `Ningún ejercicio coincide con estos filtros` y `Ver todo el catálogo` | `/exercises` sin resultados | `test:catalog` |
 | `<option value="weight"…>Peso</option>` y `<option value="bmi"…>IMC</option>` | `/evolution/[id]` | `test:evolution` |
-| La cadena `recharts` aparece con datos y **no** aparece sin datos | `/evolution/[id]` | `test:evolution` |
+| Con datos aparece un `<svg role="img">` y no se carga `recharts` | `/evolution/[id]` | `test:evolution` |
 | `data-user="anonymous"` | portada sin sesión | `test:auth` |
 | Un solo formulario de cerrar sesión por documento | todo el shell | `test:auth:screens` |
 

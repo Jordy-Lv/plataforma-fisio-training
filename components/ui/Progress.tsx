@@ -1,14 +1,8 @@
-import { Progress as ProgressPrimitive } from "@base-ui/react/progress";
 import { cn } from "cn";
 
 /**
- * Barra de avance. Se apoya en `@base-ui/react`, que ya estaba instalado: no
- * añade dependencias. La primitiva pone los papeles de accesibilidad
- * (`role="progressbar"` con su valor, su mínimo y su máximo), que es lo que
- * hace que un lector de pantalla anuncie «3 de 6» sin que lo escribamos.
- *
- * No lleva `"use client"`: no tiene estado ni manejadores, así que se puede
- * pintar desde el servidor.
+ * Barra de avance sin JavaScript de cliente: no tiene estado ni manejadores,
+ * así que el servidor puede entregar el ancho ya calculado.
  */
 export function Progress({
   value,
@@ -22,16 +16,26 @@ export function Progress({
   label: string;
   className?: string;
 }) {
+  const safeMax = Math.max(max, 1);
+  const current = Math.min(Math.max(value, 0), safeMax);
+  const percentage = (current / safeMax) * 100;
+
   return (
-    <ProgressPrimitive.Root
-      value={value}
-      max={max}
+    <div
       aria-label={label}
-      className={cn("w-full", className)}
+      aria-valuemax={safeMax}
+      aria-valuemin={0}
+      aria-valuenow={current}
+      className={cn(
+        "h-2 w-full overflow-hidden rounded-full bg-muted",
+        className,
+      )}
+      role="progressbar"
     >
-      <ProgressPrimitive.Track className="h-2 w-full overflow-hidden rounded-full bg-muted">
-        <ProgressPrimitive.Indicator className="h-full rounded-full bg-brand transition-[width] duration-300 motion-reduce:transition-none" />
-      </ProgressPrimitive.Track>
-    </ProgressPrimitive.Root>
+      <div
+        className="h-full rounded-full bg-brand transition-[width] duration-300 motion-reduce:transition-none"
+        style={{ width: `${percentage}%` }}
+      />
+    </div>
   );
 }

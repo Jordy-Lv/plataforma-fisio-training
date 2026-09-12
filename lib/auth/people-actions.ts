@@ -107,6 +107,7 @@ export async function assignProfessional(
           : "No se pudo asignar. Revisa que ambas personas estén activas y la especialidad coincida.",
     };
   revalidatePath("/people");
+  revalidatePath(`/people/${parsed.data.patientId}`);
   revalidatePath("/admin");
   revalidatePath("/pro");
   return { success: "Profesional asignado." };
@@ -164,6 +165,7 @@ export async function deactivatePerson(
   });
   if (error) return { error: error.message };
   revalidatePath("/people");
+  revalidatePath(`/people/${parsed.data.personId}`);
   revalidatePath("/admin");
   revalidatePath("/pro");
   return { success: "Persona dada de baja. Su historial se conserva." };
