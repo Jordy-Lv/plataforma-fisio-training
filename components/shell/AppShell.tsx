@@ -68,8 +68,13 @@ export function AppShell({
             {/*
               El nombre del cliente se conserva en móvil y en la app instalada.
             */}
+            {/* Sin precarga (KAN-19): está en todas las pantallas, así que
+                precargada corría en carrera con cualquier server action en
+                curso y la abortaba a medio guardar. Mismo criterio que
+                SidebarNav y MobileNav. */}
             <Link
               href={rolePaths[role]}
+              prefetch={false}
               className="flex min-h-11 items-center rounded-lg text-sm font-semibold text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
               {CLIENT_NAME}

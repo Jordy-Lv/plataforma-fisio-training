@@ -161,16 +161,20 @@ export default async function Page({
       title={patient.full_name ?? "Rutinas del paciente"}
       name={actor.fullName}
       actions={
+        // Sin precarga (KAN-19): comparten pantalla con los formularios de
+        // ajuste de la rutina y precargados corrían en carrera con el envío
+        // en curso, abortándolo a medio guardar.
         <div className="flex flex-wrap gap-2">
           <ButtonLink
             href={
               calendarContext?.returnHref ??
               `/pro/routines/${patientId}/calendar`
             }
+            prefetch={false}
           >
             Ver calendario
           </ButtonLink>
-          <ButtonLink variant="ghost" href="/pro/routines">
+          <ButtonLink variant="ghost" href="/pro/routines" prefetch={false}>
             Volver a pacientes
           </ButtonLink>
         </div>
@@ -373,6 +377,7 @@ export default async function Page({
                                   {item.exercises ? (
                                     <Link
                                       href={`/exercises/${item.exercises.id}`}
+                                      prefetch={false}
                                       className="underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-ring"
                                     >
                                       {item.exercises.name}
@@ -441,6 +446,7 @@ export default async function Page({
                                 <div className="border-t border-border pt-4">
                                   <ButtonLink
                                     href={`${catalogHref(base, { ...calendarParams, item: item.id }, {})}#catalogo-buscador`}
+                                    prefetch={false}
                                     variant={
                                       itemAbierto === item.id
                                         ? "outline"
@@ -465,6 +471,7 @@ export default async function Page({
                         solo lo enfoca en este día (`?dia=`). */}
                     <ButtonLink
                       href={`${catalogHref(base, { ...calendarParams, dia: day.id }, {})}#catalogo-buscador`}
+                      prefetch={false}
                       variant={diaAbierto === day.id ? "outline" : "default"}
                     >
                       {diaAbierto === day.id

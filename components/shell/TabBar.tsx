@@ -37,8 +37,14 @@ export function TabBar({
           const isActive = tab.href === activeHref;
           return (
             <li key={tab.href}>
+              {/* Sin precarga (KAN-19): comparte pantalla con formularios de
+                  server action (la ficha del paciente, su rutina) y precargada
+                  corre en carrera con el envío en curso, abortándolo a medio
+                  guardar. Mismo criterio que SidebarNav, MobileNav y el logo
+                  de AppShell. */}
               <Link
                 href={tab.href}
+                prefetch={false}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
                   "flex min-h-11 items-center whitespace-nowrap border-b-2 px-3 text-sm font-medium transition-colors",

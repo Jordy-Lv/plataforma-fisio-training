@@ -91,10 +91,14 @@ export function AssignmentForm({
         </SubmitButton>
       )}
       {calendarContext && (
+        // Sin precarga (KAN-19): vive dentro de este mismo <form> y
+        // precargada corría en carrera con el envío en curso, abortándolo a
+        // medio guardar.
         <ButtonLink
           variant="outline"
           className="justify-self-start"
           href={calendarContext.returnHref}
+          prefetch={false}
         >
           Volver al calendario para programar
         </ButtonLink>
