@@ -1,3 +1,15 @@
+/**
+ * Verifica la autenticación y las cookies de sesión SSR contra Supabase local:
+ * visita anónima, alta y acceso, reconocimiento tras recargar, renovación de
+ * una sesión próxima a vencer y rechazo de cookies manipuladas o inválidas.
+ *
+ * Requiere solo Supabase local encendido (`npx supabase start`): no depende de
+ * ninguna semilla, crea su propia cuenta desechable con `signUp` y la borra al
+ * terminar. Levanta su propio servidor de Next efímero, así que tampoco
+ * necesita `npm run dev`.
+ *
+ * Uso:  npm run test:auth
+ */
 import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
 import { once } from "node:events";

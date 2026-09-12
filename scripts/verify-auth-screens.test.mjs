@@ -1,3 +1,14 @@
+/**
+ * Verifica las pantallas de acceso y recuperación por HTTP: registro,
+ * inicio de sesión, recuperación de contraseña y sus mensajes de error.
+ *
+ * Requiere Supabase local encendido con la semilla base (`npm run db:reset`,
+ * que aplica `supabase/seed.sql`) y `npm run dev` en marcha. No necesita
+ * ninguna semilla de catálogo ni de progreso: usa las cuentas de la semilla
+ * base y crea las suyas propias (`*.demo.local`) por `signUp`.
+ *
+ * Uso:  npm run test:auth:screens
+ */
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { createClient } from "@supabase/supabase-js";

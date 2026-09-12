@@ -1,3 +1,13 @@
+/**
+ * Verifica la resiliencia del wizard de onboarding ante fallos de sesión:
+ * que conserva las respuestas ya dadas y se recupera sin perder el progreso.
+ *
+ * No requiere Supabase local ni ninguna semilla: React y los componentes
+ * reales se ejecutan en un DOM simulado (jsdom) y solo se sustituyen Supabase
+ * y los adaptadores de Next. No se toca ninguna base de datos.
+ *
+ * Uso:  npm run test:auth:resilience
+ */
 import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
 import { createRequire } from "node:module";

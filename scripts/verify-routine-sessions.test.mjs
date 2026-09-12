@@ -1,3 +1,15 @@
+/**
+ * Verifica la ejecución de la rutina desde el celular: iniciar, registrar y
+ * cerrar una sesión, las alertas de dolor y de ejercicio saltado, y el
+ * aislamiento entre pacientes y profesionales ajenos.
+ *
+ * Requiere Supabase local encendido con `alert_settings` ya poblada por las
+ * migraciones (no necesita `npm run db:reset` explícito, pero sí que las
+ * migraciones estén aplicadas). No depende de ninguna semilla: crea sus
+ * propias cuentas, ejercicios y rutinas por API, y los borra al terminar.
+ *
+ * Uso:  npm run test:routines:sessions
+ */
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { writeFileSync } from 'node:fs';

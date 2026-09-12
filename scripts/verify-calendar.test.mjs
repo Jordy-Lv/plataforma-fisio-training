@@ -1,3 +1,15 @@
+/**
+ * Verifica el calendario de programación y seguimiento semanal: programar,
+ * mover, ejecutar y conservar el historial, y el aislamiento entre pacientes
+ * y profesionales ajenos.
+ *
+ * Requiere Supabase local encendido con la semilla base (`npm run db:reset`)
+ * y `npm run dev` en marcha. No necesita catálogo, plantillas ni reglas
+ * sembradas: usa la cuenta `admin@demo.local` de la semilla base y crea sus
+ * propias personas, ejercicios y plantillas, y los borra al terminar.
+ *
+ * Uso:  npm run test:calendar
+ */
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { test } from "node:test";
