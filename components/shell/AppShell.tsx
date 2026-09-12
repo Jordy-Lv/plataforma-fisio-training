@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { ToastProvider } from "@/components/ui/Toast";
+import { PatientSearch } from "@/components/auth/PatientSearch";
 import { signOut } from "@/lib/auth/actions";
 import { rolePaths } from "@/lib/auth/session";
 import type { UserRole } from "@/lib/auth/schemas";
@@ -21,8 +22,11 @@ import type { UserRole } from "@/lib/auth/schemas";
  *
  * Solo hay **un** formulario de cerrar sesión en todo el documento, aunque el
  * chrome se vea distinto según el ancho: las pruebas de `scripts/helpers/
- * auth-http.mjs` localizan los formularios por orden de aparición en el HTML
- * del servidor, y un segundo formulario desplazaría a todos los demás.
+ * auth-http.mjs` localizan formularios sin marcador por el primero que
+ * aparece en el HTML del servidor. Por eso el buscador de paciente —el otro
+ * `<form>` del chrome, para `admin` y `professional`— se declara *después*
+ * del de cerrar sesión: cualquier `submit(ruta, valores)` sin marcador debe
+ * seguir encontrando el de cerrar sesión primero.
  *
  * Monta también el emisor de avisos, para que cualquier pantalla con sesión
  * pueda usar `useToast` sin repetir el proveedor. En el teléfono los avisos se
@@ -85,6 +89,12 @@ export function AppShell({
               </form>
             </div>
           </div>
+
+          {role !== "patient" && (
+            <div className="mx-auto max-w-[86rem] px-5 pb-2 sm:px-8">
+              <PatientSearch />
+            </div>
+          )}
         </header>
 
         <div className="mx-auto flex max-w-[86rem] items-start gap-8 px-5 sm:px-8">
