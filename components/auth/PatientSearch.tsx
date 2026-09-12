@@ -24,9 +24,13 @@ const debounceMs = 250;
 export function PatientSearch() {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Último término que disparó una búsqueda: una respuesta que llega tarde
+  // (fuera de orden) se descarta si ya no coincide con este valor.
+  const latestTerm = useRef("");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [suggestions, setSuggestions] = useState<PatientSuggestion[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -45,13 +49,28 @@ export function PatientSearch() {
     if (timer.current !== null) clearTimeout(timer.current);
     const trimmed = term.trim();
     if (trimmed.length < minChars) {
+      latestTerm.current = "";
       setSuggestions([]);
+      setError(null);
       return;
     }
     timer.current = setTimeout(() => {
+      latestTerm.current = trimmed;
       startTransition(async () => {
-        const result = await searchPatients(trimmed);
-        setSuggestions(result);
+        try {
+          const result = await searchPatients(trimmed);
+          if (latestTerm.current !== trimmed) return; // llegó fuera de orden
+          setSuggestions(result);
+          setError(null);
+        } catch (cause) {
+          if (latestTerm.current !== trimmed) return; // llegó fuera de orden
+          setSuggestions([]);
+          setError(
+            cause instanceof Error
+              ? cause.message
+              : "No se pudo buscar pacientes. Inténtalo de nuevo.",
+          );
+        }
       });
     }, debounceMs);
   };
@@ -102,26 +121,34 @@ export function PatientSearch() {
           aria-label="Pacientes sugeridos"
           className="absolute top-full z-50 mt-1 w-full min-w-[16rem] rounded-lg border border-border bg-popover py-1 text-popover-foreground shadow-md"
         >
-          {pending && suggestions.length === 0 && (
-            <li className="px-3 py-2 text-sm text-muted-foreground">
-              Buscando…
+          {error ? (
+            <li role="alert" className="px-3 py-2 text-sm text-danger">
+              {error}
             </li>
-          )}
-          {suggestions.map((patient) => (
-            <li key={patient.id} role="option" aria-selected={false}>
-              <Link
-                href={`/people/${patient.id}`}
-                onClick={() => setOpen(false)}
-                className="block px-3 py-2 text-sm hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
-              >
-                {patient.fullName ?? "Sin nombre"}
-              </Link>
-            </li>
-          ))}
-          {!pending && suggestions.length === 0 && (
-            <li className="px-3 py-2 text-sm text-muted-foreground">
-              Nadie coincide con «{query.trim()}».
-            </li>
+          ) : (
+            <>
+              {pending && suggestions.length === 0 && (
+                <li className="px-3 py-2 text-sm text-muted-foreground">
+                  Buscando…
+                </li>
+              )}
+              {suggestions.map((patient) => (
+                <li key={patient.id} role="option" aria-selected={false}>
+                  <Link
+                    href={`/people/${patient.id}`}
+                    onClick={() => setOpen(false)}
+                    className="block px-3 py-2 text-sm hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
+                  >
+                    {patient.fullName ?? "Sin nombre"}
+                  </Link>
+                </li>
+              ))}
+              {!pending && suggestions.length === 0 && (
+                <li className="px-3 py-2 text-sm text-muted-foreground">
+                  Nadie coincide con «{query.trim()}».
+                </li>
+              )}
+            </>
           )}
         </ul>
       )}
