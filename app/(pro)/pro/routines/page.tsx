@@ -95,6 +95,7 @@ export default async function Page({
                     <h2 className="text-base font-semibold leading-6">
                       <Link
                         href={`/pro/routines/${patient.id}`}
+                        prefetch={false}
                         className="after:absolute after:inset-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                       >
                         {patient.full_name ?? "Paciente sin nombre"}
@@ -104,7 +105,10 @@ export default async function Page({
                   </div>
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <Badge variant={badge.variant}>{badge.label}</Badge>
-                    <ButtonLink variant="ghost" href={`/people/${patient.id}`}
+                    <ButtonLink
+                      variant="ghost"
+                      href={`/people/${patient.id}`}
+                      prefetch={false}
                       className="relative">
                       Ver ficha
                     </ButtonLink>
