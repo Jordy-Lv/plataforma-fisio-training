@@ -30,8 +30,12 @@ export async function listTemplates(filters: TemplateFilters = templateList.empt
   const supabase = await createClient();
   const query = () => {
     let request = supabase.from("routine_templates")
-      .select("id, name, kind, goal, level, environment, days_per_week, is_active, template_days(id, template_items(id))", { count: "exact" })
-      .order("kind").order("name").order("id");
+      .select("id, name, kind, goal, level, environment, days_per_week, is_active, template_days(id, template_items(id))", { count: "exact" });
+    // El `id` cierra los tres órdenes: sin un desempate estable, paginar sobre
+    // filas con el mismo tipo, nombre o fecha de alta podría repetir o saltar filas.
+    request = filters.orden === "nombre" ? request.order("name").order("id")
+      : filters.orden === "recientes" ? request.order("created_at", { ascending: false }).order("id")
+      : request.order("kind").order("name").order("id");
     const term = sanitizeSearch(filters.q ?? "");
     if (term) request = request.ilike("name", `%${term}%`);
     if (filters.kind) request = request.eq("kind", filters.kind);

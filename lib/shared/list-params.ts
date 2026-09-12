@@ -7,6 +7,13 @@ export const searchParam = (max = 80) =>
 export const optionalEnum = <T extends readonly [string, ...string[]]>(values: T) =>
   z.enum(values).optional().catch(undefined);
 export const optionalId = z.string().uuid().optional().catch(undefined);
+/**
+ * Como `vista` en el catálogo: siempre lleva un valor, nunca «sin ordenar».
+ * Se declara junto a `notFilters` en cada `createListParams`, para que
+ * cambiar el orden no encienda «Quitar filtros» ni cuente como filtro activo.
+ */
+export const orderParam = <T extends readonly [string, ...string[]]>(values: T, fallback: T[number]) =>
+  z.enum(values).catch(fallback).default(fallback);
 
 /** Estado compartible de lectura. Los esquemas de escritura siguen siendo estrictos. */
 export function createListParams<S extends z.ZodObject<z.ZodRawShape>>({

@@ -80,7 +80,7 @@ export async function listPatientsWithLastScreening(
 
   // «Con tamizaje» y «sin tamizaje» dependen de la fila embebida, no de una
   // columna: el recorte va aquí. La lista es la de pacientes activos.
-  const all = (data ?? [])
+  const filtered = (data ?? [])
     .map(({ screenings, ...patient }) => ({
       ...patient,
       last: screenings[0] ?? null,
@@ -92,6 +92,11 @@ export async function listPatientsWithLastScreening(
           ? patient.last === null
           : true,
     );
+  // `nombre` ya sale así de la consulta; ordenar por el tamizaje exige leer
+  // la fila embebida, así que se hace aquí y no en PostgREST.
+  const all = filters.orden === "reciente"
+    ? [...filtered].sort((a, b) => (b.last?.taken_on ?? "").localeCompare(a.last?.taken_on ?? ""))
+    : filtered;
   const { from, to } = screeningList.range(filters);
   return {
     patients: all.slice(from, to + 1),

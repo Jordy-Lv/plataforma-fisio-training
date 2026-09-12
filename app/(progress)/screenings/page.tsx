@@ -4,7 +4,7 @@ import { cn } from "cn";
 import { Workspace } from "@/components/auth/Workspace";
 import { requireStaff } from "@/lib/progress/access";
 import { listPatientsWithLastScreening } from "@/lib/progress/screening-queries";
-import { screeningList } from "@/lib/progress/screening-list";
+import { screeningList, screeningOrderLabels } from "@/lib/progress/screening-list";
 import { formatDate, formatNumber } from "@/lib/progress/vocabulary";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
@@ -31,9 +31,12 @@ export default async function Page({
 
   const choices = [
     { name: "taken", label: "Tamizaje", options: takenLabels },
+    { name: "orden", label: "Orden", options: screeningOrderLabels, required: true },
   ];
+  // `orden` no es un filtro —no restringe resultados, solo su orden— así que
+  // no genera píldora, igual que `page`.
   const chips = Object.entries(filters)
-    .filter(([key, value]) => key !== "page" && value)
+    .filter(([key, value]) => key !== "page" && key !== "orden" && value)
     .map(([key, value]) => {
       const choice = choices.find((choice) => choice.name === key);
       const options: Record<string, string> = choice?.options ?? {};

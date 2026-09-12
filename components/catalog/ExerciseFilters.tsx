@@ -6,6 +6,8 @@ import { cardVariants } from "@/components/ui/Card";
 import { Field, Input, Select } from "@/components/ui/Field";
 import {
   exerciseList,
+  exerciseOrderLabels,
+  exerciseOrders,
   exercisesHref,
   hasActiveFilters,
   type ExerciseFilters as Filters,
@@ -51,7 +53,7 @@ export function ExerciseFilters({ filters }: { filters: Filters }) {
         />
       </Field>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-3">
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Field label="Grupo muscular">
           <Select name="muscle" defaultValue={filters.muscle ?? ""}>
             <option value="">Todos</option>
@@ -84,6 +86,18 @@ export function ExerciseFilters({ filters }: { filters: Filters }) {
             ))}
           </Select>
         </Field>
+
+        {/* No es un filtro: no restringe resultados, solo cambia su orden.
+            Por eso `exerciseList` lo declara en `notFilters`, igual que `vista`. */}
+        <Field label="Orden">
+          <Select name="orden" defaultValue={filters.orden}>
+            {exerciseOrders.map((value) => (
+              <option key={value} value={value}>
+                {exerciseOrderLabels[value]}
+              </option>
+            ))}
+          </Select>
+        </Field>
       </div>
 
       {hasActiveFilters(filters) && <div className="mt-4 flex flex-wrap gap-2" aria-label="Filtros activos">
@@ -96,7 +110,7 @@ export function ExerciseFilters({ filters }: { filters: Filters }) {
         {hasActiveFilters(filters) && (
           <ButtonLink
             variant="ghost"
-            href={exercisesHref(exerciseList.empty, { vista: filters.vista })}
+            href={exercisesHref(exerciseList.empty, { vista: filters.vista, orden: filters.orden })}
           >
             Quitar filtros
           </ButtonLink>

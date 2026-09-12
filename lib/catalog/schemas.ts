@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { equipment, environments, muscleGroups } from "@/lib/catalog/vocabulary";
-import { createListParams, optionalEnum, pageParam, searchParam } from "@/lib/shared/list-params";
+import { createListParams, optionalEnum, orderParam, pageParam, searchParam } from "@/lib/shared/list-params";
 
 /**
  * Cómo se pinta cada resultado. `tarjetas` es la vista de siempre —imagen 4:3 y
@@ -16,12 +16,21 @@ import { createListParams, optionalEnum, pageParam, searchParam } from "@/lib/sh
 export const exerciseViews = ["tarjetas", "lista"] as const;
 export type ExerciseView = (typeof exerciseViews)[number];
 
+/** Nombre alfabético (por defecto, el orden de siempre) o fecha de alta. */
+export const exerciseOrders = ["nombre", "recientes"] as const;
+export type ExerciseOrder = (typeof exerciseOrders)[number];
+export const exerciseOrderLabels: Record<ExerciseOrder, string> = {
+  nombre: "Nombre (A-Z)",
+  recientes: "Más recientes",
+};
+
 export const exerciseFiltersSchema = z.object({
   q: searchParam(),
   muscle: optionalEnum(muscleGroups),
   equipment: optionalEnum(equipment),
   environment: optionalEnum(environments),
   vista: z.enum(exerciseViews).catch("tarjetas").default("tarjetas"),
+  orden: orderParam(exerciseOrders, "nombre"),
   page: pageParam,
 });
 export type ExerciseFilters = z.infer<typeof exerciseFiltersSchema>;
@@ -35,7 +44,7 @@ export const exerciseList = createListParams({
   path: "/exercises",
   schema: exerciseFiltersSchema,
   pageSize: 24,
-  notFilters: ["vista"],
+  notFilters: ["vista", "orden"],
 });
 
 export const pageSizeFor = (vista: ExerciseView) => (vista === "lista" ? 60 : exerciseList.pageSize);

@@ -11,6 +11,7 @@ import {
   exercisesHref,
   hasActiveFilters,
   pageSizeFor,
+  type ExerciseOrder,
   type ExerciseView,
 } from "@/lib/catalog/schemas";
 import { ButtonLink } from "@/components/ui/ButtonLink";
@@ -20,14 +21,15 @@ export const metadata: Metadata = {
   title: "Catálogo de ejercicios",
 };
 
-/** «Ver todo el catálogo» quita los filtros pero **conserva la vista**: el
-    usuario eligió cómo quiere leerlo, no qué quiere buscar. */
-const sinFiltros = (vista: ExerciseView) => ({
+/** «Ver todo el catálogo» quita los filtros pero **conserva la vista y el
+    orden**: el usuario eligió cómo quiere leerlo, no qué quiere buscar. */
+const sinFiltros = (vista: ExerciseView, orden: ExerciseOrder) => ({
   q: undefined,
   muscle: undefined,
   equipment: undefined,
   environment: undefined,
   vista,
+  orden,
   page: 1,
 });
 
@@ -72,7 +74,7 @@ export default async function Page({
             className="mt-4"
             title="Ningún ejercicio coincide con estos filtros"
             action={
-              <ButtonLink href={exercisesHref(sinFiltros(filters.vista))}>
+              <ButtonLink href={exercisesHref(sinFiltros(filters.vista, filters.orden))}>
                 Ver todo el catálogo
               </ButtonLink>
             }

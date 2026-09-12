@@ -90,7 +90,7 @@ export async function listMembershipsWithPatient(
     throw new Error(`No se pudieron consultar las membresías: ${error.message}`);
 
   const term = normalize(sanitizeSearch(filters.q ?? ""));
-  return (data ?? []).map((row) => {
+  const filtered = (data ?? []).map((row) => {
     const raw = row as RawMembership & {
       patient: { id: string; full_name: string | null } | null;
     };
@@ -106,6 +106,12 @@ export async function listMembershipsWithPatient(
     // un catálogo: caben en memoria.
     term ? normalize(membership.patient_name ?? "").includes(term) : true,
   );
+  // `vencimiento` ya sale así de la consulta. `nombre` reordena **dentro**
+  // de cada sección: el panel las separa filtrando este mismo arreglo, así
+  // que el orden de entrada es el orden con el que se pintan sus tarjetas.
+  return filters.orden === "nombre"
+    ? [...filtered].sort((a, b) => (a.patient_name ?? "").localeCompare(b.patient_name ?? "", "es"))
+    : filtered;
 }
 
 /** Los pacientes activos, para el desplegable del formulario de membresía. */
@@ -148,7 +154,7 @@ export async function listPatientsWithMembership(
     throw new Error(`No se pudo consultar la membresía: ${error.message}`);
 
   const term = normalize(sanitizeSearch(filters.q ?? ""));
-  return (data ?? []).map((patient) => {
+  const filtered = (data ?? []).map((patient) => {
     const latest = patient.memberships[0];
     const plan = Array.isArray(latest?.plan) ? latest?.plan[0] : latest?.plan;
     return {
@@ -162,4 +168,9 @@ export async function listPatientsWithMembership(
     (term ? normalize(patient.full_name ?? "").includes(term) : true) &&
     (filters.status ? patient.status === filters.status : true),
   );
+  // `nombre` ya sale así de la consulta. Sin membresía, `expires_on` es
+  // `null`: se empuja al final con un valor mayor que cualquier fecha real.
+  return filters.orden === "vencimiento"
+    ? [...filtered].sort((a, b) => (a.expires_on ?? "9999-12-31").localeCompare(b.expires_on ?? "9999-12-31"))
+    : filtered;
 }
