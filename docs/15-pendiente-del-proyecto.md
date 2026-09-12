@@ -62,7 +62,7 @@ corra las suites de `scripts/` sobre `main` va a ver esta en rojo y no es una re
 Tres tickets quedaron abiertos en Jira el 2026-09-10/11, sin `tasks.md` propio porque no son
 parte de ningún change de OpenSpec en curso:
 
-- **KAN-17** — el defecto de arriba. PR #31 abierto, mergeable.
+- **KAN-17** — el defecto de arriba. Cerrado: PR #31 fusionado a `main` (`a5c8bcc`).
 - **KAN-15** — `listPatientsWithMonthAttendance` trae todos los perfiles activos y pagina en
   memoria (`all.slice(...)`), el mismo patrón que D4 (KAN-12) pero en `/attendance`. Prioridad
   baja: el tope de PostgREST (mil filas) exige mil pacientes activos, lejos del volumen de la
@@ -127,18 +127,18 @@ Hay que migrar a `.railway/railway.ts`. El `railway config migrate` falló al in
 que probablemente haya que escribirlo a mano. Los archivos actuales siguen funcionando hasta
 esa fecha.
 
-### A.4 — [código] `test:memberships` depende de la hora a la que la corras
+### A.4 — [código] `test:memberships` depende de la hora a la que la corras — **cerrado**
 
 `dateIn()` en [`scripts/verify-progress-memberships.test.mjs`](../scripts/verify-progress-memberships.test.mjs)
-fecha los fixtures en **UTC**, mientras `daysUntil()` de
+fechaba los fixtures en **UTC**, mientras `daysUntil()` de
 [`lib/progress/membership-vocabulary.ts`](../lib/progress/membership-vocabulary.ts) cuenta
 desde el «hoy» del negocio (`America/Bogota`, UTC−5). Entre las 19:00 y las 24:00 de Bogotá el
-día UTC ya avanzó y el plazo sale con un día de más: la suite **pasa por la mañana y falla de
-noche**.
+día UTC ya avanzaba y el plazo salía con un día de más: la suite pasaba por la mañana y fallaba
+de noche.
 
-Es el mismo defecto que el PR #8 arregló en `verify-progress-memberships-cron.test.mjs:42`
-—que sí usa `timeZone: "America/Bogota"`— y que quedó sin arreglar en esta. Arreglo de una
-línea, fuera del alcance de `improve-frontend-ux`: merece su propia rama.
+Mismo defecto que el PR #8 ya había arreglado en `verify-progress-memberships-cron.test.mjs:42`
+—con `timeZone: "America/Bogota"`—, ahora replicado aquí en la rama
+`fix/memberships-test-timezone`. 11/11 en verde.
 
 ### A.5 — [oper.] La base local tiene un perfil admin de sobra
 
@@ -175,17 +175,13 @@ secciones 5 y 6 resolvieron moverse *dentro* de un paciente; esto resuelve llega
 - **[verif.] 16.8** — A mano: desde cualquier pantalla del personal se llega a un paciente
   escribiendo su nombre, sin pasar por ningún listado.
 
-### B.2 — Sección 14: ordenación de los listados
+### B.2 — Sección 14: ordenación de los listados — **cerrada, PR #35 abierto**
 
-- **[código] 14.7** — Añadir `orden` a `exerciseList`, `templateList` y a los listados de
-  seguimiento, con las claves que cada pantalla puede ordenar y **sin tocar** el
-  `.order("priority")` de `/rules`.
-- **[código] 14.8** — Ordenación por defecto explícita en cada listado, documentada en un
-  comentario junto a su `createListParams`.
-- **[verif.] 14.9** — Medir de nuevo `/exercises` y `/pro/alerts` en Chrome a 1440×900 y
-  606×667 → [`docs/12`](12-medicion-de-densidad.md).
-- **[verif.] 14.10** — `test:catalog`, `test:catalog:custom`, `test:routines:sessions` + los
-  cuatro de CI.
+Las 14.1–14.12 están completas en `tasks.md` y las cuatro comprobaciones de CI pasan en la
+rama `ui/densidad-listados`. Falta solo fusionar el PR
+[#35](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/35). **KAN-15** (abajo) queda
+como el único trabajo suelto que sigue relacionado con esta sección: el mismo patrón de
+paginación en memoria, ya en `/attendance` y no en `/exercises` ni `/templates`.
 
 ### B.3 — Sección 13: cierre del change
 
@@ -296,16 +292,15 @@ eso, «adelgazar» dejó de ser el paso previo que bloqueaba todo lo demás, que
 [`16`](16-plan-de-mejora.md) §«Lo que no entra» daba por hecho al apartar 14.x y 16.x para
 «después de adelgazar»: los dos documentos ya dicen lo mismo, en vez de contradecirse.
 
-1. **KAN-17** — fusionar el [PR #31](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/31).
-   Es la única suite en rojo de las 27 hoy, y mientras siga abierto nadie puede confiar en
-   `test:calendar`.
+1. ~~**KAN-17** — fusionar el PR #31.~~ Hecho: fusionado en `main` (`a5c8bcc`).
 2. **A.1 y A.2** — decidir qué se hace con la CI y con el despliegue. Todo lo demás se
    construye encima de esa señal, y hoy no existe.
 3. **C.1** — la pasada con el teléfono: media hora, cierra cuatro casillas de tres `tasks.md`
    distintos y es lo único que valida de verdad la experiencia del paciente, que es el usuario
    que importa.
-4. **B.1** — la sección 16 de `improve-frontend-ux`, el bulto de código que queda.
-5. **B.2** — la sección 14, coordinada con **KAN-15** (mismo patrón de paginación en
+4. **B.1** — la sección 16 de `improve-frontend-ux`, el bulto de código que queda. En marcha.
+5. ~~**B.2**~~ Hecha, PR #35 abierto. Queda **KAN-15** suelto (mismo patrón de paginación en
    `/attendance`).
-6. **A.4 y KAN-16** — los dos arreglos de suites, en su propia rama, cuando apetezca.
+6. ~~**A.4**~~ Hecho, rama `fix/memberships-test-timezone`. Queda **KAN-16**, en su propia rama,
+   cuando apetezca.
 7. **B.3** — la sección 13 cierra el change.
