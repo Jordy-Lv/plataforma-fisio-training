@@ -1,11 +1,12 @@
 # Lo que falta por hacer
 
-Foto del **2026-09-11**, tomada tras fusionar a `main` los PRs
+Foto del **2026-09-12**, tomada tras fusionar a `main` los PRs
 [#22](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/22) a
-[#30](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/30) (`main` = `31e121c`).
-Quedan abiertos [#21](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/21) (KAN-3,
-rendimiento) y [#31](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/31) (KAN-17,
-ver «Estado de las suites» abajo).
+[#37](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/37) (`main` = `b569dc4`).
+Queda abierto solo [#21](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/21)
+(KAN-3, rendimiento; ver «Estado de las suites» abajo) — es de un colaborador externo
+(`vigoya19`), revisado y con sus correcciones ya subidas, a la espera de que responda o de
+que se decida fusionarlo de todas formas.
 
 Este documento reúne **todo** lo que queda abierto, dentro y fuera de OpenSpec. La fuente de
 verdad de cada tarea del change en curso sigue siendo su `tasks.md`, y cada casilla se marca
@@ -35,46 +36,59 @@ Notación: **[código]** hay que escribirlo · **[verif.]** es comprobar, medir 
 | `add-routine-execution` | 28 | — | **1** |
 | `add-routine-calendar` | 14 | — | — |
 | `simplify-navigation-and-panel` | 12 | — | **1** |
-| `improve-frontend-ux` | 120 | 3 | **19** |
+| `improve-frontend-ux` | 128 | — | **11** |
 
 Los seis changes funcionales (todo salvo `improve-frontend-ux`) están cerrados salvo dos
 verificaciones en teléfono real (`add-routine-execution` 6.1 y `simplify-navigation-and-panel`
-1.2), que caben en la misma sesión que la 13.5 de `improve-frontend-ux` (§C.1). Todo lo que
-queda vivo en código es la sección 16 y la 14 de `improve-frontend-ux`, más el bloque de
-operación que nunca estuvo en ninguna lista.
+1.2), que caben en la misma sesión que la 13.5 de `improve-frontend-ux` (§C.1). Las secciones
+16 y 14 de `improve-frontend-ux` —el bulto de código que quedaba— ya están las dos en `main`
+(PRs [#34](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/34) y
+[#35](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/35)). Lo que queda vivo en
+código es solo la sección 13 (cierre del change, ya sin nada que la bloquee) y las
+verificaciones a mano de la sección 6 y de C.2, más el bloque de operación que nunca estuvo
+en ninguna lista.
 
 ---
 
 ## Estado de las suites y tickets abiertos
 
-**`main` tiene una suite en rojo.** `npm run test:calendar` falla contra `main` (`31e121c`):
-`CalendarGrid` pinta la celda de «día vacío» en la cuadrícula del profesional en vez de la
-celda con la rutina ya programada. Es **KAN-17**, causado por que la migración de KAN-9
-(`20260910130000`) reescribió `copy_routine_template` con `create or replace` sin repetir el
-`set timezone to 'America/Bogota'` de la versión anterior, así que la rutina se fecha en la
-zona del servidor. El fix ya está listo —fecha explícita en `(now() at time zone
-'America/Bogota')::date`, sin depender de un `set` que un futuro `create or replace` puede
-volver a perder— en el PR
-[#31](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/31), con `test:calendar` en
-9/9 y el resto de suites tocadas en verde. **Falta fusionarlo.** Mientras siga abierto, quien
-corra las suites de `scripts/` sobre `main` va a ver esta en rojo y no es una regresión suya.
+**`main` no tiene ninguna suite en rojo conocida ahora mismo.** El último defecto real
+(KAN-17, abajo) se cerró el 2026-09-11. Aviso operativo del 2026-09-12, no de código:
+`npm run seed:exercises` depende de descargar
+`raw.githubusercontent.com/yuhonas/free-exercise-db`, que en este momento devuelve **503**
+de forma intermitente — si `test:catalog`, `test:templates:seed`, `test:rules:seed` o
+`test:overview` fallan porque el catálogo está vacío, comprobar primero si ese dominio
+responde antes de sospechar de una rama.
 
-Tres tickets quedaron abiertos en Jira el 2026-09-10/11, sin `tasks.md` propio porque no son
+Cuatro tickets quedaron abiertos en Jira el 2026-09-10/11, sin `tasks.md` propio porque no son
 parte de ningún change de OpenSpec en curso:
 
-- **KAN-17** — el defecto de arriba. Cerrado: PR #31 fusionado a `main` (`a5c8bcc`).
+- **KAN-17** — `CalendarGrid` fechaba la rutina en la zona del servidor, no en la de Bogotá
+  (la migración de KAN-9 perdió el `set timezone` al reescribir `copy_routine_template` con
+  `create or replace`). Cerrado: PR #31 fusionado a `main` (`a5c8bcc`).
+- **KAN-16** — las suites de `scripts/` (29 comandos `test:*` en `package.json`) no declaraban
+  de qué semillas dependían: tras un `db:reset` limpio, `test:overview` fallaba 3/5 con «La
+  semilla no tiene ninguna rutina con tres ejercicios» en vez de decir que faltaba
+  `seed:progress-demo`. Cerrado: PR #37 fusionado a `main`, cabecera explícita en las 29
+  suites y el mensaje de `test:overview` ahora nombra los tres comandos exactos.
 - **KAN-15** — `listPatientsWithMonthAttendance` trae todos los perfiles activos y pagina en
   memoria (`all.slice(...)`), el mismo patrón que D4 (KAN-12) pero en `/attendance`. Prioridad
   baja: el tope de PostgREST (mil filas) exige mil pacientes activos, lejos del volumen de la
-  demo. Coordinar con **14.7/14.8** de `improve-frontend-ux` y con **B.2** más abajo: es el
-  mismo patrón de paginación.
-- **KAN-16** — las suites de `scripts/` (29 comandos `test:*` en `package.json`) no declaran
-  de qué semillas dependen. Es el mismo mecanismo que ya cuesta tiempo en **A.4** y **A.5**:
-  tras un `db:reset` limpio,
-  `test:overview` falla 3/5 con «La semilla no tiene ninguna rutina con tres ejercicios» en
-  vez de decir que falta `npm run seed:progress-demo`. Se cierra añadiendo a la cabecera de
-  cada suite qué comandos de semilla exige, y mejor aún, haciendo que la propia suite lo
-  compruebe y lo diga.
+  demo. Coordinar con **14.7/14.8** de `improve-frontend-ux` (ya fusionadas) y con **B.2** más
+  abajo: es el mismo patrón de paginación. **En pausa a propósito**, a la espera de que se
+  decida si vale la pena la migración que requiere paginar en el servidor.
+- **KAN-3** — PR [#21](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/21), de un
+  colaborador externo (`vigoya19`), no un ticket nuevo de esta ronda pero sigue abierto: quita
+  `recharts` de `EvolutionChart.tsx` (baja el *First Load JS* de `/evolution/[patientId]` de
+  ~251 kB a ~144 kB) y añade una suite de humo con Playwright. Se revisó dos veces: la primera
+  encontró y corrigió dos defectos reales (`Suspense` que rompía el acuse de guardado,
+  sustitución de ejercicio que podía esconder los ya prescritos) y encontró de paso **KAN-19**
+  (ajeno a este PR). La segunda revisión (2026-09-12) atendió lo que faltaba de proceso:
+  descripción y checklist en blanco, `recharts`/`playwright` sin justificar, y seis `SKILL.md`
+  sueltos de `.agents/skills/source-command-opsx-*` que no eran de este cambio (quitados). El
+  PR toca `components/ui/DetailDialog.tsx` y `components/ui/Progress.tsx` sin el aviso previo
+  al equipo que pide la sección 3 de `CLAUDE.md` — señalado explícitamente en la descripción
+  para que se revise antes de fusionar. `MERGEABLE`/`CLEAN` contra `main`.
 
 ---
 
@@ -94,7 +108,7 @@ workflow figura `active` y en su ruta, Actions están habilitadas (`allowed_acti
 minutos del plan), confirmada por Yordy el 2026-09-08.
 
 **Consecuencia:** donde [`CLAUDE.md`](../CLAUDE.md) §11 dice «CI los repite y bloquea el merge
-si fallan», eso no ocurre. Los 30 PRs fusionados hasta hoy entraron sin ninguna verificación
+si fallan», eso no ocurre. Los 36 PRs fusionados hasta hoy entraron sin ninguna verificación
 automática. **La única validación real es la que se corre a mano antes de abrir el PR.**
 
 Mientras siga así, el procedimiento obligatorio antes de cada PR es:
@@ -149,43 +163,35 @@ ese perfil. **No es una regresión de código**: conviene descartarlo antes de c
 
 ### A.6 — [oper.] Cabos sueltos menores
 
-- Seis directorios sin trackear en `.agents/skills/source-command-opsx-*`. Decidir si van a
-  `.gitignore` o al repositorio; hoy viajan a producción en cada `railway up`.
-- Aviso de lint preexistente: `appUrl` sin usar en `scripts/verify-auth-screens.test.mjs`.
-  Es el único que emite `npm run lint` y ensucia la señal de los cuatro checks.
+- Seis directorios sin trackear en `.agents/skills/source-command-opsx-*` en el árbol de
+  trabajo compartido. Decidir si van a `.gitignore` o al repositorio; hoy viajan a producción
+  en cada `railway up`. (Se colaron además, ya trackeados, en el PR #21 — se quitaron de esa
+  rama el 2026-09-12, pero la decisión de fondo sobre el árbol compartido sigue pendiente.)
+- ~~Aviso de lint: `appUrl` sin usar en `verify-auth-screens.test.mjs`.~~ Ya no aparece:
+  `npm run lint` está limpio en `main` al 2026-09-12.
 
 ---
 
 ## B. Código pendiente del change `improve-frontend-ux`
 
-### B.1 — Sección 16: llegar al paciente sin recorrer una lista
+### B.1 — Sección 16: llegar al paciente sin recorrer una lista — **fusionada**
 
-Rama `ui/acceso-directo`. **Es lo único grande que queda sin empezar.** Las pestañas de las
-secciones 5 y 6 resolvieron moverse *dentro* de un paciente; esto resuelve llegar hasta él.
+PR [#34](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/34), en `main`. Las
+9 tareas (16.1–16.9) están completas en `tasks.md`. Una segunda revisión encontró y corrigió
+dos defectos reales en `PatientSearch.tsx` (error de `searchPatients` sin capturar, condición
+de carrera del debounce) antes de fusionar.
 
-- **[código] 16.1** — `lib/auth/patient-search.ts` con `searchPatients(term, limit = 8)`,
-  acotado por RLS y sin `select("*")`.
-- **[código] 16.2** — Buscador de paciente en la cabecera de `AppShell` para `admin` y
-  `professional`: `<form method="get">` que apunta a `/people`, con sugerencias tras dos
-  caracteres y salto directo a la ficha.
-- **[verif.] 16.3** — **Antes de montarlo**, verificar que el formulario nuevo queda *después*
-  del de cerrar sesión en el HTML del servidor: `auth-http.mjs` toma el primer `<form>` que
-  contiene el marcador y `AppShell` documenta que solo puede haber uno. Ver
-  [`docs/11`](11-contratos-de-las-suites-http.md).
-- **[verif.] 16.8** — A mano: desde cualquier pantalla del personal se llega a un paciente
-  escribiendo su nombre, sin pasar por ningún listado.
+### B.2 — Sección 14: ordenación de los listados — **fusionada**
 
-### B.2 — Sección 14: ordenación de los listados — **cerrada, PR #35 abierto**
-
-Las 14.1–14.12 están completas en `tasks.md` y las cuatro comprobaciones de CI pasan en la
-rama `ui/densidad-listados`. Falta solo fusionar el PR
-[#35](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/35). **KAN-15** (abajo) queda
-como el único trabajo suelto que sigue relacionado con esta sección: el mismo patrón de
-paginación en memoria, ya en `/attendance` y no en `/exercises` ni `/templates`.
+PR [#35](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/35), en `main`. Las
+14.1–14.12 están completas en `tasks.md`. **KAN-15** (arriba) queda como el único trabajo
+suelto que sigue relacionado con esta sección: el mismo patrón de paginación en memoria, ya
+en `/attendance` y no en `/exercises` ni `/templates`.
 
 ### B.3 — Sección 13: cierre del change
 
-Rama `docs/cierre-frontend`. Se ejecuta **al final**, cuando 16 y 14 estén dentro.
+Rama `docs/cierre-frontend`. Ya no tiene nada que la bloquee: 16 y 14 están las dos en
+`main`. Es lo único de código que queda del change.
 
 - **[código] 13.1** — Añadir a [`docs/10`](10-sistema-de-diseno.md) los componentes nuevos
   (`SubmitButton`, `FlashToast`, `ConfirmSubmit`, `CatalogPicker`, `PatientHeader`,
@@ -298,9 +304,11 @@ eso, «adelgazar» dejó de ser el paso previo que bloqueaba todo lo demás, que
 3. **C.1** — la pasada con el teléfono: media hora, cierra cuatro casillas de tres `tasks.md`
    distintos y es lo único que valida de verdad la experiencia del paciente, que es el usuario
    que importa.
-4. **B.1** — la sección 16 de `improve-frontend-ux`, el bulto de código que queda. En marcha.
-5. ~~**B.2**~~ Hecha, PR #35 abierto. Queda **KAN-15** suelto (mismo patrón de paginación en
-   `/attendance`).
-6. ~~**A.4**~~ Hecho, rama `fix/memberships-test-timezone`. Queda **KAN-16**, en su propia rama,
-   cuando apetezca.
-7. **B.3** — la sección 13 cierra el change.
+4. ~~**B.1**~~ Hecha, PR #34 fusionado.
+5. ~~**B.2**~~ Hecha, PR #35 fusionado. Queda **KAN-15** suelto (mismo patrón de paginación en
+   `/attendance`), en pausa a propósito.
+6. ~~**A.4**~~ Hecho, PR #36 fusionado. ~~**KAN-16**~~ Hecho, PR #37 fusionado.
+7. **B.3** — la sección 13 cierra el change. Ya no tiene nada que la bloquee: es lo único de
+   código que queda abierto.
+8. **KAN-3** — PR #21, de un colaborador externo, revisado y corregido dos veces; decidir si
+   se fusiona ya o se espera su respuesta (ver «Estado de las suites» arriba).
