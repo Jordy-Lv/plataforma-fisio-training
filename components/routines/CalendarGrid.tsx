@@ -34,6 +34,15 @@ function DayNumber({
   );
 }
 
+/**
+ * Todos los enlaces de esta rejilla van sin precarga (KAN-19): comparte
+ * pantalla con el formulario de «Programar una sesión», y con decenas de
+ * enlaces precargados a la vez, cualquiera de ellos podía correr en carrera
+ * con el envío del formulario y abortarlo a medio guardar — la acción sí
+ * llegaba a la base, pero el botón se quedaba en «Programando…» para
+ * siempre. Mismo criterio que SidebarNav, MobileNav, TabBar y el logo de
+ * AppShell.
+ */
 export function CalendarGrid({
   events,
   date,
@@ -75,6 +84,7 @@ export function CalendarGrid({
             <ButtonLink
               key={mode}
               href={calendarHref(base, date, mode)}
+              prefetch={false}
               variant={view === mode ? "default" : "outline"}
               aria-current={view === mode ? "page" : undefined}
             >
@@ -90,18 +100,24 @@ export function CalendarGrid({
         {previous >= "1900-01-01" && (
           <ButtonLink
             href={calendarHref(base, previous, view)}
+            prefetch={false}
             variant="outline"
             aria-label={view === "month" ? "Mes anterior" : "Semana anterior"}
           >
             <ChevronLeft aria-hidden="true" className="size-4" />
           </ButtonLink>
         )}
-        <ButtonLink href={calendarHref(base, today, view)} variant="outline">
+        <ButtonLink
+          href={calendarHref(base, today, view)}
+          prefetch={false}
+          variant="outline"
+        >
           Hoy
         </ButtonLink>
         {next <= "2200-12-31" && (
           <ButtonLink
             href={calendarHref(base, next, view)}
+            prefetch={false}
             variant="outline"
             aria-label={view === "month" ? "Mes siguiente" : "Semana siguiente"}
           >
@@ -135,6 +151,7 @@ export function CalendarGrid({
                 <Link
                   key={day}
                   href={creationHref}
+                  prefetch={false}
                   data-calendar-date={day}
                   data-calendar-create
                   aria-current={isSelected ? "date" : undefined}
@@ -176,6 +193,7 @@ export function CalendarGrid({
               >
                 <Link
                   href={calendarHref(base, day, view)}
+                  prefetch={false}
                   aria-current={isSelected ? "date" : undefined}
                   aria-label={`${calendarDateLabel(day, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}${day === today ? ", hoy" : ""}${items.length ? `: ${items.length} ${items.length === 1 ? "rutina" : "rutinas"}` : ": sin sesiones"}`}
                   className="flex min-h-11 min-w-0 items-center justify-center rounded hover:bg-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring sm:justify-start"
@@ -189,6 +207,7 @@ export function CalendarGrid({
                       <Link
                         key={event.id}
                         href={routineHref(event)}
+                        prefetch={false}
                         aria-label={`Ver rutina: ${event.title}, ${calendarDateLabel(day)}, ${calendarStatuses[event.status].label}`}
                         title={`${event.title} · ${calendarStatuses[event.status].label}`}
                         className={cn(
@@ -209,6 +228,7 @@ export function CalendarGrid({
                   {items.length > 2 && (
                     <Link
                       href={calendarHref(base, day, view)}
+                      prefetch={false}
                       aria-label={`Ver las ${items.length} rutinas del ${calendarDateLabel(day)}`}
                       className="flex min-h-11 items-center justify-center rounded text-xs text-muted-foreground hover:bg-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
                     >

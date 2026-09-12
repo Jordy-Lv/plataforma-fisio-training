@@ -128,7 +128,10 @@ export function RoutineCalendar({
             title="No hay sesiones para este día"
             action={
               selectedEmptyHref ? (
-                <ButtonLink href={selectedEmptyHref}>
+                // Sin precarga (KAN-19): comparte pantalla con el formulario
+                // de «Programar una sesión» y precargada corría en carrera
+                // con el envío en curso, abortándolo a medio guardar.
+                <ButtonLink href={selectedEmptyHref} prefetch={false}>
                   <Plus className="size-4" aria-hidden="true" />
                   {emptyDayLabel}
                 </ButtonLink>
@@ -172,7 +175,11 @@ export function RoutineCalendar({
                   </p>
                 )}
                 <div className="flex flex-wrap items-start gap-3">
-                  <ButtonLink variant="default" href={routineHref(event)}>
+                  <ButtonLink
+                    variant="default"
+                    href={routineHref(event)}
+                    prefetch={false}
+                  >
                     Ver rutina
                   </ButtonLink>
                   {event.sessions.map((session, index) => (
@@ -180,6 +187,7 @@ export function RoutineCalendar({
                       key={session.id}
                       variant="outline"
                       href={`${isStaff ? "/pro" : "/routine"}/sessions/${session.id}`}
+                      prefetch={false}
                     >
                       {session.status === "in_progress" && !isStaff
                         ? "Continuar sesión"

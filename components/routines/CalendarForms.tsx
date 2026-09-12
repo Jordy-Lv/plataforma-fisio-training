@@ -84,10 +84,14 @@ export function CalendarScheduleForm({
       <Button type="submit" disabled={pending} className="w-full sm:w-fit">
         {pending ? "Programando…" : "Programar sesión"}
       </Button>
+      {/* Sin precarga (KAN-19): vive dentro de este mismo <form> y
+          precargada corría en carrera con el envío en curso, abortándolo a
+          medio guardar. */}
       <ButtonLink
         variant="outline"
         className="w-full sm:w-fit"
         href={calendarAssignmentHref(patientId, assignmentDate, view)}
+        prefetch={false}
       >
         Crear o asignar otra rutina
       </ButtonLink>

@@ -59,7 +59,14 @@ export default async function Page({
       role={actor.role}
       description="Programa sus rutinas y consulta el avance de cada semana."
       actions={
-        <ButtonLink variant="outline" href={`/pro/routines/${patientId}`}>
+        // Sin precarga (KAN-19): comparte pantalla con el formulario de
+        // programar/cancelar una sesión y precargada corría en carrera con
+        // el envío en curso, abortándolo a medio guardar.
+        <ButtonLink
+          variant="outline"
+          href={`/pro/routines/${patientId}`}
+          prefetch={false}
+        >
           Volver a sus rutinas
         </ButtonLink>
       }
