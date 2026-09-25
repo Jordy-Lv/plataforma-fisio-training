@@ -1,12 +1,12 @@
 # Lo que falta por hacer
 
-Foto del **2026-09-25**, tomada con `main` = `c4419d3` (PR
-[#40](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/40) fusionado) y con el PR
-[#41](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/41) abierto y sin conflictos.
+Foto del **2026-09-25**, tomada con `main` = `857f296` (PRs
+[#40](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/40) y
+[#41](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/41) fusionados).
 Entre los dos rediseñan el panel del administrador (ver «E» abajo). El
 [#21](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/21) (KAN-3, rendimiento) ya
 está en `main` (`d50f05d`). Las ramas antiguas se borraron el 2026-09-25: en el remoto solo
-quedan `main` y la del PR abierto.
+queda `main`.
 
 **Lo siguiente es el flujo de asignación de rutinas** (sección F): el cambio de la
 asignación automática por reglas a una asignación manual por el profesional. Empieza por ahí
@@ -75,6 +75,11 @@ El último defecto real de código (KAN-17, abajo) se cerró el 2026-09-11. Avis
 de forma intermitente — si `test:catalog`, `test:templates:seed`, `test:rules:seed` o
 `test:overview` fallan porque el catálogo está vacío, comprobar primero si ese dominio
 responde antes de sospechar de una rama.
+
+En la ejecución de CI del PR #41, `Typecheck, lint y build` terminó correctamente. `Validar
+specs` no llegó a ejecutar OpenSpec porque el workflow intenta instalar `openspec@1`, una
+versión que npm no publica (`ETARGET`). Es un defecto del workflow independiente de la
+facturación; el problema histórico de minutos de Actions sigue documentado abajo.
 
 Cuatro tickets quedaron abiertos en Jira el 2026-09-10/11, sin `tasks.md` propio porque no son
 parte de ningún change de OpenSpec en curso:
@@ -344,7 +349,7 @@ el servidor local.
 
 ## E. Panel del administrador — rediseñado el 2026-09-25
 
-PRs #40 (fusionado) y #41 (abierto). No pertenece a ningún change de OpenSpec: fue una
+PRs #40 y #41 (fusionados). No pertenece a ningún change de OpenSpec: fue una
 petición directa para la demo. Lo que conviene saber antes de tocarlo:
 
 - **Distribución.** Escritorio (`xl`): «Actividad reciente» a la izquierda con scroll
@@ -418,10 +423,11 @@ eso, «adelgazar» dejó de ser el paso previo que bloqueaba todo lo demás, que
 [`16`](16-plan-de-mejora.md) §«Lo que no entra» daba por hecho al apartar 14.x y 16.x para
 «después de adelgazar»: los dos documentos ya dicen lo mismo, en vez de contradecirse.
 
-**Antes que nada (2026-09-25):**
+**Estado al 2026-09-25:**
 
-- **Fusionar el PR #41 y desplegar** (`git checkout main && git pull`, `git status`
-  limpio, `railway up`). Antes de cualquier demo, A.7: el proyecto de Supabase no pausado.
+- **PR #41 fusionado** (`857f296`). Falta desplegar (`git checkout main && git pull`,
+  `git status` limpio, `railway up`). Antes de cualquier demo, A.7: el proyecto de Supabase no
+  pausado.
 - **F** — subir los documentos de ADR-0009 a una rama y empezar el flujo de asignación de
   rutinas.
 
