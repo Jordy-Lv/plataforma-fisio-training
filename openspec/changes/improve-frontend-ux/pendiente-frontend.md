@@ -139,7 +139,9 @@ Rama `ui/catalogo-embebido`.
 
 ## Sección 13 — Cierre
 
-Rama `docs/cierre-frontend`. Se ejecuta al final.
+**13.1–13.4 fusionadas** en el PR #43 (2026-09-25). La 13.6 se corrió en el PR #44: 30 de
+31 suites en verde, con `test:smoke` en 7/11 por KAN-19, así que sigue abierta. Queda además
+la 13.5 (teléfono real). Estado vivo en `docs/15` §B.3.
 
 - **[código] 13.1** — Añadir a `docs/10-sistema-de-diseno.md` los componentes
   nuevos y cuándo usar `ConfirmDialog` frente a `ConfirmSubmit`.

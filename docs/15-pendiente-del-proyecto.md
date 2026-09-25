@@ -1,20 +1,41 @@
 # Lo que falta por hacer
 
-Foto del **2026-09-25**, tomada con `main` = `87039ad` (PR
-[#42](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/42), la asignación manual de
-rutinas, fusionado; antes, los PRs
+Foto del **2026-09-25 (noche)**, tomada con `main` = `d4ef9a2`. Ese día se fusionaron, en
+orden: [#42](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/42) (asignación
+manual de rutinas, sección F),
+[#43](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/43) (cierre de
+`improve-frontend-ux`, B.3),
+[#44](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/44) (pasada de las 31 suites,
+paquete de OpenSpec en la CI, `test:catalog` y deltas de `simplify-navigation-and-panel`) y
+[#45](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/45), que es un duplicado del
+#44 hecho por Copilot: mismos cambios, sin nada nuevo. Antes, los PRs
 [#40](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/40) y
 [#41](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/41) rediseñaron el panel del
-administrador, ver «E» abajo). El
-[#21](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/21) (KAN-3, rendimiento) ya
-está en `main` (`d50f05d`). Las ramas antiguas se borraron el 2026-09-25: en el remoto solo
-queda `main`.
+administrador (ver «E» abajo), y el
+[#21](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/21) (KAN-3, rendimiento) está en
+`main` desde `d50f05d`. Además de `main`, en el remoto quedan `claude/kind-johnson-50sh63`,
+`copilot/fix-ci-job-and-suites-pending` y `docs/asignacion-manual`: **las tres están ya
+contenidas en `main`** y se pueden borrar.
 
-**La asignación manual de rutinas ya está en `main`** (sección F, PR #42): de ese change solo
-quedan la 7.1, bloqueada por KAN-19, y la 7.2, en el teléfono. **El cierre de
-`improve-frontend-ux`** (B.3, tareas 13.1–13.4) va en la rama
-`claude/exciting-albattani-8jt0nu`; tras fusionarla, a ese change solo le quedan
-verificaciones a mano.
+### Dónde retomar
+
+**Ya no queda código pendiente en ningún change.** Todo lo que está abierto es una de estas
+cuatro cosas, y ninguna se empieza sin decidirla antes con Jordy:
+
+1. **KAN-19** (§F) — con JavaScript, tras una server action, el botón puede quedarse en
+   «Asignando…» o sin su acuse. Es lo único que deja `test:smoke` en 7/11 y lo que mantiene
+   abiertas la 13.6 de `improve-frontend-ux` y la 7.1 de `manual-routine-assignment`. Decidido
+   dejarlo para un change propio: ni parche en el shell compartido sin consenso, ni subir
+   Next/React sin confirmar que es del framework.
+2. **C.1** — la pasada con el teléfono real. Cierra cinco casillas de una vez.
+3. **`retire-rules-engine`** (§F) — proponer el change que retira el motor de reglas.
+4. **Operación** (§A) — la CI sigue sin correr por la facturación (A.1) y el despliegue es
+   manual (A.2).
+
+`openspec validate --all --strict` pasa los 8 changes desde el #44. Los changes que ya no
+tienen tareas abiertas (`add-auth-and-roles`, `add-exercise-library-and-rules`,
+`add-progress-and-memberships`, `add-routine-calendar`) se podrían archivar con
+`/opsx:archive`, lo que crearía por primera vez `openspec/specs/`. Tampoco se ha decidido.
 
 Este documento reúne **todo** lo que queda abierto, dentro y fuera de OpenSpec. La fuente de
 verdad de cada tarea del change en curso sigue siendo su `tasks.md`, y cada casilla se marca
@@ -54,8 +75,8 @@ misma sesión que la 13.5 de `improve-frontend-ux` y la 7.2 de `manual-routine-a
 16 y 14 de `improve-frontend-ux` —el bulto de código que quedaba— ya están las dos en `main`
 (PRs [#34](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/34) y
 [#35](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/35)). Lo que quedaba vivo en
-código era solo la sección 13, cuyas cuatro tareas de código (13.1–13.4) están hechas en la
-rama de B.3. Quedan las verificaciones a mano de la sección 6, de C.2 y la 13.5–13.6, más el
+código era solo la sección 13, cuyas cuatro tareas de código (13.1–13.4) están en `main`
+(PR #43). Quedan las verificaciones a mano de la sección 6, de C.2 y la 13.5–13.6, más el
 bloque de operación que nunca estuvo en ninguna lista.
 
 ---
@@ -269,10 +290,10 @@ PR [#35](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/35), en `mai
 suelto que sigue relacionado con esta sección: el mismo patrón de paginación en memoria, ya
 en `/attendance` y no en `/exercises` ni `/templates`.
 
-### B.3 — Sección 13: cierre del change — **código hecho, sin fusionar**
+### B.3 — Sección 13: cierre del change — **código fusionado**
 
-Rama `claude/exciting-albattani-8jt0nu` (el plan decía `docs/cierre-frontend`). Las cuatro
-tareas de código están hechas:
+PR [#43](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/43) (el plan decía rama
+`docs/cierre-frontend`). Las cuatro tareas de código están en `main`:
 
 - ~~**13.1**~~ — [`docs/10`](10-sistema-de-diseno.md) documenta los componentes que faltaban,
   los listados, los componentes de dominio reutilizados y cuándo usar `ConfirmSubmit` frente
@@ -286,7 +307,9 @@ tareas de código están hechas:
 Queda:
 
 - **[verif.] 13.6** — Las veinticinco suites en verde sobre la rama fusionada, más los cuatro
-  de CI.
+  de CI. **Corrida el 2026-09-25 sobre `c7be7ea`:** hoy son 31 suites y pasan 30, más los
+  cuatro de CI. Solo `test:smoke` queda en 7/11 por KAN-19, así que la casilla sigue abierta.
+- **[verif.] 13.5** — el teléfono real (§C.1).
 
 ---
 
@@ -510,15 +533,18 @@ eso, «adelgazar» dejó de ser el paso previo que bloqueaba todo lo demás, que
 [`16`](16-plan-de-mejora.md) §«Lo que no entra» daba por hecho al apartar 14.x y 16.x para
 «después de adelgazar»: los dos documentos ya dicen lo mismo, en vez de contradecirse.
 
-**Estado al 2026-09-25:**
+**Estado al 2026-09-25 (noche):**
 
-- **PR #41 fusionado** (`857f296`). Falta desplegar (`git checkout main && git pull`,
-  `git status` limpio, `railway up`). Antes de cualquier demo, A.7: el proyecto de Supabase no
-  pausado.
+- **PRs #41 a #45 fusionados** (`main` = `d4ef9a2`). Falta desplegar (`git checkout main &&
+  git pull`, `git status` limpio, `railway up`). Antes de cualquier demo, A.7: el proyecto de
+  Supabase no pausado.
 - **F** — ~~subir los documentos de ADR-0009~~, ~~proponer el plan~~ e ~~implementarlo~~
   (PR #42 fusionado, `87039ad`). Quedan la 7.1 (KAN-19) y la 7.2 (teléfono, §C.1). La
   retirada del motor va aparte, en `retire-rules-engine`, todavía sin proponer.
-- **B.3** — 13.1–13.4 hechas en `claude/exciting-albattani-8jt0nu`; falta fusionarla.
+- **B.3** — 13.1–13.4 fusionadas (PR #43). 13.6 corrida (PR #44): 30 de 31, abierta por
+  KAN-19. Queda 13.5 (§C.1).
+- **CI y OpenSpec** — el job «Validar specs» instala ya `@fission-ai/openspec` y los 8 changes
+  validan (PR #44). La CI sigue sin correr por A.1.
 
 Lo anterior, en su orden original:
 
@@ -532,8 +558,7 @@ Lo anterior, en su orden original:
 5. ~~**B.2**~~ Hecha, PR #35 fusionado. Queda **KAN-15** suelto (mismo patrón de paginación en
    `/attendance`), en pausa a propósito.
 6. ~~**A.4**~~ Hecho, PR #36 fusionado. ~~**KAN-16**~~ Hecho, PR #37 fusionado.
-7. **B.3** — la sección 13 cierra el change. 13.1–13.4 hechas (pendiente de fusionar); quedan
-   13.5 (C.1) y 13.6.
+7. **B.3** — ~~13.1–13.4~~ fusionadas (PR #43). Quedan 13.5 (C.1) y 13.6 (KAN-19).
 8. ~~**KAN-3**~~ Hecho: PR #21 fusionado (`d50f05d`).
-9. **`test:calendar` y `test:catalog`** — diagnosticar los dos fallos de «Estado de las
-   suites».
+9. ~~**`test:calendar` y `test:catalog`**~~ — los dos corregidos: `test:calendar` en el PR #42
+   y `test:catalog` en el PR #44.
