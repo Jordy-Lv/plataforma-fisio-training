@@ -124,8 +124,11 @@ export function AppShell({
           {/*
             Con menú, la barra lateral es un riel pegado al borde izquierdo de
             la ventana, con su fondo y su borde, y ocupa todo el alto. El
-            contenido usa todo el ancho restante, sin tope: en monitores
-            grandes lo que crece es la escala (`app/globals.css`), no el hueco. Dentro,
+            contenido llega hasta 100rem (1600 px, donde empieza la clase
+            «extra-large» de Material 3) y se centra en el espacio que queda:
+            en un monitor grande el margen sobrante se reparte a los dos lados
+            en vez de acumularse a la derecha. El texto no se escala: de eso
+            se encargan el sistema operativo y el zoom del navegador. Dentro,
             el menú es `sticky` justo bajo la cabecera fija y se desplaza por
             su cuenta si no cabe, sin arrastrar la página. La cabecera del
             personal lleva además el buscador de pacientes (111 px frente a
@@ -150,7 +153,7 @@ export function AppShell({
           <main
             className={cn(
               "min-w-0 flex-1 py-6 lg:py-8 lg:pb-14",
-              withNav ? "pb-28 lg:pl-8" : "pb-12",
+              withNav ? "pb-28 lg:mx-auto lg:max-w-[100rem] lg:pl-8" : "pb-12",
             )}
           >
             {/*
