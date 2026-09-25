@@ -19,3 +19,4 @@ Un ADR aceptado no se edita: se supera con uno nuevo que lo referencia.
 | [0008](0008-formularios-dentro-de-dialogos.md) | Qué formularios pueden vivir dentro de un diálogo | Propuesta |
 | [0009](0009-asignacion-manual-de-rutinas.md) | Asignación de rutinas decidida por el profesional | Aceptada; supera ADR-0003 |
 | [0010](0010-especialidad-en-la-asignacion-de-rutinas.md) | Restricción de especialidad en la asignación y confirmación de rutinas | Aceptada; supera en parte ADR-0007 |
+| [0011](0011-estado-de-listado-en-la-url.md) | El estado de un listado vive en la URL | Aceptada |

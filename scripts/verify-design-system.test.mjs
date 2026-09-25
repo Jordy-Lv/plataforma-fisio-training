@@ -121,3 +121,32 @@ test("cada grupo de rutas define sus estados de carga y de error", () => {
     `Toda vista que carga datos define cargando, vacío y error:\n${missing.join("\n")}`,
   );
 });
+
+test("cada segmento dinámico con página define su propio estado de carga", () => {
+  // El `loading.tsx` del grupo dibuja una forma genérica; una ficha o un
+  // editor que carga por su identificador pinta algo muy distinto, y el hueco
+  // tiene que anunciarlo. `(dev)` queda fuera, como arriba.
+  const segments = [];
+  const visit = (dir) => {
+    for (const entry of readdirSync(dir)) {
+      const full = join(dir, entry);
+      if (!statSync(full).isDirectory()) continue;
+      if (entry === "(dev)") continue;
+      if (entry.startsWith("[")) segments.push(full);
+      visit(full);
+    }
+  };
+  visit(join(root, "app"));
+  assert.ok(segments.length > 0, "No se encontró ningún segmento dinámico");
+  const missing = segments
+    .filter((dir) => {
+      const files = readdirSync(dir);
+      return files.includes("page.tsx") && !files.includes("loading.tsx");
+    })
+    .map((dir) => `${relative(root, dir)}/loading.tsx`);
+  assert.deepEqual(
+    missing,
+    [],
+    `Todo segmento dinámico con page.tsx define su loading.tsx con la forma de su pantalla:\n${missing.join("\n")}`,
+  );
+});

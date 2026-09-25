@@ -44,6 +44,7 @@ components/
   <dominio>/     componentes propios de un dominio
 lib/
   supabase/      clientes server/browser — COMPARTIDO
+  shared/        parámetros de listado, búsqueda, paginación — COMPARTIDO
   db/types.ts    GENERADO, nunca editar a mano
   auth/          slice 1
   catalog/       slice 2 — ejercicios, plantillas, reglas
@@ -54,8 +55,10 @@ scripts/
 ```
 
 Cada slice es dueño de su carpeta `app/(grupo)/**` y su `lib/<slice>/**`. Para tocar
-`components/ui/**`, `lib/supabase/**` o el esquema core (`profiles`, `care_assignments`):
-avisa al equipo **antes** de abrir el PR.
+`components/ui/**`, `lib/supabase/**`, `lib/shared/**` o el esquema core (`profiles`,
+`care_assignments`): avisa al equipo **antes** de abrir el PR. `lib/shared/**` es
+compartido porque de él leen los listados de tres slices
+([ADR-0011](docs/adr/0011-estado-de-listado-en-la-url.md)).
 
 ## 4. Convenciones de nombres
 

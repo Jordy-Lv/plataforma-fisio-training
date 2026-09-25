@@ -194,10 +194,13 @@ final, después de la 16.
 
 ## 13. Cierre — rama `docs/cierre-frontend`
 
-- [ ] 13.1 Añadir a `docs/10-sistema-de-diseno.md` los componentes nuevos y cuándo usar `ConfirmDialog` frente a `ConfirmSubmit`
-- [ ] 13.2 Escribir `docs/adr/0009-estado-de-listado-en-la-url.md`: por qué el estado vive en la URL y por qué el autoenvío no es una excepción del ADR-0008
-- [ ] 13.3 Declarar `lib/shared/**` como territorio compartido en la sección 3 de `CLAUDE.md`
-- [ ] 13.4 Añadir a `scripts/verify-design-system.test.mjs` la comprobación de que todo segmento dinámico con `page.tsx` tiene su `loading.tsx`
+- [x] 13.1 Añadir a `docs/10-sistema-de-diseno.md` los componentes nuevos y cuándo usar `ConfirmDialog` frente a `ConfirmSubmit`
+  - `docs/10` §2 documenta los 21 componentes de `components/ui/**` y `components/shell/**` que faltaban, una subsección «Listados», otra de componentes de dominio reutilizados (`CatalogPicker`, `PatientHeader`, `PatientTabs`) y una tabla «`ConfirmSubmit` o `ConfirmDialog`». `StaffWorkboard` ya no existe: KAN-5 lo sustituyó por `ProHome` (`components/progress/`), que no es compartido.
+- [x] 13.2 Escribir `docs/adr/0011-estado-de-listado-en-la-url.md`: por qué el estado vive en la URL y por qué el autoenvío no es una excepción del ADR-0008
+  - Numerado **0011**, no 0009 como decía el enunciado original: ADR-0009 es la asignación manual de rutinas. Acordado con Jordy el 2026-09-25. Registrado en `docs/adr/README.md`.
+- [x] 13.3 Declarar `lib/shared/**` como territorio compartido en la sección 3 de `CLAUDE.md`
+- [x] 13.4 Añadir a `scripts/verify-design-system.test.mjs` la comprobación de que todo segmento dinámico con `page.tsx` tiene su `loading.tsx`
+  - Solo 2 de 11 lo tenían. Se añadieron los 9 que faltaban, cada uno con la forma de su pantalla (decidido con Jordy el 2026-09-25, en vez de una lista de excepciones). `test:design` 5/5, y falla nombrando el archivo si se quita uno.
 - [ ] 13.5 Recorrer los caminos del paciente en un teléfono real y registrar el resultado
 - [ ] 13.6 Las veinticinco suites en verde sobre la rama fusionada, más los cuatro de CI
 
