@@ -246,6 +246,34 @@ html.dark {
   color-scheme: dark;
 }
 
+/*
+  Escala en pantallas grandes. Todo el diseño —texto, espaciado, radios,
+  anchos de columna— está en `rem`, así que subir el tamaño base agranda la
+  interfaz entera en proporción. Sin esto, en un monitor 2K la aplicación se
+  veía con el mismo tamaño en píxeles que en un portátil: diminuta y con media
+  pantalla vacía. Los puntos de corte de Tailwind usan `rem` en la media query,
+  que se resuelve contra el tamaño inicial del navegador y no contra este, así
+  que no se retroalimentan. Van en porcentaje para respetar el tamaño de letra
+  que cada persona tenga configurado. Por debajo de 1800 px no cambia nada.
+*/
+@media (min-width: 1800px) {
+  html {
+    font-size: 112.5%;
+  }
+}
+
+@media (min-width: 2300px) {
+  html {
+    font-size: 137.5%;
+  }
+}
+
+@media (min-width: 3000px) {
+  html {
+    font-size: 162.5%;
+  }
+}
+
 body {
   margin: 0;
   font-family: var(--font-sans);
