@@ -19,7 +19,10 @@ import { Progress } from "@/components/ui/Progress";
 import { cn } from "cn";
 import { cardVariants } from "@/components/ui/Card";
 
-const cardClass = cn(cardVariants(), "grid content-start gap-2");
+const cardClass = cn(
+  cardVariants({ padding: "sm" }),
+  "grid grid-cols-[minmax(0,1fr)_auto] content-start items-center gap-x-3 gap-y-2",
+);
 
 const percentFormat = new Intl.NumberFormat("es-CO", {
   style: "percent",
@@ -39,9 +42,18 @@ const visits = (count: number) =>
  * **El orden `<h3>` → cifra → frase es contrato**: `verify-progress-overview`
  * lee `Título</h3>` seguido de dos `<p>`. Por eso el icono va *dentro* del
  * `<h3>`, antes del texto, y lo que se añade —la barra, la comparación— va
- * después de la frase.
+ * después de la frase. La cifra se *ve* a la derecha del título porque la
+ * rejilla la coloca ahí, no porque cambie de sitio en el HTML.
+ *
+ * **Es `async` a propósito, aunque no espere nada.** React Flight parte el
+ * árbol de una pantalla en filas de unos 3200 caracteres y aplaza lo que
+ * sobra; al pintar el HTML, lo aplazado sale como `<template id="P:n">` y su
+ * contenido viaja al final del documento. Si el corte cae dentro de la
+ * tarjeta, el `<h3>` queda separado de su cifra y la suite deja de verlos
+ * juntos. Un componente asíncrono se serializa como una fila propia, con su
+ * propio margen: la tarjeta puede viajar entera al final, pero nunca partida.
  */
-function Metric({
+async function Metric({
   title,
   icon: Icon,
   value,
@@ -56,15 +68,19 @@ function Metric({
 }) {
   return (
     <article className={cardClass}>
-      <h3 className="flex items-center gap-3 text-sm font-medium text-muted-foreground">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-soft-foreground">
-          <Icon className="size-5" aria-hidden="true" />
+      <h3 className="flex min-w-0 items-center gap-2.5 text-sm font-medium text-muted-foreground">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-soft-foreground">
+          <Icon className="size-4" aria-hidden="true" />
         </span>
         {title}
       </h3>
-      <p className="mt-1 text-4xl font-semibold tracking-tight">{value}</p>
-      <p className="text-sm leading-6 text-muted-foreground">{children}</p>
-      {footer}
+      <p className="col-start-2 row-start-1 text-3xl font-semibold tracking-tight">
+        {value}
+      </p>
+      <p className="col-span-2 text-xs leading-5 text-muted-foreground">
+        {children}
+      </p>
+      {footer && <div className="col-span-2 grid gap-2">{footer}</div>}
     </article>
   );
 }
@@ -126,12 +142,11 @@ export function BusinessOverview({
   const lastMonth = monthName(previous.since);
 
   return (
-    <section className="grid gap-6">
-      <div>
-        <h2 className="text-xl font-semibold">Panorama del negocio</h2>
-        <p className="mt-2 max-w-2xl leading-7 text-muted-foreground">
-          Cómo va {month}. El cumplimiento y la asistencia son del mes en curso;
-          los clientes activos son los de hoy.
+    <section className="grid gap-3">
+      <div className="flex flex-wrap items-baseline gap-x-2">
+        <h2 className="text-base font-semibold">Panorama del negocio</h2>
+        <p className="text-sm text-muted-foreground first-letter:uppercase">
+          {month} · clientes activos de hoy; el resto, del mes en curso.
         </p>
       </div>
 
@@ -144,7 +159,7 @@ export function BusinessOverview({
           primero desde el panel de personas.
         </EmptyState>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-3">
           <Metric
             title="Clientes activos"
             icon={Users}
@@ -159,8 +174,7 @@ export function BusinessOverview({
               </p>
             }
           >
-            {patients(activePatients)} con acceso a la plataforma. Un paciente
-            desactivado deja de contar aquí.
+            {patients(activePatients)} con acceso a la plataforma.
           </Metric>
 
           <Metric
@@ -196,7 +210,7 @@ export function BusinessOverview({
           >
             {compliance.rate === null
               ? "Nadie ha registrado una sesión este mes. La cifra aparece en cuanto un paciente marque su primer ejercicio."
-              : `${compliance.done} de ${compliance.logged} ejercicios hechos en ${compliance.sessions === 1 ? "1 sesión" : `${compliance.sessions} sesiones`} del mes. Los saltados no cuentan.`}
+              : `${compliance.done} de ${compliance.logged} ejercicios hechos en ${compliance.sessions === 1 ? "1 sesión" : `${compliance.sessions} sesiones`} del mes.`}
           </Metric>
 
           <Metric
