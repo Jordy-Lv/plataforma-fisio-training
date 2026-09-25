@@ -70,7 +70,7 @@ cuesta más que los dos días que se intentaba ahorrar.
 | Slice | Es dueño de |
 |---|---|
 | 1 — auth | `app/(auth)/**`, `lib/auth/**`, `profiles`, `patient_details`, `patient_conditions` |
-| 2 — catálogo | `app/(admin)/exercises/**`, `app/(admin)/rules/**`, `lib/catalog/**`, `exercises`, `routine_templates`, `assignment_rules` |
+| 2 — catálogo | `app/(admin)/exercises/**`, `app/(admin)/templates/**`, `lib/catalog/**`, `exercises`, `routine_templates` |
 | 3 — rutinas | `app/(pro)/**`, `app/(patient)/routine/**`, `lib/routines/**`, `routines`, `sessions`, `session_logs`, `alerts` |
 | 4 — progreso | `app/(patient)/progress/**`, `app/(admin)/memberships/**`, `lib/progress/**`, `screenings`, `attendance`, `plans`, `memberships` |
 

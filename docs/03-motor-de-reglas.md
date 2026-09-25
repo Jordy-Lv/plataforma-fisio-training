@@ -1,204 +1,95 @@
-# 03 — Motor de asignación de rutinas
+# 03 — Asignación de rutinas por el profesional
 
 ## Qué resuelve
 
-Cuando un paciente termina su registro, la plataforma le propone una rutina base **sin
-que un profesional tenga que armarla desde cero**. El profesional entra después a
-ajustarla, que es donde su criterio aporta valor.
+El entrenador o fisioterapeuta decide qué rutina recibe cada paciente. La plataforma no
+elige ni propone una plantilla al terminar el registro. El profesional revisa el perfil y
+las condiciones del paciente, selecciona una plantilla adecuada, ajusta la copia para ese
+caso y la asigna.
 
-Esto no es inteligencia artificial. Fue una decisión explícita del cliente y es la
-correcta: el criterio clínico lo define el equipo profesional una sola vez, en forma de
-reglas, y el sistema lo aplica de manera consistente y auditable. Con un modelo de IA
-nadie podría explicar por qué a un paciente con dolor de rodilla le tocó determinado
-ejercicio. → [ADR-0003](adr/0003-motor-de-reglas-sin-ia.md)
+La plantilla original queda intacta. Cada asignación crea un **snapshot** en las tablas de
+rutinas del paciente, de modo que los cambios individuales no afectan a otras personas ni
+a la plantilla del equipo. → [ADR-0001](adr/0001-snapshot-de-rutinas.md) y
+[ADR-0009](adr/0009-asignacion-manual-de-rutinas.md).
 
-## Cómo funciona
+## Flujo de asignación
 
 ```
-Paciente completa el registro
-        │
-        ├─ objetivo, nivel, entorno, equipamiento
-        └─ condiciones activas (rodilla, lumbar, hombro…)
+El paciente termina el registro
         │
         ▼
-Se leen assignment_rules activas, ORDENADAS POR priority ASC
+El entrenador o fisioterapeuta abre su ficha
+        │
+        ├─ revisa objetivo, nivel, entorno, equipamiento y condiciones
+        └─ elige una plantilla de su especialidad
         │
         ▼
-Para cada regla: ¿coincide con el perfil del paciente?
+La plataforma copia la plantilla a la rutina del paciente (snapshot)
         │
-        ├─ No  → siguiente regla
-        └─ Sí  → GANA. Se detiene la evaluación.
-                 │
-                 ▼
-        Se copia la plantilla (snapshot) a routines / routine_days / routine_items
-                 │
-                 ▼
-        Se eliminan de la copia los ejercicios contraindicados
-        por alguna condición activa del paciente
-                 │
-                 ▼
-        Rutina en estado 'active'. Se notifica al profesional a cargo.
+        ▼
+El profesional revisa y ajusta ejercicios, series y repeticiones
+        │
+        ▼
+Confirma la asignación
+        │
+        ▼
+El paciente ve su rutina desde el celular
 ```
 
-Si ninguna regla coincide, **no se inventa nada**: el paciente queda sin rutina, se genera
-una alerta para el profesional y la vista del paciente muestra "Tu profesional está
-preparando tu rutina". Es preferible a asignar algo inadecuado.
+Hasta que el profesional confirme una asignación, el paciente permanece sin rutina y ve
+un estado que explica que su profesional debe asignarla. No se escoge una plantilla por
+coincidencia de perfil ni se crea una asignación automática durante el onboarding.
 
-### El apartado «Asignación automática» (KAN-7)
+## Condiciones y contraindicaciones
 
-Se preguntó si este apartado aporta valor o si se podía retirar. **Se queda**, y por dos
-razones duras:
+Las condiciones registradas por el paciente son información que el profesional revisa
+antes de elegir y ajustar la rutina. Los ejercicios marcados como contraindicados para una
+condición activa deben quedar excluidos de la rutina asignada.
 
-1. Es el punto 2 del alcance ([`00`](00-contexto-y-alcance.md)): «la plataforma propone una
-   rutina base automáticamente».
-2. **No existe otra forma de asignar una rutina por reglas.** Toda fila de `routines` nace de
-   `copy_routine_template`, y el camino con motor pasa por `commit_routine_assignment`, que
-   exige regla ganadora. La única alternativa es la copia manual directa, que es una decisión
-   clínica del profesional y deja su propia traza (BACK-003).
-
-Lo que sí sobraba era la presentación, y eso es lo que cambió:
-
-- **El nombre.** «Reglas» es lenguaje de ingeniero. En el menú es «Asignación» y la pantalla
-  se titula «Asignación automática».
-- **Los criterios del formulario.** De siete a la vista a **cuatro** —objetivo, nivel, entorno
-  y condiciones que la excluyen—, que son los que describen a quién va dirigida una regla. El
-  equipamiento, cómo se exige y la edad quedan plegados en «Criterios avanzados», que **se
-  abre solo** cuando la regla que se edita ya usa alguno: plegar algo que está puesto lo
-  esconde, y esconder no es simplificar. **El esquema de Zod no cambió**: sigue aceptando los
-  siete y las reglas que ya los usan siguen funcionando.
-- **Una línea de estado.** «N plantillas activas · N reglas activas», y si la máquina está
-  cableada o no. Antes había que recorrer la lista para deducirlo.
-
-**Descartado** doblar la regla dentro de la plantilla: obligaría a una regla por plantilla —el
-seed ya tiene dos apuntando a la misma— y reescribiría `test:rules:panel` entero a cambio de
-un beneficio que las pestañas de sección ya dan.
-
-### Dónde se dispara (KAN-9)
-
-Los dos puntos de entrada, y ninguno más:
-
-1. **El final del registro del paciente.** `public.finish_patient_onboarding` marca el paso
-   a 3 y llama a `private.assign_routine_from_rules` **en la misma transacción**. Es lo que
-   promete el punto 2 de [`00-contexto-y-alcance.md`](00-contexto-y-alcance.md) y el primer
-   recuadro del diagrama de arriba. Hasta el 2026-09-10 ese disparo **no existía**: el
-   diagrama describía una intención, no el código.
-2. **El botón «Evaluar y asignar rutina»** de `/pro/routines/[patientId]`, para reasignar
-   tras un cambio de perfil o de reglas. Entra por `public.commit_routine_assignment`, que
-   además comprueba que el contexto no cambió desde que el equipo lo vio en pantalla y
-   recalcula el ganador en el servidor (BACK-002).
-
-Los dos comparten el mismo efecto —una sola implementación— así que no pueden divergir. El
-evento del registro automático se distingue en `routine_assignment_events` por
-`payload.source = 'onboarding'`.
-
-Si la transacción del registro no puede asignar, **se deshace entera** y el paciente
-termina sin registrar: es preferible a dejarlo a medias sin que nadie se entere.
-
-## Forma de una regla
-
-`assignment_rules.conditions` es un `jsonb`. Todos los campos son opcionales; un campo
-ausente significa "no me importa este criterio".
-
-```json
-{
-  "goal": ["lose_weight", "general_health"],
-  "level": ["beginner"],
-  "environment": ["home"],
-  "equipment_any_of": ["none", "bands"],
-  "excludes_conditions": ["knee", "lower_back"],
-  "age_range": { "min": 18, "max": 60 }
-}
-```
-
-| Campo | Coincide cuando |
-|---|---|
-| `goal` | El objetivo del paciente está en la lista |
-| `level` | Su nivel está en la lista |
-| `environment` | Su entorno está en la lista |
-| `equipment_any_of` | Tiene **al menos uno** de esos equipamientos |
-| `equipment_all_of` | Tiene **todos** esos equipamientos |
-| `excludes_conditions` | El paciente **no** tiene ninguna de esas condiciones activas. Si la tiene, la regla no aplica |
-| `age_range` | Su edad cae en el rango |
-
-Los campos presentes se combinan con **Y lógico**: todos deben cumplirse. Dentro de un
-campo de lista, la lógica es **O**.
-
-## Ejemplo de conjunto de reglas
-
-| Prioridad | Nombre | Condiciones | Plantilla |
-|---|---|---|---|
-| 10 | Rehabilitación de rodilla | `goal: [rehab]`, cualquier nivel | Protocolo rodilla — fase 1 |
-| 20 | Lumbalgia en casa | `goal: [rehab]`, `environment: [home]` | Protocolo lumbar — casa |
-| 30 | Principiante en casa sin equipo | `level: [beginner]`, `environment: [home]`, `equipment_any_of: [none, bands]`, `excludes_conditions: [knee, lower_back]` | Full body casa — principiante |
-| 40 | Principiante en gimnasio | `level: [beginner]`, `environment: [gym]` | Full body gym — principiante |
-| 50 | Intermedio hipertrofia gimnasio | `goal: [gain_muscle]`, `level: [intermediate, advanced]`, `environment: [gym]` | Torso-pierna — intermedio |
-| 99 | Genérico | *(sin condiciones)* | Acondicionamiento general |
-
-**La prioridad importa más que las condiciones.** Las reglas de rehabilitación van
-primero porque una condición clínica manda sobre cualquier objetivo estético. La regla 99
-es la red de seguridad; el equipo decide si la quiere activa.
-
-## Filtro de contraindicaciones
-
-Es un segundo paso, independiente de la regla que haya ganado, y es el que protege al
-paciente:
-
-```
-Para cada routine_item copiado:
-  si algún exercises.contraindications ∩ condiciones_activas_del_paciente ≠ ∅
-    → se elimina el ítem de la rutina
-    → se registra en routine.notes qué se quitó y por qué
-```
-
-Si al terminar el filtro un día queda con menos de 3 ejercicios, se marca la rutina para
-revisión del profesional y se genera una alerta. Nunca se entrega un día vacío.
-
-## Vocabulario de partes del cuerpo
-
-`patient_conditions.body_part`, `exercises.contraindications` y `session_logs.pain_location`
-comparten este vocabulario cerrado. **Un valor fuera de la lista rompe el filtro en
-silencio**, así que se valida con Zod en la entrada:
+El vocabulario compartido de `patient_conditions.body_part`,
+`exercises.contraindications` y `session_logs.pain_location` está en
+`lib/catalog/body-parts.ts`:
 
 ```
 neck · shoulder · elbow · wrist · upper_back · lower_back
 hip · knee · ankle · foot · core · other
 ```
 
-Se define una sola vez en `lib/catalog/body-parts.ts` y todo el proyecto importa de ahí.
+## Plantillas
 
-## Dónde vive el código
+El equipo define las plantillas en `routine_templates`, `template_days` y `template_items`.
+El profesional usa el catálogo para elegir una plantilla del tipo correcto, la revisa y
+ajusta el snapshot del paciente. La plantilla base solo cambia mediante la gestión de
+plantillas, no al editar una rutina ya asignada.
 
-```
-lib/catalog/
-├── body-parts.ts        Vocabulario compartido
-├── rules-schema.ts      Zod de conditions — valida lo que el admin escribe
-├── evaluate-rules.ts    Función pura: (perfil, reglas) → template_id | null
-└── assign-routine.ts    Server action: evalúa, copia el snapshot, filtra, persiste
-```
+## Responsabilidades
 
-`evaluate-rules.ts` es **una función pura sin acceso a base de datos**: recibe el perfil y
-el arreglo de reglas, devuelve un `template_id` o `null`. Así se puede probar con una
-tabla de casos sin levantar nada, que es justo lo que hay que verificar en la demo.
+- **Administrador:** mantiene el catálogo de ejercicios y las plantillas base.
+- **Entrenador:** asigna rutinas de entrenamiento a sus pacientes vinculados.
+- **Fisioterapeuta:** asigna rutinas de fisioterapia a sus pacientes vinculados.
+- **Plataforma:** copia la plantilla, valida permisos y condiciones, y persiste la rutina
+  individual; no decide qué plantilla corresponde al paciente.
 
-## Panel de administración
+## Estado de implementación
 
-El equipo profesional edita las reglas sin tocar código:
+La aplicación todavía contiene el motor `assignment_rules` de la decisión anterior
+([ADR-0003](adr/0003-motor-de-reglas-sin-ia.md)). Este documento y
+[ADR-0009](adr/0009-asignacion-manual-de-rutinas.md) establecen el comportamiento deseado:
+asignación elegida por el profesional. Retirar el motor del flujo y actualizar sus pruebas
+y pantallas requiere un cambio de implementación separado; la documentación no afirma que
+ese cambio de código ya esté hecho.
 
-- Lista de reglas ordenada por prioridad, con reordenamiento.
-- Formulario por criterio (no un editor de JSON: el JSON es el almacenamiento, no la
-  interfaz).
-- **Simulador**: se introduce un perfil de paciente ficticio y se muestra qué regla
-  ganaría y qué plantilla se asignaría. Es la funcionalidad que hace creíble el motor en
-  la demostración; sin ella, el cliente tiene que confiar en nuestra palabra.
+Hoy el código asigna por reglas en dos puntos: `public.finish_patient_onboarding` llama a
+`private.assign_routine_from_rules` en la misma transacción que cierra el registro
+(KAN-9, [`20260910130000`](../supabase/migrations/20260910130000_routines_auto_assignment.sql)),
+y el botón «Evaluar y asignar rutina» de `/pro/routines/[patientId]` entra por
+`public.commit_routine_assignment`, que exige una regla ganadora. Los dos son lo que el
+cambio de implementación tiene que retirar.
 
 ## Qué debe demostrarse
 
-Del [plan de verificación](07-plan-de-verificacion.md), camino 2:
-
-1. Un paciente con objetivo, entorno y condición determinados recibe una rutina coherente.
-2. Ningún ejercicio de esa rutina está contraindicado para su condición.
-3. Al **cambiar una regla en el panel**, el siguiente paciente con el mismo perfil recibe
-   una plantilla distinta.
-
-El punto 3 es el que prueba que el sistema está realmente parametrizado y no tiene la
-lógica escrita a mano.
+1. Un profesional ve solo a los pacientes que tiene asignados.
+2. Puede elegir una plantilla de su especialidad y revisar la copia antes de confirmarla.
+3. La rutina asignada no contiene ejercicios contraindicados por las condiciones activas.
+4. Editar la rutina de una persona no modifica la plantilla ni las rutinas de otras personas.
+5. Un paciente recién registrado no recibe una rutina hasta que su profesional la asigne.

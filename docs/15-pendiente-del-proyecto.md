@@ -379,13 +379,14 @@ El flujo actual es confuso de usar y de ver (revisión de Jordy, 2026-09-25): la
 buscador de catálogo permanente y la rutina con tarjetas dentro de tarjetas, y el
 profesional no puede elegir la plantilla.
 
-**Decisión tomada, pero todavía fuera del repositorio.** Jordy la redactó como
-`docs/adr/0009-asignacion-manual-de-rutinas.md`, junto con cambios en `README.md` y en
-`docs/00`, `01`, `02`, `03`, `04`, `05`, `06`, `07`, `16` y `adr/README.md`. **Nada de eso
-está en el remoto**: el ADR es un archivo sin seguimiento y el resto está en un
-`git stash` («docs asignacion manual (pendiente)») de su copia local en Windows. **Primer
-paso de la sesión nueva: que esos documentos lleguen a una rama.** Sin ellos, ADR-0009 no
-existe para nadie más y `docs/00` sigue diciendo que la rutina se asigna sola.
+**Decisión ya en el repositorio.** [ADR-0009](adr/0009-asignacion-manual-de-rutinas.md) y los
+cambios en `README.md`, `docs/00`–`07` y `adr/README.md` llegaron desde la rama
+`docs/asignacion-manual`, fusionada sobre `main` el 2026-09-25. Tres conflictos, resueltos así:
+en [`02`](02-modelo-de-datos.md) y [`03`](03-motor-de-reglas.md) manda ADR-0009 (en `02` se
+conserva el párrafo de KAN-8; en `03`, «Estado de implementación» dice dónde asigna hoy el
+código por reglas); en [`16`](16-plan-de-mejora.md) se quedó la versión de `main`, así que su
+KAN-7, D1 y Fases 2–3 describen el plan **anterior** a ADR-0009 y no son alcance vigente.
+`docs/00` ya no dice que la rutina se asigna sola; **el código sí lo sigue haciendo**.
 
 Lo que Jordy dejó dicho de esa decisión:
 
@@ -428,8 +429,9 @@ eso, «adelgazar» dejó de ser el paso previo que bloqueaba todo lo demás, que
 - **PR #41 fusionado** (`857f296`). Falta desplegar (`git checkout main && git pull`,
   `git status` limpio, `railway up`). Antes de cualquier demo, A.7: el proyecto de Supabase no
   pausado.
-- **F** — subir los documentos de ADR-0009 a una rama y empezar el flujo de asignación de
-  rutinas.
+- **F** — ~~subir los documentos de ADR-0009~~ (hecho); empezar el flujo de asignación de
+  rutinas: inventario de dependencias de `assignment_rules` y rediseño de
+  `/pro/routines/[patientId]`.
 
 Lo anterior, en su orden original:
 

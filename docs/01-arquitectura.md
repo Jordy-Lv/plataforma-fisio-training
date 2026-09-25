@@ -71,13 +71,13 @@ a nivel general, y la especificidad se aplica después, por paciente. Con refere
 ajuste hecho para un paciente contaminaría a todos los demás.
 → [ADR-0001](adr/0001-snapshot-de-rutinas.md)
 
-### Reglas parametrizadas, no IA
+### Asignación decidida por el profesional
 
-La asignación automática se resuelve con condiciones evaluadas por prioridad sobre
-parámetros que el equipo profesional define y edita. Fue una decisión explícita del
-cliente en la reunión: mantiene el desarrollo dentro del presupuesto y, sobre todo, deja
-el criterio clínico en manos de los profesionales y no de un modelo.
-→ [ADR-0003](adr/0003-motor-de-reglas-sin-ia.md) y [`03-motor-de-reglas.md`](03-motor-de-reglas.md)
+El entrenador o fisioterapeuta elige una plantilla, revisa y ajusta la copia para el
+paciente, y confirma la asignación. La plataforma conserva el snapshot y aplica las
+validaciones de acceso y contraindicaciones; no decide automáticamente qué plantilla
+corresponde a una persona. → [ADR-0009](adr/0009-asignacion-manual-de-rutinas.md) y
+[`03-motor-de-reglas.md`](03-motor-de-reglas.md)
 
 ### Sin tiempo real en la Etapa 1
 

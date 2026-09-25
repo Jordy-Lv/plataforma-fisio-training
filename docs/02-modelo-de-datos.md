@@ -30,7 +30,7 @@ template_days                        sessions              │
 template_items ──────────────────────► session_logs ───────┘
     ▲
     │
-assignment_rules
+assignment_rules (legado; retirada pendiente)
 
 screenings · attendance · plans · services · memberships
 ```
@@ -96,9 +96,8 @@ Lesiones y limitaciones. Un paciente puede tener varias.
 | `notes` | `text` | |
 | `is_active` | `boolean` | Una condición superada deja de excluir ejercicios |
 
-**Esta tabla es la que alimenta las contraindicaciones del motor de reglas.** Si aquí dice
-`knee`, ningún ejercicio con `knee` en `contraindications` puede asignarse
-automáticamente.
+Las condiciones del paciente se revisan durante la asignación manual. Los ejercicios
+contraindicados por condiciones activas deben quedar excluidos de la rutina asignada.
 
 ### `care_assignments`
 Vincula paciente con profesional. La tabla que permite que una misma persona tenga
@@ -125,7 +124,7 @@ slices: requiere aviso al equipo antes del PR.
 
 ---
 
-## Catálogo y motor de reglas
+## Catálogo y asignación de rutinas
 
 ### `exercises`
 
@@ -143,8 +142,8 @@ slices: requiere aviso al equipo antes del PR.
 | `is_custom` | `boolean` | `true` = creado por el equipo; `false` = importado de free-exercise-db |
 | `external_id` | `text` | Id de origen, para reimportar sin duplicar |
 
-Índices GIN sobre `equipment`, `environments` y `contraindications`: el motor de reglas
-filtra por esos arreglos en cada asignación.
+Índices GIN sobre `equipment`, `environments` y `contraindications`: permiten consultar
+el catálogo y validar las contraindicaciones durante la asignación.
 
 ### `routine_templates` · `template_days` · `template_items`
 Las rutinas base que define el equipo. **Nunca se modifican al asignarlas.**
@@ -162,16 +161,19 @@ dentro del día. La pregunta la plantea KAN-8 —«¿un ejercicio debe estar aso
 varias rutinas?»— y el esquema ya la responde: a varias, y no hay que duplicar el ejercicio
 en el catálogo para reutilizarlo.
 
-### `assignment_rules`
-Las reglas del motor de asignación, editables desde el panel de administración.
+### `assignment_rules` (legado)
+Esta tabla pertenece al flujo anterior de asignación automática por reglas. La nueva
+decisión es que el profesional elige la plantilla. La tabla y sus políticas siguen en el
+esquema implementado hasta que un cambio de código la retire; no debe añadirse a nuevas
+pantallas o flujos. Ver [ADR-0009](adr/0009-asignacion-manual-de-rutinas.md).
 
 | Columna | Tipo | Notas |
 |---|---|---|
 | `id` | `uuid` PK | |
 | `name` | `text` | Legible por el equipo: "Principiante en casa, objetivo bajar de peso" |
-| `priority` | `integer` | Menor número, mayor prioridad. **Se evalúan en orden y la primera que coincide gana** |
-| `conditions` | `jsonb` | Ver [`03-motor-de-reglas.md`](03-motor-de-reglas.md) |
-| `template_id` | `uuid` FK | La plantilla que se asigna si la regla coincide |
+| `priority` | `integer` | Flujo anterior: menor número, mayor prioridad |
+| `conditions` | `jsonb` | Criterios del flujo anterior; no forman parte de la asignación vigente |
+| `template_id` | `uuid` FK | Plantilla destino del flujo anterior |
 | `is_active` | `boolean` | |
 
 ---
