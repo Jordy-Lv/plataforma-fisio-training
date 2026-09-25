@@ -64,13 +64,10 @@ corriéndolas sobre `origin/main` sin sus cambios):
 - **`test:calendar` 3/9** — fallan «El editor conserva fecha y vista al abrir, buscar y
   cerrar el catálogo» («La rutina debe abrirse desde la cuadrícula.») y «Recorrido completo:
   día vacío, asignación, programación y primera sesión completada» (URL del día esperada
-  distinta). **Diagnosticado el 2026-09-25:** «El editor conserva fecha y vista…» hace
-  `querySelector('form[method="get"]')` y se queda con el buscador de pacientes de la
-  cabecera (PR #34), que va antes que el del catálogo. El selector ya se corrigió (PR #42,
-  acordado con Jordy). Lo que sigue fallando es el final del subtest: al salir del catálogo
-  espera un buscador general y `#assign-routine a` con la rutina activa, y las dos cosas
-  contradicen el diseño aprobado de `manual-routine-assignment` (D4). Adaptar esa parte está
-  pendiente de acordarse. «Recorrido completo» ya pasa.
+  distinta). **Cerrado en el PR #42:** la suite tomaba el buscador de pacientes de la
+  cabecera (PR #34) en vez del del catálogo, y el final del subtest esperaba el buscador
+  general y `#assign-routine` que el diseño de `manual-routine-assignment` retira. Ajustado
+  de acuerdo con Jordy: 9/9.
 - **`test:catalog` 3/9** tras `seed:calendar-demo`: esa semilla crea tres ejercicios
   «· Ejemplo» y la suite espera exactamente los 868 de free-exercise-db (871 ≠ 868).
   `npm run db:clean` también los señala.
@@ -438,14 +435,17 @@ migración [`20260925120000_routines_manual_assignment`](../supabase/migrations/
 acciones y consultas en `lib/routines/`, la pantalla por pasos (`AssignmentFlow`,
 `AssignmentSteps`, `TemplateChoice`, `RoutineDraftBar`, `RoutineEditor`), `test:routines`
 reescrita (14/14) y el paso de elegir plantilla en `test:calendar` y `test:smoke`. Quedan
-abiertas **7.1** (dos suites arrastran fallos previos, abajo) y **7.2** (teléfono real).
+abiertas **7.1** (`test:smoke` arrastra KAN-19, abajo) y **7.2** (teléfono real).
 
 **Deuda anotada:** `public.copy_routine_template` sigue creando una rutina **activa** sin
 borrador ni exclusión de contraindicados (ahora sí con ADR-0010). La usan
 `test:routines:snapshot`, `test:routines:items` y `test:calendar` para preparar datos;
 cerrarla del todo exige cambiar esas suites (design, Risks).
 
-**KAN-19 se reproduce aquí de forma fiable, y ya se sabe algo más.** Con JavaScript, tras
+**KAN-19 se reproduce aquí de forma fiable, y ya se sabe algo más.** Decisión de Jordy
+(2026-09-25): **se deja documentado para un change posterior**; ni parche en el shell
+compartido sin consenso del equipo, ni subir Next/React sin confirmar antes que es del
+framework y no de la integración del proyecto. Con JavaScript, tras
 elegir o confirmar, la base se actualiza pero el botón puede quedarse en «Asignando…» y la
 pantalla no cambia de paso. Diagnóstico del 2026-09-25 con Chromium a 375 px:
 

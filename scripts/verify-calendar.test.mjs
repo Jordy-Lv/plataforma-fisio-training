@@ -252,33 +252,28 @@ test(
               )
               ?.getAttribute("href");
             assert.ok(closeHref);
+            // Salir del catálogo conserva la fecha y la vista, y deja la
+            // pantalla sin buscador: desde `manual-routine-assignment` solo
+            // aparece enfocado en un día o un ejercicio (design D4).
+            const closedUrl = new URL(closeHref, "http://localhost");
+            assert.equal(closedUrl.searchParams.get("dia"), null);
+            assert.equal(closedUrl.searchParams.get("item"), null);
+            assert.equal(closedUrl.searchParams.get("calendarDate"), today);
+            assert.equal(closedUrl.searchParams.get("calendarView"), view);
             const closed = await web.request(closeHref);
             const closedDocument = new JSDOM(closed.html).window.document;
-            const generalSearch =
-              closedDocument.querySelector('form[method="get"]');
-            assert.ok(
-              generalSearch,
-              "El catálogo general permanece disponible.",
-            );
             assert.equal(
-              generalSearch.querySelector('[name="dia"], [name="item"]'),
+              closedDocument.querySelector(
+                'form[method="get"][aria-label="Buscar en el catálogo"]',
+              ),
               null,
+              "Sin foco no queda ningún buscador del catálogo.",
             );
+            // La vuelta al calendario es el botón «Ver calendario» de la
+            // cabecera: `#assign-routine` solo existe con un borrador.
             assert.equal(
-              generalSearch
-                .querySelector('[name="calendarDate"]')
-                ?.getAttribute("value"),
-              today,
-            );
-            assert.equal(
-              generalSearch
-                .querySelector('[name="calendarView"]')
-                ?.getAttribute("value"),
-              view,
-            );
-            assert.equal(
-              closedDocument
-                .querySelector("#assign-routine a")
+              [...closedDocument.querySelectorAll("a")]
+                .find((link) => link.textContent.trim() === "Ver calendario")
                 ?.getAttribute("href"),
               `${route}?date=${today}&view=${view}#calendar-schedule`,
             );

@@ -255,6 +255,12 @@ Tan contrato como las presencias:
   `?item=` (`test:routines`).
 - `/pro/routines/[patientId]` de un profesional **no** muestra plantillas del otro tipo, ni
   forzando `?tipo=` (`test:routines`).
+- Al salir del buscador enfocado («Salir del día» / «Dejar de sustituir»), la pantalla **no**
+  conserva ningún buscador del catálogo, y el enlace mantiene `calendarDate` y
+  `calendarView`. La vuelta al calendario es el botón «Ver calendario» de la cabecera
+  (`test:calendar`). La suite localiza el buscador del catálogo por
+  `aria-label="Buscar en el catálogo"`: el primer `<form method="get">` del documento es el
+  buscador de pacientes de la cabecera.
 
 ---
 
