@@ -98,9 +98,11 @@ versión que npm no publica (`ETARGET`). Es un defecto del workflow independient
 facturación; el problema histórico de minutos de Actions sigue documentado abajo.
 **Corregido el 2026-09-25:** el paquete `openspec` de npm es un marcador vacío (solo publica
 `0.0.0`); OpenSpec se publica como `@fission-ai/openspec`, que es lo que instala ahora
-`ci.yml`. Con él, `openspec validate --all --strict` pasa 7 de 8 changes: falla
-`simplify-navigation-and-panel`, cuya propuesta declara cuatro capacidades modificadas pero
-no tiene ningún delta en `specs/`. Pendiente de decisión.
+`ci.yml`. Con él, `openspec validate --all --strict` pasaba 7 de 8 changes: fallaba
+`simplify-navigation-and-panel`, cuya propuesta declaraba cuatro capacidades modificadas pero
+no tenía ningún delta en `specs/`. **Resuelto el mismo día, de acuerdo con Jordy:** se
+escribieron sus deltas a partir del código vigente (sin KAN-7 ni KAN-9, que ya no lo están)
+y ahora pasan los 8.
 
 Cuatro tickets quedaron abiertos en Jira el 2026-09-10/11, sin `tasks.md` propio porque no son
 parte de ningún change de OpenSpec en curso:
