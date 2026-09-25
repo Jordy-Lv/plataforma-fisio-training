@@ -3,8 +3,8 @@
 ## 1. Decisión y aviso al equipo
 
 - [x] 1.1 Redactar `docs/adr/0010-especialidad-en-la-asignacion-de-rutinas.md` y registrarlo en `docs/adr/README.md` (ADR-0007 queda «superada en parte»). Verificación: el índice enlaza ADR-0010 y el archivo existe.
-- [ ] 1.2 Añadir en `docs/04-roles-y-permisos.md` que crear y confirmar un borrador exige la especialidad del tipo y una asignación de cuidado vigente de ese tipo, y que el admin está exento (ADR-0010). Verificación: la matriz y el texto citan ADR-0010 y no contradicen a ADR-0007 en lectura ni en edición.
-- [ ] 1.3 Avisar al equipo, antes de abrir el PR, de que la migración reescribe `public.finish_patient_onboarding` (slice 1) (`CLAUDE.md` §3). Verificación: el aviso queda enlazado en la descripción del PR.
+- [x] 1.2 Añadir en `docs/04-roles-y-permisos.md` que crear y confirmar un borrador exige la especialidad del tipo y una asignación de cuidado vigente de ese tipo, y que el admin está exento (ADR-0010). Verificación: la matriz y el texto citan ADR-0010 y no contradicen a ADR-0007 en lectura ni en edición.
+- [x] 1.3 Avisar al equipo, antes de abrir el PR, de que la migración reescribe `public.finish_patient_onboarding` (slice 1) (`CLAUDE.md` §3). Verificación: el aviso queda enlazado en la descripción del PR. **Jordy confirmó el 2026-09-25 que el equipo ya está avisado.**
 
 ## 2. Migración `routines_manual_assignment`
 
@@ -17,7 +17,7 @@
 - [ ] 2.7 Añadir el trigger de guarda de activación (D2.7). Verificación: un `update … set status = 'active'` directo sobre un borrador, hecho como profesional a cargo, falla con `42501`; `test:calendar` (que cierra rutinas como profesional) sigue en verde.
 - [ ] 2.8 Reescribir `public.finish_patient_onboarding` sin la llamada al motor (D2.9). Verificación: subtests «Registro terminado» y «Un perfil que antes coincidía con una regla», sin ninguna rutina ni evento, y `test:auth` en verde.
 - [ ] 2.9 Especialidad por RPC directa en las tres funciones: entrenador con plantilla `physio`, profesional sin asignación vigente, paciente y anónimo rechazados; admin con los dos tipos aceptado. Verificación: los subtests de `specs/routine-assignment` «La especialidad limita…» pasan.
-- [ ] 2.10 Regenerar `lib/db/types.ts` con `npm run db:types` en el mismo commit que la migración. Verificación: `npm run typecheck` pasa y el diff de tipos solo trae las funciones nuevas o cambiadas.
+- [x] 2.10 Regenerar `lib/db/types.ts` con `npm run db:types` en el mismo commit que la migración. Verificación: `npm run typecheck` pasa y el diff de tipos solo trae las funciones nuevas o cambiadas.
 
 ## 3. Acciones y consultas del slice de rutinas
 

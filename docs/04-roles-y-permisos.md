@@ -39,6 +39,7 @@ Esta es la regla que hay que tener en la cabeza al escribir cualquier política.
 | `exercises` | total | lectura + creación de propios | **solo lectura** |
 | `routine_templates` / `template_*` | total | lectura | — |
 | `routines` / `routine_days` / `routine_items` | total | lectura/escritura de asignados | **solo lectura de las propias** |
+| Crear y confirmar un borrador de rutina | los dos tipos | **solo de su especialidad** y con asignación vigente de ese tipo ([ADR-0010](adr/0010-especialidad-en-la-asignacion-de-rutinas.md)) | — |
 | `sessions` | lectura total | lectura de asignados | lectura/escritura propias |
 | `routine_schedules` | lectura/programación/cancelación | lectura/programación/cancelación de asignados | solo lectura propia |
 | `session_logs` | lectura total | lectura de asignados | lectura/escritura propios |
@@ -56,6 +57,29 @@ Puntos que suelen implementarse mal:
   admin.
 - **El paciente no ve alertas.** Las alertas son una herramienta clínica y administrativa.
 - **El profesional no ve pacientes que no tiene asignados.** Ni siquiera su nombre.
+- **El paciente no lee borradores.** Una rutina en `pending_review` es un borrador que su
+  profesional prepara: no aparece en ninguna de sus consultas hasta que se confirma.
+
+### Asignar una rutina: la especialidad sí es autorización (ADR-0010)
+
+Desde [ADR-0009](adr/0009-asignacion-manual-de-rutinas.md) la rutina la elige una persona, y
+[ADR-0010](adr/0010-especialidad-en-la-asignacion-de-rutinas.md) exige que la base de datos
+compruebe quién puede hacerlo:
+
+| Operación | admin | professional | patient |
+|---|---|---|---|
+| Crear un borrador desde una plantilla | cualquier tipo | solo si `routine_templates.kind = specialty` **y** tiene una `care_assignments` vigente de ese `kind` sobre el paciente | — |
+| Confirmar o descartar un borrador | cualquier tipo | la misma condición, contra `routines.kind` | — |
+| Editar los ejercicios de una rutina ya creada | total | cualquier profesional que lo atienda (`treats_patient()`), sin mirar la especialidad | — |
+
+Lo comprueba `private.can_assign_routine_kind` dentro de las funciones `security definer`
+que crean, descartan y confirman el borrador, y también `public.copy_routine_template`.
+**El administrador está exento**: puede preparar y confirmar rutinas de los dos tipos.
+
+Esto es una excepción acotada a la regla de [ADR-0007](adr/0007-tres-roles-mas-especialidad.md):
+la especialidad sigue sin intervenir en la **lectura** ni en la **edición** de rutinas ya
+asignadas, que se autorizan con `treats_patient()` como hasta ahora. Solo gobierna la
+selección y la confirmación de plantillas.
 
 ### Matriz «tipo de alerta → especialidad» (KAN-10)
 
