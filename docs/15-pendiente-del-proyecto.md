@@ -1,12 +1,17 @@
 # Lo que falta por hacer
 
-Foto del **2026-09-12**, tomada tras fusionar a `main` los PRs
-[#22](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/22) a
-[#37](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/37) (`main` = `b569dc4`).
-Queda abierto solo [#21](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/21)
-(KAN-3, rendimiento; ver «Estado de las suites» abajo) — es de un colaborador externo
-(`vigoya19`), revisado y con sus correcciones ya subidas, a la espera de que responda o de
-que se decida fusionarlo de todas formas.
+Foto del **2026-09-25**, tomada con `main` = `c4419d3` (PR
+[#40](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/40) fusionado) y con el PR
+[#41](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/41) abierto y sin conflictos.
+Entre los dos rediseñan el panel del administrador (ver «E» abajo). El
+[#21](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/21) (KAN-3, rendimiento) ya
+está en `main` (`d50f05d`). Las ramas antiguas se borraron el 2026-09-25: en el remoto solo
+quedan `main` y la del PR abierto.
+
+**Lo siguiente es el flujo de asignación de rutinas** (sección F): el cambio de la
+asignación automática por reglas a una asignación manual por el profesional. Empieza por ahí
+una sesión nueva, pero **lee F antes de tocar código**: la decisión que lo gobierna todavía no
+está en el repositorio.
 
 Este documento reúne **todo** lo que queda abierto, dentro y fuera de OpenSpec. La fuente de
 verdad de cada tarea del change en curso sigue siendo su `tasks.md`, y cada casilla se marca
@@ -52,8 +57,19 @@ en ninguna lista.
 
 ## Estado de las suites y tickets abiertos
 
-**`main` no tiene ninguna suite en rojo conocida ahora mismo.** El último defecto real
-(KAN-17, abajo) se cerró el 2026-09-11. Aviso operativo del 2026-09-12, no de código:
+**Dos suites fallan en `main` a 2026-09-25**, las dos ajenas al PR #41 (se comprobó
+corriéndolas sobre `origin/main` sin sus cambios):
+
+- **`test:calendar` 3/9** — fallan «El editor conserva fecha y vista al abrir, buscar y
+  cerrar el catálogo» («La rutina debe abrirse desde la cuadrícula.») y «Recorrido completo:
+  día vacío, asignación, programación y primera sesión completada» (URL del día esperada
+  distinta). Sin diagnosticar. Sospecha: depende de la hora (se corrió de noche en Bogotá)
+  o del estado que deja `seed:calendar-demo`.
+- **`test:catalog` 3/9** tras `seed:calendar-demo`: esa semilla crea tres ejercicios
+  «· Ejemplo» y la suite espera exactamente los 868 de free-exercise-db (871 ≠ 868).
+  `npm run db:clean` también los señala.
+
+El último defecto real de código (KAN-17, abajo) se cerró el 2026-09-11. Aviso operativo del 2026-09-12, no de código:
 `npm run seed:exercises` depende de descargar
 `raw.githubusercontent.com/yuhonas/free-exercise-db`, que en este momento devuelve **503**
 de forma intermitente — si `test:catalog`, `test:templates:seed`, `test:rules:seed` o
@@ -77,8 +93,8 @@ parte de ningún change de OpenSpec en curso:
   demo. Coordinar con **14.7/14.8** de `improve-frontend-ux` (ya fusionadas) y con **B.2** más
   abajo: es el mismo patrón de paginación. **En pausa a propósito**, a la espera de que se
   decida si vale la pena la migración que requiere paginar en el servidor.
-- **KAN-3** — PR [#21](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/21), de un
-  colaborador externo (`vigoya19`), no un ticket nuevo de esta ronda pero sigue abierto: quita
+- **KAN-3** — **fusionado** (`d50f05d`). PR [#21](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/21), de un
+  colaborador externo (`vigoya19`): quita
   `recharts` de `EvolutionChart.tsx` (baja el *First Load JS* de `/evolution/[patientId]` de
   ~251 kB a ~144 kB) y añade una suite de humo con Playwright. Se revisó dos veces: la primera
   encontró y corrigió dos defectos reales (`Suspense` que rompía el acuse de guardado,
@@ -169,6 +185,43 @@ ese perfil. **No es una regresión de código**: conviene descartarlo antes de c
   rama el 2026-09-12, pero la decisión de fondo sobre el árbol compartido sigue pendiente.)
 - ~~Aviso de lint: `appUrl` sin usar en `verify-auth-screens.test.mjs`.~~ Ya no aparece:
   `npm run lint` está limpio en `main` al 2026-09-12.
+
+---
+
+### A.7 — [oper.] El cliente se queda en la capa gratuita de Supabase
+
+Decisión del cliente (2026-09-25): usar el plan gratuito de Supabase hasta que se sienta
+satisfecho y decida pagar. El despliegue en Railway lo paga Jordy. Lo que eso implica, y
+que hay que tener presente en cada demo:
+
+- **Pausa por inactividad.** El plan gratuito pausa el proyecto tras días sin uso. Antes
+  de cada demo, entrar al panel de Supabase y comprobar que no está pausado; si lo está,
+  reactivarlo con tiempo.
+- **Sin respaldos automáticos.** Lo dice ya el
+  [ADR-0002](adr/0002-hosting-railway.md): aceptable para demo y piloto, inaceptable para
+  datos de salud reales. Mientras el cliente esté a prueba, datos ficticios o riesgo
+  aceptado por escrito.
+- **Correo de autenticación.** «Recuperar contraseña» usa el correo propio de Supabase, que
+  en el plan gratuito tiene límites de envío muy bajos. Comprobar en el panel si hay SMTP
+  propio configurado antes de que lo use un paciente real.
+- **Tamaño: sin riesgo.** Medido en local con todo sembrado: base de 15 MB e imágenes del
+  catálogo de 47 MB.
+- **Auth ya está incluido** en el plan gratuito: lo que el cliente compraría después es el
+  plan de pago de Supabase (respaldos), no «Supabase Auth» por separado.
+
+### A.8 — [oper.] Trabajar en Windows
+
+Jordy trabaja en Windows. Lo que se aprendió el 2026-09-25:
+
+- **PowerShell 7 (`pwsh`), no Windows PowerShell 5.1**: la 5.1 no acepta `&&`, y todas
+  las instrucciones del proyecto encadenan con `&&`.
+- **Docker Desktop encendido** («Engine running») antes de `npm run db:start`.
+- Los scripts de `scripts/` llamaban a `node_modules/.bin/supabase`, que en Windows no se
+  puede ejecutar (`spawnSync … ENOENT`): fallaban `db:env`, todas las semillas y varias
+  suites. **Arreglado en el PR #40**: ahora lanzan `node_modules/supabase/dist/supabase.js`
+  con `process.execPath`.
+- `railway up` sube la carpeta local tal cual: antes de desplegar, `git status` sin
+  archivos sueltos (A.2).
 
 ---
 
@@ -289,6 +342,73 @@ el servidor local.
 
 ---
 
+## E. Panel del administrador — rediseñado el 2026-09-25
+
+PRs #40 (fusionado) y #41 (abierto). No pertenece a ningún change de OpenSpec: fue una
+petición directa para la demo. Lo que conviene saber antes de tocarlo:
+
+- **Distribución.** Escritorio (`xl`): «Actividad reciente» a la izquierda con scroll
+  propio; a la derecha «Pide tu atención hoy», el panorama en tira de tres cifras y cuatro
+  accesos rápidos. Cabe entero sin desplazarse a 1440 × 789 y en pantallas mayores. En el
+  teléfono todo va apilado y compacto (1720 → 1111 px de alto).
+- **Datos.** `getAdminDashboard` en `lib/progress/overview-queries.ts`, un solo
+  `Promise.all`. El mes anterior sale de restar dos llamadas a `business_overview`, que
+  acota el cumplimiento solo por abajo: sin migración.
+- **Contrato de suite.** `test:overview` lee `Título</h3>` + `<p>cifra</p>` +
+  `<p>frase</p>` seguidos. `Metric` es `async` sin esperar nada **a propósito**: React
+  Flight parte el árbol en filas de ~3200 caracteres y el corte llegó a caer dentro de una
+  tarjeta, separando el `<h3>` de su cifra en el HTML.
+- **Shell.** El menú lateral es un riel pegado al borde izquierdo; el contenido llega hasta
+  100rem (1600 px) centrado. El texto se queda en 16 px en toda pantalla: se probó escalar
+  el tamaño base en monitores grandes y se descartó (con Windows al 125 % se agrandaba dos
+  veces).
+- **Regla móvil nueva** (`docs/10`, regla 7): ningún acceso directo repite la barra
+  inferior; se comprueba con `isInMobileBar`.
+
+---
+
+## F. Siguiente: el flujo de asignación de rutinas
+
+El flujo actual es confuso de usar y de ver (revisión de Jordy, 2026-09-25): la pantalla
+`/pro/routines/[patientId]` apila «Asignar según el perfil», el aviso de condiciones, un
+buscador de catálogo permanente y la rutina con tarjetas dentro de tarjetas, y el
+profesional no puede elegir la plantilla.
+
+**Decisión tomada, pero todavía fuera del repositorio.** Jordy la redactó como
+`docs/adr/0009-asignacion-manual-de-rutinas.md`, junto con cambios en `README.md` y en
+`docs/00`, `01`, `02`, `03`, `04`, `05`, `06`, `07`, `16` y `adr/README.md`. **Nada de eso
+está en el remoto**: el ADR es un archivo sin seguimiento y el resto está en un
+`git stash` («docs asignacion manual (pendiente)») de su copia local en Windows. **Primer
+paso de la sesión nueva: que esos documentos lleguen a una rama.** Sin ellos, ADR-0009 no
+existe para nadie más y `docs/00` sigue diciendo que la rutina se asigna sola.
+
+Lo que Jordy dejó dicho de esa decisión:
+
+- **El entrenador o fisioterapeuta elige y asigna la rutina**: selecciona una plantilla de
+  su especialidad, revisa y ajusta la copia del paciente y confirma la asignación.
+- **El sistema deja de proponer y asignar rutinas solo al terminar el registro.**
+  ADR-0003 (motor de reglas) queda superado por ADR-0009.
+- **Se conservan** el snapshot (ADR-0001), los permisos y la validación de
+  contraindicaciones.
+- **Antes de modificar nada**, identificar todo lo que depende de `assignment_rules` o de
+  una «regla ganadora»: pantallas, acciones, consultas, funciones SQL, migraciones, tipos y
+  pruebas. Si hace falta migración, nueva y con `lib/db/types.ts` regenerado. Actualizar el
+  change de OpenSpec que corresponda.
+
+Puntos de partida en el código: `app/(pro)/pro/routines/[patientId]/page.tsx`,
+`components/routines/AssignmentForm.tsx`, `lib/routines/assignment*.ts`, las migraciones
+`*_routines_rule_assignment.sql`, `*_routines_auto_assignment.sql` y
+`*_routines_qa_rule_winner_recompute.sql`, `/rules` en el panel del admin y las suites
+`test:routines`, `test:rules*` y `test:routines:snapshot`. Contratos que siguen vigentes
+mientras no se acuerde otra cosa: `?dia=` e `?item=` en `docs/11` y el orden de los
+formularios de esa pantalla.
+
+KAN-19 (el «Guardando…» que se queda colgado) sigue abierto como **parcial** y se reprodujo
+precisamente en las pantallas de rutina y calendario del profesional: tenerlo presente al
+rehacer esa pantalla.
+
+---
+
 ## Orden sugerido
 
 Las cuatro fases de [`16-plan-de-mejora.md`](16-plan-de-mejora.md) ya están fusionadas (Fase 2:
@@ -297,6 +417,15 @@ KAN-11/5/7; Fase 3: KAN-9/10; Fase 4: KAN-6/8/13/14) salvo el paso a mano de su 
 eso, «adelgazar» dejó de ser el paso previo que bloqueaba todo lo demás, que es justo lo que
 [`16`](16-plan-de-mejora.md) §«Lo que no entra» daba por hecho al apartar 14.x y 16.x para
 «después de adelgazar»: los dos documentos ya dicen lo mismo, en vez de contradecirse.
+
+**Antes que nada (2026-09-25):**
+
+- **Fusionar el PR #41 y desplegar** (`git checkout main && git pull`, `git status`
+  limpio, `railway up`). Antes de cualquier demo, A.7: el proyecto de Supabase no pausado.
+- **F** — subir los documentos de ADR-0009 a una rama y empezar el flujo de asignación de
+  rutinas.
+
+Lo anterior, en su orden original:
 
 1. ~~**KAN-17** — fusionar el PR #31.~~ Hecho: fusionado en `main` (`a5c8bcc`).
 2. **A.1 y A.2** — decidir qué se hace con la CI y con el despliegue. Todo lo demás se
@@ -310,5 +439,6 @@ eso, «adelgazar» dejó de ser el paso previo que bloqueaba todo lo demás, que
 6. ~~**A.4**~~ Hecho, PR #36 fusionado. ~~**KAN-16**~~ Hecho, PR #37 fusionado.
 7. **B.3** — la sección 13 cierra el change. Ya no tiene nada que la bloquee: es lo único de
    código que queda abierto.
-8. **KAN-3** — PR #21, de un colaborador externo, revisado y corregido dos veces; decidir si
-   se fusiona ya o se espera su respuesta (ver «Estado de las suites» arriba).
+8. ~~**KAN-3**~~ Hecho: PR #21 fusionado (`d50f05d`).
+9. **`test:calendar` y `test:catalog`** — diagnosticar los dos fallos de «Estado de las
+   suites».

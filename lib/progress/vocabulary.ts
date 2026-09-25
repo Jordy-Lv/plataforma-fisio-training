@@ -113,17 +113,6 @@ export function previousMonthStart() {
     : `${year}-${String(month - 1).padStart(2, "0")}-01`;
 }
 
-/** La hora de ahora (0-23) en la zona del negocio, para saludar a tiempo. */
-export function currentHour() {
-  return Number(
-    new Intl.DateTimeFormat("en-US", {
-      hour: "numeric",
-      hourCycle: "h23",
-      timeZone,
-    }).format(new Date()),
-  );
-}
-
 /** La fecha `YYYY-MM-DD` de un `timestamptz` en el día del negocio. */
 function dayOf(value: string) {
   return new Intl.DateTimeFormat("en-CA", { timeZone }).format(new Date(value));

@@ -54,17 +54,29 @@ export function AppShell({
   withNav?: boolean;
   children: ReactNode;
 }) {
+  /*
+    Con menú, cabecera y cuerpo usan todo el ancho de la ventana: el menú queda
+    pegado a la izquierda y el contenido aprovecha el resto. Sin menú —las
+    pantallas de registro— se conserva la columna centrada.
+  */
+  const frame = withNav ? "" : "mx-auto max-w-[86rem]";
+
   return (
     <div
       className={cn(
-        "min-h-svh bg-background",
+        "flex min-h-svh flex-col bg-background",
         withNav &&
           "[--toast-inset-bottom:calc(3.5rem+env(safe-area-inset-bottom))] lg:[--toast-inset-bottom:0px]",
       )}
     >
       <ToastProvider>
         <header className="sticky top-0 z-40 border-b border-border bg-surface/90 backdrop-blur">
-          <div className="mx-auto flex max-w-[86rem] items-center justify-between gap-3 px-5 py-2 sm:px-8">
+          <div
+            className={cn(
+              "flex items-center justify-between gap-3 px-5 py-2 sm:px-8",
+              frame,
+            )}
+          >
             {/*
               El nombre del cliente se conserva en móvil y en la app instalada.
             */}
@@ -96,28 +108,52 @@ export function AppShell({
           </div>
 
           {role !== "patient" && (
-            <div className="mx-auto max-w-[86rem] px-5 pb-2 sm:px-8">
+            <div className={cn("px-5 pb-2 sm:px-8", frame)}>
               <PatientSearch />
             </div>
           )}
         </header>
 
-        <div className="mx-auto flex max-w-[86rem] items-start gap-8 px-5 sm:px-8">
+        <div
+          className={cn(
+            "flex w-full flex-1 px-5 sm:px-8",
+            frame,
+            withNav && "lg:pl-0",
+          )}
+        >
           {/*
-            `top-14` deja la barra lateral justo bajo la cabecera fija; con `h-`
-            calculado a partir de ella, el menú largo del administrador se
-            desplaza por su cuenta sin arrastrar la página.
+            Con menú, la barra lateral es un riel pegado al borde izquierdo de
+            la ventana, con su fondo y su borde, y ocupa todo el alto. El
+            contenido llega hasta 100rem (1600 px, donde empieza la clase
+            «extra-large» de Material 3) y se centra en el espacio que queda:
+            en un monitor grande el margen sobrante se reparte a los dos lados
+            en vez de acumularse a la derecha. El texto no se escala: de eso
+            se encargan el sistema operativo y el zoom del navegador. Dentro,
+            el menú es `sticky` justo bajo la cabecera fija y se desplaza por
+            su cuenta si no cabe, sin arrastrar la página. La cabecera del
+            personal lleva además el buscador de pacientes (111 px frente a
+            67 px): con el mismo `top` para todos, al bajar la página el
+            primer enlace del menú quedaba tapado por ella.
           */}
           {withNav && (
-            <aside className="sticky top-16 hidden w-56 shrink-0 overflow-y-auto py-8 lg:block lg:max-h-[calc(100svh-4rem)]">
-              <SidebarNav role={role} />
+            <aside className="hidden w-60 shrink-0 border-r border-border bg-surface lg:block">
+              <div
+                className={cn(
+                  "sticky overflow-y-auto px-3 py-8",
+                  role === "patient"
+                    ? "top-[4.25rem] max-h-[calc(100svh-4.25rem)]"
+                    : "top-28 max-h-[calc(100svh-7rem)]",
+                )}
+              >
+                <SidebarNav role={role} />
+              </div>
             </aside>
           )}
 
           <main
             className={cn(
               "min-w-0 flex-1 py-6 lg:py-8 lg:pb-14",
-              withNav ? "pb-28" : "pb-12",
+              withNav ? "pb-28 lg:mx-auto lg:max-w-[100rem] lg:pl-8" : "pb-12",
             )}
           >
             {/*

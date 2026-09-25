@@ -120,6 +120,12 @@ propio diálogo). Se revisan en `/ui/overlays`, que solo existe en desarrollo.
 6. **Antes de crear un componente**, busca si ya existe en `components/ui/**`. Antes de
    añadir una dependencia, justifícalo en el PR: el rediseño entero se hizo sin añadir
    ninguna.
+7. **En el teléfono, ningún acceso directo repite la barra inferior.** Si un destino ya
+   está en la barra —como entrada o como pestaña de una entrada—, no se añade como
+   acceso directo en la pantalla: solo suma ruido y alarga el scroll. Los accesos
+   directos móviles son para lo que la barra esconde tras «Menú». Se comprueba con
+   `isInMobileBar(role, href)` de `components/shell/nav-items.ts` en vez de fijar la
+   lista a mano, para que siga valiendo si el menú cambia.
 
 ---
 

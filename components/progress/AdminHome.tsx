@@ -5,16 +5,21 @@ import {
   CheckCircle2,
   ChevronRight,
   CircleAlert,
+  ClipboardList,
   Clock,
   CreditCard,
+  Megaphone,
+  Ruler,
   Store,
   UserPlus,
   UserX,
   Users,
+  Workflow,
   type LucideIcon,
 } from "lucide-react";
 
 import { Workspace } from "@/components/auth/Workspace";
+import { isInMobileBar } from "@/components/shell/nav-items";
 import { BusinessOverview } from "@/components/progress/BusinessOverview";
 import { Badge, type BadgeVariant } from "@/components/ui/Badge";
 import { cardVariants } from "@/components/ui/Card";
@@ -23,18 +28,12 @@ import {
   type ActivityItem,
   type AdminAttention,
 } from "@/lib/progress/overview-queries";
-import { currentHour, formatWhen } from "@/lib/progress/vocabulary";
+import { formatWhen } from "@/lib/progress/vocabulary";
 import { cn } from "cn";
 
 /** "1 membresía" y "3 membresías": el recuento y su nombre, una sola vez. */
 function count(n: number, singular: string, plural: string) {
   return n === 1 ? `1 ${singular}` : `${n} ${plural}`;
-}
-
-/** El saludo del día, en la hora del negocio y no la del servidor. */
-function greeting() {
-  const hour = currentHour();
-  return hour < 12 ? "Buenos días" : hour < 19 ? "Buenas tardes" : "Buenas noches";
 }
 
 type Task = {
@@ -109,9 +108,9 @@ function AttentionPanel({ attention }: { attention: AdminAttention }) {
   const tasks = tasksFrom(attention);
 
   return (
-    <section className={cn(cardVariants({ padding: "lg" }), "grid content-start gap-4")}>
+    <section className={cn(cardVariants({ padding: "sm" }), "grid content-start gap-3")}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-lg font-semibold">Pide tu atención hoy</h2>
+        <h2 className="text-base font-semibold">Pide tu atención hoy</h2>
         {tasks.length > 0 && (
           <Badge variant="warning">
             {count(tasks.length, "pendiente", "pendientes")}
@@ -120,7 +119,7 @@ function AttentionPanel({ attention }: { attention: AdminAttention }) {
       </div>
 
       {tasks.length === 0 ? (
-        <p className="flex items-center gap-3 rounded-xl bg-success-soft p-4 text-sm leading-6 text-success">
+        <p className="flex items-center gap-3 rounded-xl bg-success-soft p-3 text-sm leading-6 text-success">
           <CheckCircle2 className="size-5 shrink-0" aria-hidden="true" />
           Todo al día: no hay membresías por resolver, alertas sin leer ni
           pacientes sin profesional.
@@ -131,19 +130,21 @@ function AttentionPanel({ attention }: { attention: AdminAttention }) {
             <li key={task.key}>
               <Link
                 href={task.href}
-                className="flex min-h-14 items-center gap-3 rounded-xl border border-border p-3 transition-colors hover:border-brand hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                className="flex min-h-12 items-center gap-3 rounded-xl border border-border px-3 py-2 transition-colors hover:border-brand hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               >
                 <span
                   className={cn(
-                    "flex size-10 shrink-0 items-center justify-center rounded-lg",
+                    "flex size-9 shrink-0 items-center justify-center rounded-lg",
                     iconTone[task.tone],
                   )}
                 >
                   <task.icon className="size-5" aria-hidden="true" />
                 </span>
-                <span className="grid min-w-0 flex-1 gap-0.5">
-                  <span className="font-semibold">{task.title}</span>
-                  <span className="text-sm leading-5 text-muted-foreground">
+                <span className="grid min-w-0 flex-1 gap-0.5 sm:flex sm:items-baseline sm:gap-3">
+                  <span className="text-sm font-semibold sm:shrink-0">
+                    {task.title}
+                  </span>
+                  <span className="hidden text-xs leading-5 text-muted-foreground sm:inline sm:truncate">
                     {task.description}
                   </span>
                 </span>
@@ -160,60 +161,79 @@ function AttentionPanel({ attention }: { attention: AdminAttention }) {
   );
 }
 
-const shortcuts: {
-  href: string;
-  label: string;
-  hint: string;
-  icon: LucideIcon;
-}[] = [
-  {
-    href: "/people",
-    label: "Personas",
-    hint: "Altas, equipo y acompañamiento",
-    icon: UserPlus,
-  },
-  {
-    href: "/attendance",
-    label: "Asistencia por paciente",
-    hint: "Quién viene y cuánto",
-    icon: CalendarCheck,
-  },
-  {
-    href: "/memberships",
-    label: "Membresías",
-    hint: "Ingresos y vencimientos",
-    icon: CreditCard,
-  },
-  {
-    href: "/plans",
-    label: "Planes y servicios",
-    hint: "Lo que ofrece el negocio",
-    icon: Store,
-  },
+type Shortcut = { href: string; label: string; icon: LucideIcon };
+
+/** Escritorio: los cuatro destinos de todos los días; el resto está en el menú. */
+const shortcuts: Shortcut[] = [
+  { href: "/people", label: "Personas", icon: UserPlus },
+  { href: "/attendance", label: "Asistencia", icon: CalendarCheck },
+  { href: "/memberships", label: "Membresías", icon: CreditCard },
+  { href: "/plans", label: "Planes y servicios", icon: Store },
 ];
 
 /**
- * Los cuatro destinos que más usa el administrador, con icono y en rejilla de
- * dos: en el teléfono caben sin desplazarse y cada uno mide más de 44 px.
+ * Teléfono: solo lo que la barra inferior **no** enseña. Regla de las vistas
+ * móviles: si un destino ya está en la barra —como entrada o como pestaña de
+ * una entrada—, repetirlo aquí solo añade ruido. Por eso la lista se filtra
+ * con `isInMobileBar` en vez de fijarse a mano: si el menú cambia, los
+ * accesos se ajustan solos. Hoy quedan los seis que viven tras «Menú».
+ */
+const mobileShortcuts: Shortcut[] = [
+  { href: "/pro/alerts", label: "Alertas", icon: Bell },
+  { href: "/memberships", label: "Membresías", icon: CreditCard },
+  { href: "/attendance", label: "Asistencia", icon: CalendarCheck },
+  { href: "/screenings", label: "Tamizaje", icon: Ruler },
+  { href: "/plans", label: "Planes", icon: Store },
+  { href: "/offer", label: "Vitrina", icon: Megaphone },
+  { href: "/templates", label: "Plantillas", icon: ClipboardList },
+  { href: "/rules", label: "Asignación", icon: Workflow },
+].filter((shortcut) => !isInMobileBar("admin", shortcut.href));
+
+/**
+ * Los accesos rápidos. En escritorio, una fila de cuatro botones de 48 px; en
+ * el teléfono, una rejilla de tres columnas de iconos con su nombre debajo,
+ * cada uno de más de 44 px, con lo que la barra inferior no enseña.
  */
 function Shortcuts() {
   return (
-    <section className={cn(cardVariants({ padding: "lg" }), "grid content-start gap-4")}>
-      <h2 className="text-lg font-semibold">Accesos rápidos</h2>
-      <ul className="grid grid-cols-2 gap-3">
+    <section aria-labelledby="accesos-rapidos">
+      <h2 id="accesos-rapidos" className="sr-only">
+        Accesos rápidos
+      </h2>
+      <ul className="grid grid-cols-3 gap-2 sm:hidden">
+        {mobileShortcuts.map((shortcut) => (
+          <li key={shortcut.href}>
+            <Link
+              href={shortcut.href}
+              className={cn(
+                cardVariants({ interactive: true, padding: "none" }),
+                "flex h-full min-h-16 flex-col items-center justify-center gap-1 px-1 py-2 text-center text-xs font-medium leading-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+              )}
+            >
+              <shortcut.icon
+                className="size-5 shrink-0 text-brand"
+                aria-hidden="true"
+              />
+              {shortcut.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <ul className="hidden grid-cols-4 gap-3 sm:grid">
         {shortcuts.map((shortcut) => (
           <li key={shortcut.href}>
             <Link
               href={shortcut.href}
-              className="grid h-full min-h-24 content-start gap-2 rounded-xl border border-border p-3 transition-colors hover:border-brand hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              className={cn(
+                cardVariants({ interactive: true, padding: "none" }),
+                "flex h-full min-h-12 items-center gap-2.5 px-3 py-2 text-sm font-semibold leading-5 hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+              )}
             >
-              <shortcut.icon className="size-6 text-brand" aria-hidden="true" />
-              <span className="text-sm font-semibold leading-5">
-                {shortcut.label}
-              </span>
-              <span className="text-xs leading-4 text-muted-foreground">
-                {shortcut.hint}
-              </span>
+              <shortcut.icon
+                className="size-5 shrink-0 text-brand"
+                aria-hidden="true"
+              />
+              {shortcut.label}
             </Link>
           </li>
         ))}
@@ -222,26 +242,45 @@ function Shortcuts() {
   );
 }
 
-/** Lo último que pasó: sesiones cerradas y altas nuevas, más reciente primero. */
+/**
+ * Lo último que pasó: sesiones cerradas y altas nuevas, más reciente primero.
+ *
+ * En escritorio es la columna de la izquierda y **no marca la altura de la
+ * fila**: `xl:h-0 xl:min-h-full` la estira hasta la altura de la columna de
+ * la derecha y, si no cabe, la lista se desplaza dentro de la tarjeta en vez
+ * de alargar la página.
+ */
+/** En el teléfono solo se ven las tres más recientes: el resto alarga la página. */
+const MOBILE_ACTIVITY = 3;
+
 function RecentActivity({ items }: { items: ActivityItem[] }) {
   return (
-    <section className={cn(cardVariants({ padding: "lg" }), "grid content-start gap-4")}>
-      <h2 className="text-lg font-semibold">Actividad reciente</h2>
+    <section
+      className={cn(
+        cardVariants({ padding: "sm" }),
+        "flex flex-col gap-2 xl:h-0 xl:min-h-full",
+      )}
+    >
+      <h2 className="text-base font-semibold">Actividad reciente</h2>
       {items.length === 0 ? (
         <p className="text-sm leading-6 text-muted-foreground">
           Aún no hay movimiento. Aquí aparecerán las sesiones que cierren los
           pacientes y las altas nuevas.
         </p>
       ) : (
-        <ol className="grid">
-          {items.map((item) => (
+        <ol className="-mx-1 grid content-start overflow-y-auto px-1 xl:flex-1">
+          {items.map((item, index) => (
             <li
               key={`${item.kind}-${item.id}`}
-              className="flex items-start gap-3 border-b border-border py-3 last:border-b-0"
+              className={cn(
+                "flex items-start gap-3 border-b border-border py-2.5 last:border-b-0",
+                index >= MOBILE_ACTIVITY && "hidden sm:flex",
+                index === MOBILE_ACTIVITY - 1 && "max-sm:border-b-0",
+              )}
             >
               <span
                 className={cn(
-                  "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full",
+                  "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full",
                   item.kind === "session"
                     ? "bg-success-soft text-success"
                     : "bg-brand-soft text-brand-soft-foreground",
@@ -265,7 +304,7 @@ function RecentActivity({ items }: { items: ActivityItem[] }) {
                     ? "completó una sesión"
                     : "se dio de alta"}
                 </span>
-                <span className="text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   {item.detail ? `${item.detail} · ` : ""}
                   {formatWhen(item.at)}
                 </span>
@@ -279,13 +318,16 @@ function RecentActivity({ items }: { items: ActivityItem[] }) {
 }
 
 /**
- * El panel del administrador, en el orden en que se lee al entrar:
+ * El panel del administrador, pensado para verse entero sin desplazarse en
+ * un portátil de 13" (1440 × 790 útiles). Sin descripción bajo el título: el
+ * saludo ya está en la cabecera y esa línea era la que no cabía.
  *
- * 1. **Lo que pide acción hoy** —membresías, alertas, pacientes sin
- *    profesional— junto a los accesos rápidos.
- * 2. **El panorama del mes**: tres cifras con su comparación frente al mes
- *    anterior.
- * 3. **La actividad reciente**, para ver que el negocio se mueve.
+ * - **Escritorio (`xl`)**: dos columnas. A la izquierda, la actividad
+ *   reciente; a la derecha, lo que pide acción hoy, el panorama del mes en
+ *   una tira de tres cifras y los accesos rápidos.
+ * - **Teléfono y tableta**: una sola columna, con lo que pide acción primero.
+ *   Por eso la actividad va *después* en el HTML y la rejilla la sube a la
+ *   izquierda solo en escritorio.
  *
  * El trabajo clínico del día sigue siendo del profesional y vive en `/pro`.
  * Todo sale de `getAdminDashboard`, en un solo `Promise.all`.
@@ -298,30 +340,27 @@ export async function AdminHome({
   name: string | null;
 }) {
   const dashboard = await getAdminDashboard(id);
-  const firstName = name?.split(" ")[0];
 
   return (
     <Workspace
       title="Panel de administración"
       name={name}
       role="admin"
-      description={`${greeting()}${firstName ? `, ${firstName}` : ""}. Esto es lo que pide tu atención y cómo va el negocio este mes.`}
     >
-      <div className="grid gap-8">
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <AttentionPanel attention={dashboard.attention} />
-          </div>
+      <div className="grid gap-4 xl:grid-cols-[minmax(18rem,1fr)_minmax(0,2.2fr)]">
+        <div className="grid content-start gap-3 xl:col-start-2 xl:row-start-1">
+          <AttentionPanel attention={dashboard.attention} />
+          <BusinessOverview
+            overview={dashboard.overview}
+            previous={dashboard.previous}
+            newPatients={dashboard.newPatients}
+          />
           <Shortcuts />
         </div>
 
-        <BusinessOverview
-          overview={dashboard.overview}
-          previous={dashboard.previous}
-          newPatients={dashboard.newPatients}
-        />
-
-        <RecentActivity items={dashboard.activity} />
+        <div className="xl:col-start-1 xl:row-start-1">
+          <RecentActivity items={dashboard.activity} />
+        </div>
       </div>
     </Workspace>
   );

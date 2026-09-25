@@ -195,6 +195,15 @@ function hrefsOf(item: NavItem): string[] {
 }
 
 /**
+ * Si una ruta ya está a la vista en la barra inferior del teléfono: es una de
+ * sus entradas visibles o una pestaña de ellas. Regla de las pantallas
+ * móviles: un acceso directo que ya está en la barra solo añade ruido.
+ */
+export function isInMobileBar(role: UserRole, href: string): boolean {
+  return primaryNavItems(role).some((item) => hrefsOf(item).includes(href));
+}
+
+/**
  * Ruta de la entrada que hay que marcar como activa, o `null` si ninguna
  * corresponde. Devuelve una sola: gana la coincidencia más larga, porque
  * estando en `/patient/profile` encajan tanto «Inicio» (`/patient`) como «Mi
