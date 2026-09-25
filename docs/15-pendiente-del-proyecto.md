@@ -1,18 +1,20 @@
 # Lo que falta por hacer
 
-Foto del **2026-09-25**, tomada con `main` = `857f296` (PRs
+Foto del **2026-09-25**, tomada con `main` = `87039ad` (PR
+[#42](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/42), la asignación manual de
+rutinas, fusionado; antes, los PRs
 [#40](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/40) y
-[#41](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/41) fusionados).
-Entre los dos rediseñan el panel del administrador (ver «E» abajo). El
+[#41](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/41) rediseñaron el panel del
+administrador, ver «E» abajo). El
 [#21](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/21) (KAN-3, rendimiento) ya
 está en `main` (`d50f05d`). Las ramas antiguas se borraron el 2026-09-25: en el remoto solo
 queda `main`.
 
-**Lo siguiente es el flujo de asignación de rutinas** (sección F): el cambio de la
-asignación automática por reglas a una asignación manual por el profesional. Empieza por ahí
-una sesión nueva, pero **lee F antes de tocar código**: las decisiones (ADR-0009 y ADR-0010)
-y el plan (change `manual-routine-assignment`) ya están en el repositorio, aprobados; falta
-implementarlo.
+**La asignación manual de rutinas ya está en `main`** (sección F, PR #42): de ese change solo
+quedan la 7.1, bloqueada por KAN-19, y la 7.2, en el teléfono. **El cierre de
+`improve-frontend-ux`** (B.3, tareas 13.1–13.4) va en la rama
+`claude/exciting-albattani-8jt0nu`; tras fusionarla, a ese change solo le quedan
+verificaciones a mano.
 
 Este documento reúne **todo** lo que queda abierto, dentro y fuera de OpenSpec. La fuente de
 verdad de cada tarea del change en curso sigue siendo su `tasks.md`, y cada casilla se marca
@@ -42,17 +44,19 @@ Notación: **[código]** hay que escribirlo · **[verif.]** es comprobar, medir 
 | `add-routine-execution` | 28 | — | **1** |
 | `add-routine-calendar` | 14 | — | — |
 | `simplify-navigation-and-panel` | 12 | — | **1** |
-| `improve-frontend-ux` | 128 | — | **11** |
+| `improve-frontend-ux` | 132 | — | **7** |
+| `manual-routine-assignment` | 32 | — | **2** |
 
-Los seis changes funcionales (todo salvo `improve-frontend-ux`) están cerrados salvo dos
-verificaciones en teléfono real (`add-routine-execution` 6.1 y `simplify-navigation-and-panel`
-1.2), que caben en la misma sesión que la 13.5 de `improve-frontend-ux` (§C.1). Las secciones
+Los seis primeros changes funcionales están cerrados salvo dos verificaciones en teléfono
+real (`add-routine-execution` 6.1 y `simplify-navigation-and-panel` 1.2), que caben en la
+misma sesión que la 13.5 de `improve-frontend-ux` y la 7.2 de `manual-routine-assignment`
+(§C.1). A `manual-routine-assignment` le queda además la 7.1, que espera a KAN-19 (§F). Las secciones
 16 y 14 de `improve-frontend-ux` —el bulto de código que quedaba— ya están las dos en `main`
 (PRs [#34](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/34) y
-[#35](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/35)). Lo que queda vivo en
-código es solo la sección 13 (cierre del change, ya sin nada que la bloquee) y las
-verificaciones a mano de la sección 6 y de C.2, más el bloque de operación que nunca estuvo
-en ninguna lista.
+[#35](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/35)). Lo que quedaba vivo en
+código era solo la sección 13, cuyas cuatro tareas de código (13.1–13.4) están hechas en la
+rama de B.3. Quedan las verificaciones a mano de la sección 6, de C.2 y la 13.5–13.6, más el
+bloque de operación que nunca estuvo en ninguna lista.
 
 ---
 
@@ -249,20 +253,22 @@ PR [#35](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/35), en `mai
 suelto que sigue relacionado con esta sección: el mismo patrón de paginación en memoria, ya
 en `/attendance` y no en `/exercises` ni `/templates`.
 
-### B.3 — Sección 13: cierre del change
+### B.3 — Sección 13: cierre del change — **código hecho, sin fusionar**
 
-Rama `docs/cierre-frontend`. Ya no tiene nada que la bloquee: 16 y 14 están las dos en
-`main`. Es lo único de código que queda del change.
+Rama `claude/exciting-albattani-8jt0nu` (el plan decía `docs/cierre-frontend`). Las cuatro
+tareas de código están hechas:
 
-- **[código] 13.1** — Añadir a [`docs/10`](10-sistema-de-diseno.md) los componentes nuevos
-  (`SubmitButton`, `FlashToast`, `ConfirmSubmit`, `CatalogPicker`, `PatientHeader`,
-  `StaffWorkboard`) y cuándo usar `ConfirmDialog` frente a `ConfirmSubmit`.
-- **[código] 13.2** — Escribir `docs/adr/0009-estado-de-listado-en-la-url.md`: por qué el
-  estado vive en la URL y por qué el autoenvío no es una excepción del ADR-0008.
-- **[código] 13.3** — Declarar `lib/shared/**` como territorio compartido en la sección 3 de
-  [`CLAUDE.md`](../CLAUDE.md).
-- **[código] 13.4** — Añadir a `scripts/verify-design-system.test.mjs` la comprobación de que
-  todo segmento dinámico con `page.tsx` tiene su `loading.tsx`.
+- ~~**13.1**~~ — [`docs/10`](10-sistema-de-diseno.md) documenta los componentes que faltaban,
+  los listados, los componentes de dominio reutilizados y cuándo usar `ConfirmSubmit` frente
+  a `ConfirmDialog`. `StaffWorkboard` ya no existe (KAN-5 lo sustituyó por `ProHome`).
+- ~~**13.2**~~ — [ADR-0011](adr/0011-estado-de-listado-en-la-url.md), no 0009 como decía el
+  plan: ese número ya lo tomó la asignación manual de rutinas.
+- ~~**13.3**~~ — `lib/shared/**` declarado compartido en [`CLAUDE.md`](../CLAUDE.md) §3.
+- ~~**13.4**~~ — `test:design` exige un `loading.tsx` en cada segmento dinámico con página. Solo
+  2 de 11 lo tenían; se añadieron los 9 que faltaban con la forma de su pantalla.
+
+Queda:
+
 - **[verif.] 13.6** — Las veinticinco suites en verde sobre la rama fusionada, más los cuatro
   de CI.
 
@@ -272,7 +278,7 @@ Rama `docs/cierre-frontend`. Ya no tiene nada que la bloquee: 16 y 14 están las
 
 Ninguna de estas se puede cerrar leyendo código.
 
-### C.1 — La pasada con el teléfono real. **Cuatro casillas de cuatro sitios distintos, una sola sesión.**
+### C.1 — La pasada con el teléfono real. **Cinco casillas de cinco sitios distintos, una sola sesión.**
 
 Este es el atajo que más rinde: las cuatro esperan el mismo teléfono y el mismo recorrido
 —alta de paciente → registro → asignación → ejecución de sesión.
@@ -284,6 +290,9 @@ Este es el atajo que más rinde: las cuatro esperan el mismo teléfono y el mism
   alertas— en un teléfono real. **Es la única casilla abierta de `add-routine-execution`.**
 - **1.2** (`simplify-navigation-and-panel`) — Es el mismo recorrido: su propio enunciado remite
   a cerrar estas mismas casillas. Se marca sola al hacer las otras.
+- **7.2** (`manual-routine-assignment`) — Elegir, ajustar y confirmar una rutina como
+  profesional a 375 px; el paciente no ve el borrador y ve la rutina al confirmar. Es el mismo
+  recorrido, en el paso de asignación.
 - **Camino 8, PWA** — El manifest, los iconos y el service worker están implementados y
   verificados en navegador desde el 2026-09-05; falta el recorrido de instalación en un
   teléfono real.
@@ -430,7 +439,8 @@ decisiones de diseño (todas en su `design.md`):
   `#assign-routine` (tarea 5.1). Las filas nuevas de `docs/11` entran con la implementación
   (tarea 4.9).
 
-**Implementado el 2026-09-25** en la rama `claude/nifty-clarke-s8tcs6` (32 de 34 tareas):
+**Implementado el 2026-09-25 y fusionado** en el PR
+[#42](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/42) (`87039ad`, 32 de 34 tareas):
 migración [`20260925120000_routines_manual_assignment`](../supabase/migrations/20260925120000_routines_manual_assignment.sql),
 acciones y consultas en `lib/routines/`, la pantalla por pasos (`AssignmentFlow`,
 `AssignmentSteps`, `TemplateChoice`, `RoutineDraftBar`, `RoutineEditor`), `test:routines`
@@ -489,26 +499,25 @@ eso, «adelgazar» dejó de ser el paso previo que bloqueaba todo lo demás, que
 - **PR #41 fusionado** (`857f296`). Falta desplegar (`git checkout main && git pull`,
   `git status` limpio, `railway up`). Antes de cualquier demo, A.7: el proyecto de Supabase no
   pausado.
-- **F** — ~~subir los documentos de ADR-0009~~ y ~~proponer el plan~~ (hechos, aprobados el
-  2026-09-25); siguiente: implementar con `/opsx:apply`. Plan en el change
-  [`manual-routine-assignment`](../openspec/changes/manual-routine-assignment/proposal.md)
-  (con [ADR-0010](adr/0010-especialidad-en-la-asignacion-de-rutinas.md)); la retirada del motor
-  va aparte, en `retire-rules-engine`.
+- **F** — ~~subir los documentos de ADR-0009~~, ~~proponer el plan~~ e ~~implementarlo~~
+  (PR #42 fusionado, `87039ad`). Quedan la 7.1 (KAN-19) y la 7.2 (teléfono, §C.1). La
+  retirada del motor va aparte, en `retire-rules-engine`, todavía sin proponer.
+- **B.3** — 13.1–13.4 hechas en `claude/exciting-albattani-8jt0nu`; falta fusionarla.
 
 Lo anterior, en su orden original:
 
 1. ~~**KAN-17** — fusionar el PR #31.~~ Hecho: fusionado en `main` (`a5c8bcc`).
 2. **A.1 y A.2** — decidir qué se hace con la CI y con el despliegue. Todo lo demás se
    construye encima de esa señal, y hoy no existe.
-3. **C.1** — la pasada con el teléfono: media hora, cierra cuatro casillas de tres `tasks.md`
+3. **C.1** — la pasada con el teléfono: media hora, cierra cinco casillas de cuatro `tasks.md`
    distintos y es lo único que valida de verdad la experiencia del paciente, que es el usuario
    que importa.
 4. ~~**B.1**~~ Hecha, PR #34 fusionado.
 5. ~~**B.2**~~ Hecha, PR #35 fusionado. Queda **KAN-15** suelto (mismo patrón de paginación en
    `/attendance`), en pausa a propósito.
 6. ~~**A.4**~~ Hecho, PR #36 fusionado. ~~**KAN-16**~~ Hecho, PR #37 fusionado.
-7. **B.3** — la sección 13 cierra el change. Ya no tiene nada que la bloquee: es lo único de
-   código que queda abierto.
+7. **B.3** — la sección 13 cierra el change. 13.1–13.4 hechas (pendiente de fusionar); quedan
+   13.5 (C.1) y 13.6.
 8. ~~**KAN-3**~~ Hecho: PR #21 fusionado (`d50f05d`).
 9. **`test:calendar` y `test:catalog`** — diagnosticar los dos fallos de «Estado de las
    suites».

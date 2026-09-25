@@ -143,7 +143,7 @@ Rama `docs/cierre-frontend`. Se ejecuta al final.
 
 - **[código] 13.1** — Añadir a `docs/10-sistema-de-diseno.md` los componentes
   nuevos y cuándo usar `ConfirmDialog` frente a `ConfirmSubmit`.
-- **[código] 13.2** — Escribir `docs/adr/0009-estado-de-listado-en-la-url.md`: por
+- **[código] 13.2** — Escribir `docs/adr/0011-estado-de-listado-en-la-url.md`: por
   qué el estado vive en la URL y por qué el autoenvío no es una excepción del
   ADR-0008.
 - **[código] 13.3** — Declarar `lib/shared/**` como territorio compartido en la
