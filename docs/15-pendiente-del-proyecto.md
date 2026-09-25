@@ -10,8 +10,9 @@ queda `main`.
 
 **Lo siguiente es el flujo de asignación de rutinas** (sección F): el cambio de la
 asignación automática por reglas a una asignación manual por el profesional. Empieza por ahí
-una sesión nueva, pero **lee F antes de tocar código**: la decisión que lo gobierna todavía no
-está en el repositorio.
+una sesión nueva, pero **lee F antes de tocar código**: las decisiones (ADR-0009 y ADR-0010)
+y el plan (change `manual-routine-assignment`) ya están en el repositorio, aprobados; falta
+implementarlo.
 
 Este documento reúne **todo** lo que queda abierto, dentro y fuera de OpenSpec. La fuente de
 verdad de cada tarea del change en curso sigue siendo su `tasks.md`, y cada casilla se marca
@@ -388,26 +389,59 @@ código por reglas); en [`16`](16-plan-de-mejora.md) se quedó la versión de `m
 KAN-7, D1 y Fases 2–3 describen el plan **anterior** a ADR-0009 y no son alcance vigente.
 `docs/00` ya no dice que la rutina se asigna sola; **el código sí lo sigue haciendo**.
 
-Lo que Jordy dejó dicho de esa decisión:
+Lo que dicen las dos decisiones:
 
-- **El entrenador o fisioterapeuta elige y asigna la rutina**: selecciona una plantilla de
-  su especialidad, revisa y ajusta la copia del paciente y confirma la asignación.
-- **El sistema deja de proponer y asignar rutinas solo al terminar el registro.**
-  ADR-0003 (motor de reglas) queda superado por ADR-0009.
-- **Se conservan** el snapshot (ADR-0001), los permisos y la validación de
-  contraindicaciones.
-- **Antes de modificar nada**, identificar todo lo que depende de `assignment_rules` o de
-  una «regla ganadora»: pantallas, acciones, consultas, funciones SQL, migraciones, tipos y
-  pruebas. Si hace falta migración, nueva y con `lib/db/types.ts` regenerado. Actualizar el
-  change de OpenSpec que corresponda.
+- **[ADR-0009](adr/0009-asignacion-manual-de-rutinas.md)** — el entrenador o fisioterapeuta
+  elige una plantilla de su especialidad, revisa y ajusta la copia y confirma. El sistema no
+  propone ni asigna solo al terminar el registro. Se conservan el snapshot (ADR-0001), los
+  permisos y la exclusión de contraindicados.
+- **[ADR-0010](adr/0010-especialidad-en-la-asignacion-de-rutinas.md)** (supera en parte a
+  ADR-0007) — crear y confirmar la rutina exige que la plantilla sea de la especialidad del
+  profesional y una `care_assignments` vigente de ese tipo; el admin puede las dos. Editar los
+  ejercicios de una rutina ya creada sigue abierto a cualquier profesional a cargo.
 
-Puntos de partida en el código: `app/(pro)/pro/routines/[patientId]/page.tsx`,
-`components/routines/AssignmentForm.tsx`, `lib/routines/assignment*.ts`, las migraciones
-`*_routines_rule_assignment.sql`, `*_routines_auto_assignment.sql` y
-`*_routines_qa_rule_winner_recompute.sql`, `/rules` en el panel del admin y las suites
-`test:routines`, `test:rules*` y `test:routines:snapshot`. Contratos que siguen vigentes
-mientras no se acuerde otra cosa: `?dia=` e `?item=` en `docs/11` y el orden de los
-formularios de esa pantalla.
+**Plan: el change
+[`manual-routine-assignment`](../openspec/changes/manual-routine-assignment/proposal.md)**,
+validado con `openspec validate --strict`. Aprobado por Jordy el 2026-09-25, junto con estas
+decisiones de diseño (todas en su `design.md`):
+
+- El borrador es `pending_review`, que el paciente ya no puede leer, rotulado «Borrador».
+  Crearlo no cierra la rutina activa ni genera alertas; confirmarlo cierra la anterior, activa
+  la nueva y avisa como hasta ahora.
+- Un solo borrador por paciente y tipo; con uno abierto hay que descartarlo antes de elegir
+  otra plantilla. Descartar **archiva**, no borra.
+- Crear un borrador exige el registro terminado.
+- Contraindicados: se quitan solos al crear el borrador y la pantalla dice cuáles; añadir uno
+  a mano se permite con aviso.
+- Un día vacío bloquea la confirmación; un día con uno o dos ejercicios solo pide
+  confirmación con aviso.
+- Sin ranking ni «recomendada»: ficha breve del paciente y filtros de plantillas por enlaces.
+- `copy_routine_template` también comprueba ADR-0010, y un trigger impide activar un
+  borrador con un `update` directo.
+- La pantalla va por pasos (elegir → ajustar y confirmar → activa); cada profesional ve la
+  rutina de su tipo; el admin cambia de tipo con chips `?tipo=`. El buscador del catálogo
+  solo aparece con `?dia=` o `?item=`.
+- Sin alerta al terminar el registro: el listado de `/pro/routines` ya distingue a quien no
+  tiene rutina.
+- **Contratos de suites aprobados:** `test:routines` se reescribe sobre el ciclo nuevo, y
+  `test:calendar` y `test:smoke` añaden el paso de elegir plantilla antes del formulario
+  `#assign-routine` (tarea 5.1). Las filas nuevas de `docs/11` entran con la implementación
+  (tarea 4.9).
+
+**Siguiente paso:** `/opsx:apply` sobre `manual-routine-assignment`, desde la tarea 1.2. La
+1.3 (avisar al equipo de que se reescribe `finish_patient_onboarding`, del slice 1) va antes
+de abrir el PR. Necesita la base local de Supabase (`npm run db:reset`) para las tareas del
+grupo 2.
+
+**Fuera de este change:** retirar `assignment_rules`, `/rules`, el simulador, `seed:rules` y
+las suites `test:rules*` va en otro change, `retire-rules-engine`, todavía sin proponer.
+Hasta entonces el motor queda como código legado que la aplicación ya no invoca.
+
+**Fallo encontrado en el camino de reglas, sin arreglar a propósito:** cuando el motor deja
+una rutina en `pending_review` (días cortos), `private.assign_routine_from_rules` cierra la
+activa y la «restaura» después, pero el trigger `closed_routine_cancels_calendar` ya canceló
+su calendario al cerrarla, y restaurarla no lo recupera. El borrador nuevo no usa ese camino, y
+el motor se retira en `retire-rules-engine`.
 
 KAN-19 (el «Guardando…» que se queda colgado) sigue abierto como **parcial** y se reprodujo
 precisamente en las pantallas de rutina y calendario del profesional: tenerlo presente al
@@ -429,8 +463,8 @@ eso, «adelgazar» dejó de ser el paso previo que bloqueaba todo lo demás, que
 - **PR #41 fusionado** (`857f296`). Falta desplegar (`git checkout main && git pull`,
   `git status` limpio, `railway up`). Antes de cualquier demo, A.7: el proyecto de Supabase no
   pausado.
-- **F** — ~~subir los documentos de ADR-0009~~ (hecho); empezar el flujo de asignación de
-  rutinas. Plan en el change
+- **F** — ~~subir los documentos de ADR-0009~~ y ~~proponer el plan~~ (hechos, aprobados el
+  2026-09-25); siguiente: implementar con `/opsx:apply`. Plan en el change
   [`manual-routine-assignment`](../openspec/changes/manual-routine-assignment/proposal.md)
   (con [ADR-0010](adr/0010-especialidad-en-la-asignacion-de-rutinas.md)); la retirada del motor
   va aparte, en `retire-rules-engine`.

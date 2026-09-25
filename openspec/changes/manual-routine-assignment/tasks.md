@@ -38,9 +38,9 @@
 - [ ] 4.8 Completar en `scripts/verify-routine-assignment.test.mjs` el recorrido HTTP completo (elegir → borrador invisible para el paciente → ajustar → confirmar con cuerpo `{}` → visible) y retirar los subtests del motor (D6). Verificación: `npm run test:routines` en verde.
 - [ ] 4.9 Actualizar `docs/11-contratos-de-las-suites-http.md` §3 y §4 con las filas y frases de D5. Verificación: cada marcador nuevo lo usa al menos una suite.
 
-## 5. Suites que asignan por la pantalla (contrato por acordar)
+## 5. Suites que asignan por la pantalla (contrato aprobado)
 
-- [ ] 5.1 Acordar con el usuario el contrato nuevo para `test:calendar` y `test:smoke`: un paso previo de elegir plantilla, con las mismas aserciones después (D5). Verificación: aprobación explícita anotada en este `tasks.md`.
+- [x] 5.1 Acordar con el usuario el contrato nuevo para `test:calendar` y `test:smoke`: un paso previo de elegir plantilla, con las mismas aserciones después (D5). Verificación: aprobación explícita anotada en este `tasks.md`. **Aprobado por Jordy el 2026-09-25.**
 - [ ] 5.2 Añadir a `scripts/verify-calendar.test.mjs` el paso de elegir plantilla antes de `#assign-routine`, y retirar la regla que inserta (su plantilla sigue). Verificación: `npm run test:calendar` en verde.
 - [ ] 5.3 Añadir a `scripts/verify-demo-smoke.test.mjs` el paso de elegir plantilla por especialidad (entrenamiento y rehabilitación), y retirar la regla. Verificación: `npm run test:smoke` en verde, con el contraindicado excluido.
 

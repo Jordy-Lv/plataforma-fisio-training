@@ -205,9 +205,9 @@ Estados:
 
 ### D5. Contratos de suites
 
-Cambian filas de `docs/11` §3 y el texto de §4. Aprobado por el usuario para `test:routines`.
-Hay que acordarlo antes de fusionar para `test:calendar` y `test:smoke`, que también asignan
-por esta pantalla:
+Cambian filas de `docs/11` §3 y el texto de §4. Aprobado por Jordy el 2026-09-25 para
+`test:routines`, y también para `test:calendar` y `test:smoke`, que asignan por esta misma
+pantalla:
 
 | Pantalla | Marcador | Suites |
 |---|---|---|
@@ -234,6 +234,14 @@ subtest por escenario de `specs/routine-assignment` y `specs/patient-onboarding`
 
 Salen los subtests del motor (BACK-002, `no_match`, «Cambiar la regla…»). Su código SQL sigue
 vivo hasta `retire-rules-engine`, que decidirá si se conservan en `test:rules`.
+
+### Decisiones ratificadas
+
+Jordy revisó y ratificó el 2026-09-25, sin vetos, las decisiones de este documento que no
+venían dadas: registro terminado para crear borrador (D2.2), descartar archiva (D2.3), un
+borrador abierto bloquea elegir otra plantilla (D2.2), ADR-0010 también en
+`copy_routine_template` (D2.6), guarda de activación (D2.7), buscador solo con foco (D4),
+chips `?tipo=` para el admin (D4) y ninguna alerta al terminar el registro (Non-Goals).
 
 ## Risks / Trade-offs
 
