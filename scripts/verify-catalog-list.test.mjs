@@ -128,6 +128,12 @@ test("Listado del catálogo de ejercicios", { timeout: 120_000 }, async (t) => {
     sembrados > 500,
     `El catálogo debe estar sembrado; hay ${sembrados}. Ejecuta npm run seed:exercises.`,
   );
+  // `/exercises` lista todos los ejercicios, también los propios: la política
+  // de lectura es `using (true)` para cualquier autenticado. Por eso el total
+  // esperado es la tabla entera, no solo lo sembrado; si no, un ejercicio
+  // propio (los de `seed:calendar-demo`, o uno creado a mano) descuadra la
+  // cuenta sin que la pantalla haga nada mal.
+  const catalogo = Number(sql("select count(*) from public.exercises").trim());
 
   const password = `Test-${crypto.randomUUID()}!`;
   const people = {};
@@ -191,7 +197,7 @@ test("Listado del catálogo de ejercicios", { timeout: 120_000 }, async (t) => {
       const client = await signedInAs(role);
       const { response, html } = await client.request("/exercises");
       assert.equal(response.status, 200, `${role} no pudo abrir el catálogo`);
-      assert.equal(totalShown(html), sembrados);
+      assert.equal(totalShown(html), catalogo);
       assert.equal(cardNames(html).length, 24, "La primera página trae 24 tarjetas");
       assert.ok(
         html.includes('aria-label="Páginas del catálogo"') &&
@@ -205,7 +211,7 @@ test("Listado del catálogo de ejercicios", { timeout: 120_000 }, async (t) => {
     const client = await signedInAs("admin");
     const { html } = await client.request("/exercises?q=sentadilla");
     const total = totalShown(html);
-    assert.ok(total > 0 && total < sembrados, "La búsqueda en español no acotó nada");
+    assert.ok(total > 0 && total < catalogo, "La búsqueda en español no acotó nada");
     for (const name of cardNames(html)) assert.match(name.toLowerCase(), /sentadilla/);
     const { html: previousName } = await client.request("/exercises?q=squat");
     assert.equal(totalShown(previousName), 0, "No deben quedar nombres del catálogo en inglés");
@@ -215,7 +221,7 @@ test("Listado del catálogo de ejercicios", { timeout: 120_000 }, async (t) => {
     const client = await signedInAs("admin");
     const { html } = await client.request("/exercises?equipment=dumbbells");
     const conMancuernas = totalShown(html);
-    assert.ok(conMancuernas > 0 && conMancuernas < sembrados);
+    assert.ok(conMancuernas > 0 && conMancuernas < catalogo);
     assert.equal(
       conMancuernas,
       Number(sql("select count(*) from public.exercises where equipment @> array['dumbbells']").trim()),
@@ -250,7 +256,7 @@ test("Listado del catálogo de ejercicios", { timeout: 120_000 }, async (t) => {
       "/exercises?muscle=inventado&equipment=&page=cero",
     );
     assert.equal(response.status, 200);
-    assert.equal(totalShown(html), sembrados);
+    assert.equal(totalShown(html), catalogo);
   });
 
   await t.test("La segunda página trae ejercicios distintos", async () => {

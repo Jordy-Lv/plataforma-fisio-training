@@ -81,8 +81,9 @@ Antes de esa pasada fallaban dos suites en `main`, las dos ajenas al PR #41:
   `/exercises` con `count(*) … where is_custom = false`, pero `/exercises` lista **todos**
   los ejercicios (la política de lectura es `using (true)` para cualquier autenticado), así
   que cualquier ejercicio propio —de esa semilla o creado a mano en la demo— descuadra el
-  total. Sin ejercicios propios pasa 9/9. Corregirlo es cambiar un contrato de suite:
-  pendiente de decisión.
+  total. **Corregido de acuerdo con Jordy (2026-09-25):** la suite compara con el total de
+  la tabla; la guarda de «catálogo sembrado» sigue contando solo lo sembrado. Reproducido
+  antes (6/9 tras `seed:calendar-demo`) y 9/9 después, con y sin esa semilla.
 
 El último defecto real de código (KAN-17, abajo) se cerró el 2026-09-11. Aviso operativo del 2026-09-12, no de código:
 `npm run seed:exercises` depende de descargar
