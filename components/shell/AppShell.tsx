@@ -124,12 +124,22 @@ export function AppShell({
           {/*
             Con menú, la barra lateral es un riel pegado al borde izquierdo de
             la ventana, con su fondo y su borde, y ocupa todo el alto. Dentro,
-            el menú es `sticky` justo bajo la cabecera fija (`top-16`) y se
-            desplaza por su cuenta si no cabe, sin arrastrar la página.
+            el menú es `sticky` justo bajo la cabecera fija y se desplaza por
+            su cuenta si no cabe, sin arrastrar la página. La cabecera del
+            personal lleva además el buscador de pacientes (111 px frente a
+            67 px): con el mismo `top` para todos, al bajar la página el
+            primer enlace del menú quedaba tapado por ella.
           */}
           {withNav && (
             <aside className="hidden w-60 shrink-0 border-r border-border bg-surface lg:block">
-              <div className="sticky top-16 max-h-[calc(100svh-4rem)] overflow-y-auto px-3 py-8">
+              <div
+                className={cn(
+                  "sticky overflow-y-auto px-3 py-8",
+                  role === "patient"
+                    ? "top-[4.25rem] max-h-[calc(100svh-4.25rem)]"
+                    : "top-28 max-h-[calc(100svh-7rem)]",
+                )}
+              >
                 <SidebarNav role={role} />
               </div>
             </aside>
