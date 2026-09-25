@@ -66,8 +66,11 @@ corriéndolas sobre `origin/main` sin sus cambios):
   día vacío, asignación, programación y primera sesión completada» (URL del día esperada
   distinta). **Diagnosticado el 2026-09-25:** «El editor conserva fecha y vista…» hace
   `querySelector('form[method="get"]')` y se queda con el buscador de pacientes de la
-  cabecera (PR #34), que va antes que el del catálogo. Arreglarlo es cambiar el selector de
-  la suite: pendiente de acordarlo (`CLAUDE.md` §12). «Recorrido completo» ya pasa.
+  cabecera (PR #34), que va antes que el del catálogo. El selector ya se corrigió (PR #42,
+  acordado con Jordy). Lo que sigue fallando es el final del subtest: al salir del catálogo
+  espera un buscador general y `#assign-routine a` con la rutina activa, y las dos cosas
+  contradicen el diseño aprobado de `manual-routine-assignment` (D4). Adaptar esa parte está
+  pendiente de acordarse. «Recorrido completo» ya pasa.
 - **`test:catalog` 3/9** tras `seed:calendar-demo`: esa semilla crea tres ejercicios
   «· Ejemplo» y la suite espera exactamente los 868 de free-exercise-db (871 ≠ 868).
   `npm run db:clean` también los señala.
