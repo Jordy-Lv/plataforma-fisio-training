@@ -1259,8 +1259,13 @@ export type Database = {
         }
         Returns: Json
       }
+      confirm_routine_draft: { Args: { target_routine: string }; Returns: Json }
       copy_routine_template: {
         Args: { patient_id: string; template_id: string }
+        Returns: string
+      }
+      create_routine_draft: {
+        Args: { target_patient: string; template_id: string }
         Returns: string
       }
       current_role: {
@@ -1269,6 +1274,10 @@ export type Database = {
       }
       deactivate_person: {
         Args: { expected_assignments: number; person_id: string }
+        Returns: undefined
+      }
+      discard_routine_draft: {
+        Args: { target_routine: string }
         Returns: undefined
       }
       finish_patient_onboarding: {

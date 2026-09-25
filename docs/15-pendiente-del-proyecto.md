@@ -10,8 +10,9 @@ queda `main`.
 
 **Lo siguiente es el flujo de asignación de rutinas** (sección F): el cambio de la
 asignación automática por reglas a una asignación manual por el profesional. Empieza por ahí
-una sesión nueva, pero **lee F antes de tocar código**: la decisión que lo gobierna todavía no
-está en el repositorio.
+una sesión nueva, pero **lee F antes de tocar código**: las decisiones (ADR-0009 y ADR-0010)
+y el plan (change `manual-routine-assignment`) ya están en el repositorio, aprobados; falta
+implementarlo.
 
 Este documento reúne **todo** lo que queda abierto, dentro y fuera de OpenSpec. La fuente de
 verdad de cada tarea del change en curso sigue siendo su `tasks.md`, y cada casilla se marca
@@ -63,8 +64,10 @@ corriéndolas sobre `origin/main` sin sus cambios):
 - **`test:calendar` 3/9** — fallan «El editor conserva fecha y vista al abrir, buscar y
   cerrar el catálogo» («La rutina debe abrirse desde la cuadrícula.») y «Recorrido completo:
   día vacío, asignación, programación y primera sesión completada» (URL del día esperada
-  distinta). Sin diagnosticar. Sospecha: depende de la hora (se corrió de noche en Bogotá)
-  o del estado que deja `seed:calendar-demo`.
+  distinta). **Cerrado en el PR #42:** la suite tomaba el buscador de pacientes de la
+  cabecera (PR #34) en vez del del catálogo, y el final del subtest esperaba el buscador
+  general y `#assign-routine` que el diseño de `manual-routine-assignment` retira. Ajustado
+  de acuerdo con Jordy: 9/9.
 - **`test:catalog` 3/9** tras `seed:calendar-demo`: esa semilla crea tres ejercicios
   «· Ejemplo» y la suite espera exactamente los 868 de free-exercise-db (871 ≠ 868).
   `npm run db:clean` también los señala.
@@ -379,38 +382,96 @@ El flujo actual es confuso de usar y de ver (revisión de Jordy, 2026-09-25): la
 buscador de catálogo permanente y la rutina con tarjetas dentro de tarjetas, y el
 profesional no puede elegir la plantilla.
 
-**Decisión tomada, pero todavía fuera del repositorio.** Jordy la redactó como
-`docs/adr/0009-asignacion-manual-de-rutinas.md`, junto con cambios en `README.md` y en
-`docs/00`, `01`, `02`, `03`, `04`, `05`, `06`, `07`, `16` y `adr/README.md`. **Nada de eso
-está en el remoto**: el ADR es un archivo sin seguimiento y el resto está en un
-`git stash` («docs asignacion manual (pendiente)») de su copia local en Windows. **Primer
-paso de la sesión nueva: que esos documentos lleguen a una rama.** Sin ellos, ADR-0009 no
-existe para nadie más y `docs/00` sigue diciendo que la rutina se asigna sola.
+**Decisión ya en el repositorio.** [ADR-0009](adr/0009-asignacion-manual-de-rutinas.md) y los
+cambios en `README.md`, `docs/00`–`07` y `adr/README.md` llegaron desde la rama
+`docs/asignacion-manual`, fusionada sobre `main` el 2026-09-25. Tres conflictos, resueltos así:
+en [`02`](02-modelo-de-datos.md) y [`03`](03-motor-de-reglas.md) manda ADR-0009 (en `02` se
+conserva el párrafo de KAN-8; en `03`, «Estado de implementación» dice dónde asigna hoy el
+código por reglas); en [`16`](16-plan-de-mejora.md) se quedó la versión de `main`, así que su
+KAN-7, D1 y Fases 2–3 describen el plan **anterior** a ADR-0009 y no son alcance vigente.
+`docs/00` ya no dice que la rutina se asigna sola; **el código sí lo sigue haciendo**.
 
-Lo que Jordy dejó dicho de esa decisión:
+Lo que dicen las dos decisiones:
 
-- **El entrenador o fisioterapeuta elige y asigna la rutina**: selecciona una plantilla de
-  su especialidad, revisa y ajusta la copia del paciente y confirma la asignación.
-- **El sistema deja de proponer y asignar rutinas solo al terminar el registro.**
-  ADR-0003 (motor de reglas) queda superado por ADR-0009.
-- **Se conservan** el snapshot (ADR-0001), los permisos y la validación de
-  contraindicaciones.
-- **Antes de modificar nada**, identificar todo lo que depende de `assignment_rules` o de
-  una «regla ganadora»: pantallas, acciones, consultas, funciones SQL, migraciones, tipos y
-  pruebas. Si hace falta migración, nueva y con `lib/db/types.ts` regenerado. Actualizar el
-  change de OpenSpec que corresponda.
+- **[ADR-0009](adr/0009-asignacion-manual-de-rutinas.md)** — el entrenador o fisioterapeuta
+  elige una plantilla de su especialidad, revisa y ajusta la copia y confirma. El sistema no
+  propone ni asigna solo al terminar el registro. Se conservan el snapshot (ADR-0001), los
+  permisos y la exclusión de contraindicados.
+- **[ADR-0010](adr/0010-especialidad-en-la-asignacion-de-rutinas.md)** (supera en parte a
+  ADR-0007) — crear y confirmar la rutina exige que la plantilla sea de la especialidad del
+  profesional y una `care_assignments` vigente de ese tipo; el admin puede las dos. Editar los
+  ejercicios de una rutina ya creada sigue abierto a cualquier profesional a cargo.
 
-Puntos de partida en el código: `app/(pro)/pro/routines/[patientId]/page.tsx`,
-`components/routines/AssignmentForm.tsx`, `lib/routines/assignment*.ts`, las migraciones
-`*_routines_rule_assignment.sql`, `*_routines_auto_assignment.sql` y
-`*_routines_qa_rule_winner_recompute.sql`, `/rules` en el panel del admin y las suites
-`test:routines`, `test:rules*` y `test:routines:snapshot`. Contratos que siguen vigentes
-mientras no se acuerde otra cosa: `?dia=` e `?item=` en `docs/11` y el orden de los
-formularios de esa pantalla.
+**Plan: el change
+[`manual-routine-assignment`](../openspec/changes/manual-routine-assignment/proposal.md)**,
+validado con `openspec validate --strict`. Aprobado por Jordy el 2026-09-25, junto con estas
+decisiones de diseño (todas en su `design.md`):
 
-KAN-19 (el «Guardando…» que se queda colgado) sigue abierto como **parcial** y se reprodujo
-precisamente en las pantallas de rutina y calendario del profesional: tenerlo presente al
-rehacer esa pantalla.
+- El borrador es `pending_review`, que el paciente ya no puede leer, rotulado «Borrador».
+  Crearlo no cierra la rutina activa ni genera alertas; confirmarlo cierra la anterior, activa
+  la nueva y avisa como hasta ahora.
+- Un solo borrador por paciente y tipo; con uno abierto hay que descartarlo antes de elegir
+  otra plantilla. Descartar **archiva**, no borra.
+- Crear un borrador exige el registro terminado.
+- Contraindicados: se quitan solos al crear el borrador y la pantalla dice cuáles; añadir uno
+  a mano se permite con aviso.
+- Un día vacío bloquea la confirmación; un día con uno o dos ejercicios solo pide
+  confirmación con aviso.
+- Sin ranking ni «recomendada»: ficha breve del paciente y filtros de plantillas por enlaces.
+- `copy_routine_template` también comprueba ADR-0010, y un trigger impide activar un
+  borrador con un `update` directo.
+- La pantalla va por pasos (elegir → ajustar y confirmar → activa); cada profesional ve la
+  rutina de su tipo; el admin cambia de tipo con chips `?tipo=`. El buscador del catálogo
+  solo aparece con `?dia=` o `?item=`.
+- Sin alerta al terminar el registro: el listado de `/pro/routines` ya distingue a quien no
+  tiene rutina.
+- **Contratos de suites aprobados:** `test:routines` se reescribe sobre el ciclo nuevo, y
+  `test:calendar` y `test:smoke` añaden el paso de elegir plantilla antes del formulario
+  `#assign-routine` (tarea 5.1). Las filas nuevas de `docs/11` entran con la implementación
+  (tarea 4.9).
+
+**Implementado el 2026-09-25** en la rama `claude/nifty-clarke-s8tcs6` (32 de 34 tareas):
+migración [`20260925120000_routines_manual_assignment`](../supabase/migrations/20260925120000_routines_manual_assignment.sql),
+acciones y consultas en `lib/routines/`, la pantalla por pasos (`AssignmentFlow`,
+`AssignmentSteps`, `TemplateChoice`, `RoutineDraftBar`, `RoutineEditor`), `test:routines`
+reescrita (14/14) y el paso de elegir plantilla en `test:calendar` y `test:smoke`. Quedan
+abiertas **7.1** (`test:smoke` arrastra KAN-19, abajo) y **7.2** (teléfono real).
+
+**Deuda anotada:** `public.copy_routine_template` sigue creando una rutina **activa** sin
+borrador ni exclusión de contraindicados (ahora sí con ADR-0010). La usan
+`test:routines:snapshot`, `test:routines:items` y `test:calendar` para preparar datos;
+cerrarla del todo exige cambiar esas suites (design, Risks).
+
+**KAN-19 se reproduce aquí de forma fiable, y ya se sabe algo más.** Decisión de Jordy
+(2026-09-25): **se deja documentado para un change posterior**; ni parche en el shell
+compartido sin consenso del equipo, ni subir Next/React sin confirmar antes que es del
+framework y no de la integración del proyecto. Con JavaScript, tras
+elegir o confirmar, la base se actualiza pero el botón puede quedarse en «Asignando…» y la
+pantalla no cambia de paso. Diagnóstico del 2026-09-25 con Chromium a 375 px:
+
+- El servidor termina la respuesta de la acción en ~0,2 s (medido con `curl` y desde la
+  página); no quedan peticiones abiertas ni *chunks* por cargar.
+- No es la precarga: en el cuelgue no hay ninguna petición `_rsc`.
+- Si la respuesta se entrega **entera** al cliente de React (en un trozo o re-troceada hasta
+  en trozos de 1 byte, pero ya descargada), funciona siempre (8 de 8). Si React la procesa
+  **mientras llega**, se cuelga en la mayoría de los intentos.
+- Next 15.5.26 (el último 15.x) no lo corrige (2 cuelgues de 3).
+
+Es un problema de tiempos del cliente de Next/React al consumir en *streaming* la respuesta
+de una server action, no de esta pantalla: `test:smoke` falla igual en `main` en la sesión
+del paciente. Sin JavaScript (lo que recorren las suites HTTP) todo funciona.
+
+**Fuera de este change:** retirar `assignment_rules`, `/rules`, el simulador, `seed:rules` y
+las suites `test:rules*` va en otro change, `retire-rules-engine`, todavía sin proponer.
+Hasta entonces el motor queda como código legado que la aplicación ya no invoca.
+
+**Fallo encontrado en el camino de reglas, sin arreglar a propósito:** cuando el motor deja
+una rutina en `pending_review` (días cortos), `private.assign_routine_from_rules` cierra la
+activa y la «restaura» después, pero el trigger `closed_routine_cancels_calendar` ya canceló
+su calendario al cerrarla, y restaurarla no lo recupera. El borrador nuevo no usa ese camino, y
+el motor se retira en `retire-rules-engine`.
+
+KAN-19 sigue abierto: ver el diagnóstico de arriba.
 
 ---
 
@@ -428,8 +489,11 @@ eso, «adelgazar» dejó de ser el paso previo que bloqueaba todo lo demás, que
 - **PR #41 fusionado** (`857f296`). Falta desplegar (`git checkout main && git pull`,
   `git status` limpio, `railway up`). Antes de cualquier demo, A.7: el proyecto de Supabase no
   pausado.
-- **F** — subir los documentos de ADR-0009 a una rama y empezar el flujo de asignación de
-  rutinas.
+- **F** — ~~subir los documentos de ADR-0009~~ y ~~proponer el plan~~ (hechos, aprobados el
+  2026-09-25); siguiente: implementar con `/opsx:apply`. Plan en el change
+  [`manual-routine-assignment`](../openspec/changes/manual-routine-assignment/proposal.md)
+  (con [ADR-0010](adr/0010-especialidad-en-la-asignacion-de-rutinas.md)); la retirada del motor
+  va aparte, en `retire-rules-engine`.
 
 Lo anterior, en su orden original:
 

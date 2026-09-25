@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { bodyParts } from "@/lib/catalog/body-parts";
+import { environments, levels, templateKinds } from "@/lib/catalog/vocabulary";
 import { isSchedulingDate, todayInBogota } from "@/lib/routines/calendar";
 
 const id = z.string().uuid("Selecciona un registro válido.");
@@ -47,4 +48,32 @@ export const scheduleRoutineSchema = z.object({
   scheduledOn: calendarDateSchema.refine((date) => isSchedulingDate(date, todayInBogota()), "Elige una fecha desde hoy y hasta un año."),
 });
 export const cancelScheduleSchema = z.object({ patientId: id, scheduleId: id });
-export type RoutineActionState = { error?: string; success?: string };
+/**
+ * `at` lo marcan las acciones de la asignación: la pantalla muestra solo el
+ * acuse de la última, porque sus tres estados conviven entre pasos.
+ */
+export type RoutineActionState = { error?: string; success?: string; at?: number };
+
+/** Elegir una plantilla crea el borrador (ADR-0009). */
+export const chooseTemplateSchema = z.object({
+  patientId: z.string().uuid("Selecciona un paciente válido."),
+  templateId: z.string().uuid("Elige una plantilla de la lista."),
+});
+/** Confirmar o descartar un borrador. */
+export const routineDraftSchema = z.object({
+  patientId: z.string().uuid("Selecciona un paciente válido."),
+  routineId: z.string().uuid("Recarga la página: no encontramos el borrador."),
+});
+/**
+ * Filtros de la lista de plantillas, en la URL. Un valor inválido se ignora en
+ * vez de romper la página: el filtro solo estrecha. `tipo` solo lo usa el
+ * administrador; al profesional le manda su especialidad.
+ */
+export const templateFiltersSchema = z.object({
+  dias: z.coerce.number().int().min(1).max(7).optional().catch(undefined),
+  nivel: z.enum(levels).optional().catch(undefined),
+  entorno: z.enum(environments).optional().catch(undefined),
+  tipo: z.enum(templateKinds).optional().catch(undefined),
+  paso: z.literal("plantilla").optional().catch(undefined),
+});
+export type TemplateFilters = z.infer<typeof templateFiltersSchema>;

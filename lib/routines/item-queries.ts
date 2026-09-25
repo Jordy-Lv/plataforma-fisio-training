@@ -10,9 +10,9 @@ import { createClient } from "@/lib/supabase/server";
  * contraindicaciones del ejercicio— y no tiene sentido cargarlas cada vez que
  * el paciente abre su rutina en el teléfono.
  */
-export async function editableRoutines(patientId: string) {
+export async function editableRoutines(patientId: string, routineId?: string) {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("routines")
     .select(
       `id, name, kind, status, notes,
@@ -23,6 +23,10 @@ export async function editableRoutines(patientId: string) {
     )
     .eq("patient_id", patientId)
     .order("created_at", { ascending: false });
+  // La pantalla por pasos muestra una sola rutina: no carga el contenido de las
+  // cerradas ni de las del otro tipo.
+  if (routineId) query = query.eq("id", routineId);
+  const { data, error } = await query;
 
   if (error)
     throw new Error(`No se pudieron consultar las rutinas: ${error.message}`);

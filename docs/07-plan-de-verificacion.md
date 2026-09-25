@@ -20,18 +20,20 @@ El camino 9 no es opcional bajo ninguna circunstancia.
 **Pasa si:** las tres sesiones funcionan con credenciales propias y el paciente aparece en
 la lista del profesional que lo creó — y solo en la de ese profesional.
 
-## 2. Motor de reglas
+## 2. Asignación manual de rutina
 
-**Objetivo:** demostrar que la asignación está parametrizada y no escrita a mano.
+**Objetivo:** comprobar que el profesional elige y asigna la rutina, y que cada paciente
+recibe una copia independiente.
 
-1. Al terminar el onboarding, el paciente recibe una rutina automáticamente.
-2. Revisar la rutina asignada: coherente con `home` + `bands` + su objetivo.
-3. **Ningún ejercicio de la rutina tiene `knee` en `contraindications`.**
-4. Entrar como `admin`, cambiar la plantilla asociada a esa regla.
-5. Crear un segundo paciente con el mismo perfil: recibe la **nueva** plantilla.
+1. Completar el onboarding de un paciente y confirmar que todavía no tiene rutina.
+2. Entrar como su entrenador o fisioterapeuta y abrir la asignación de rutina.
+3. Elegir una plantilla de la especialidad correspondiente y revisar la copia.
+4. Confirmar que los ejercicios contraindicados por una condición activa no se pueden
+   asignar.
+5. Ajustar y confirmar la rutina; verificar que el paciente la ve en el celular.
 
-**Pasa si:** los pasos 3 y 5 se cumplen. El 5 es la prueba de que el motor es
-configurable; sin él, no hay motor.
+**Pasa si:** no hay rutina antes de la acción profesional, la asignación queda vinculada al
+paciente correcto y la plantilla base permanece intacta.
 
 ## 3. Snapshot de rutina
 
@@ -40,7 +42,7 @@ configurable; sin él, no hay motor.
 1. Como profesional, abrir la rutina del paciente y modificarla: cambiar series de un
    ejercicio, eliminar otro, añadir uno nuevo.
 2. Consultar en la base de datos `template_items` de la plantilla de origen.
-3. Crear un tercer paciente que caiga en la misma regla.
+3. Crear un tercer paciente y asignarle la misma plantilla.
 
 **Pasa si:** `template_items` está **idéntica** a antes del paso 1, y el tercer paciente
 recibe la plantilla original, sin los ajustes del primero.
@@ -139,7 +141,8 @@ y **se vuelve a recorrer entero**, no solo el paso que falló.
 | # | Camino | Estado | Fecha | Notas |
 |---|---|---|---|---|
 | 1 | Alta y onboarding | ✅ | 2026-09-05 | Verificado con `npm run test:people` (10/10), incluido «Camino 1 completo por formularios y acciones del servidor»: admin crea profesional physio, este crea paciente y el paciente completa objetivo, casa, bandas y condición de rodilla moderada; las tres credenciales funcionan y otro profesional no ve al paciente. Paso 2 revisado en navegador a 375 × 812, sin desbordamiento y con objetivos táctiles de 44 px o más. `npm run test:auth:resilience` (14/14) verifica recuperación ante fallos de sesión y conservación de respuestas. Falta el recorrido en teléfono real del día 10. |
-| 2 | Motor de reglas | ✅ | 2026-09-05 | Recorrido completo contra la aplicación local con las cuentas de la semilla. Paso 1 y 2: un paciente con `rehab` + `home` + `bands` y condición `knee` activa cae en la regla «Rehabilitación de rodilla» y recibe esa plantilla, sin escribir una línea de código — con la salvedad de que hoy **no es automático al terminar el onboarding**: la dispara el profesional a cargo desde `/pro/routines/[patientId]`. Paso 3: con la plantilla tal cual pasa de forma trivial, porque ninguno de sus ejercicios contraindica `knee`; para probar el filtro de verdad se contraindicó «Quad Stretch» y se repitió la asignación: el ejercicio no llega a la rutina, que pierde exactamente uno (10 de 11) y sigue sin ningún `knee` en `contraindications`. Pasos 4 y 5: el `admin` cambia la plantilla de esa regla desde `/rules/[id]` y el siguiente paciente con el mismo perfil recibe la plantilla nueva («Rehabilitación lumbar»), no la anterior. Las suites `npm run test:routines` («Cambiar la regla asigna otra plantilla y conserva ambas especialidades») y `npm run test:rules:panel` («Cambiar la plantilla de una regla cambia lo que se asignaría») cubren el resto de forma automática; el paso 3 con exclusión real y el paso 5 con un segundo paciente se verificaron a mano porque ninguna de las dos los cubría así. Todo lo creado se borró y la regla quedó apuntando a su plantilla original. Falta el recorrido en teléfono real del día 10. |
+| 2 | Motor de reglas (verificación histórica) | ✅ | 2026-09-05 | En esa fecha se verificó el flujo automático por reglas que implementaba la aplicación. Esa evidencia conserva el resultado histórico de la prueba; el flujo ya no representa el comportamiento requerido. La prueba de aceptación vigente es «Asignación manual de rutina», descrita arriba y registrada en la fila «2 bis». |
+| 2 bis | Asignación manual de rutina | ✅ | 2026-09-25 | Change [`manual-routine-assignment`](../openspec/changes/manual-routine-assignment/proposal.md). Verificado contra la pantalla real y la API con `npm run test:routines` (14/14): el entrenador ve solo plantillas de entrenamiento y la ficha del paciente, sin recomendada ni buscador; elegir crea un borrador que el paciente no ve, sin eventos ni alertas y sin el ejercicio contraindicado (queda en «Qué se excluyó»); un segundo envío no crea otro borrador; un `update` directo no lo activa; ADR-0010 rechaza por RPC al entrenador con plantilla de rehabilitación, al profesional sin asignación, al paciente y al anónimo, y el admin prepara los dos tipos; confirmar publica la rutina, cierra la activa con sus sesiones y avisa solo a quien entrena ese tipo; un día vacío bloquea la confirmación y los días cortos solo avisan; terminar el registro ya no asigna nada aunque una regla coincida. `test:calendar` y `test:smoke` recorren el paso de elegir plantilla. Falta el recorrido en teléfono real a 375 px (tarea 7.2 del change). |
 | 3 | Snapshot de rutina | ✅ | 2026-09-05 | Verificado contra la pantalla real con `npm run test:routines:items` y contra la API con `npm run test:routines:snapshot`: el profesional a cargo cambia series, repeticiones, peso y descanso —el ítem queda marcado como ajustado—, quita un ejercicio, añade otro del catálogo y sustituye uno conservando posición y prescripción; `template_items` sigue idéntica tras cada paso y el paciente siguiente recibe la plantilla original. Un profesional sin asignación y el propio paciente no cambian nada aunque se les entregue el formulario. Revisado a 375 px sin desbordamiento horizontal y sin controles por debajo de 44 px. Falta el recorrido en teléfono real del día 10. |
 | 4 | Ejecución desde el celular | ✅ | 2026-09-05 | Evidencia en `openspec/changes/add-routine-execution/session-verification.md`: `npm run test:routines:sessions` (18/18 en el recorrido documentado), acciones HTTP de inicio, registro y cierre, valores reales, esfuerzo, saltado con dolor 8 en rodilla y observación persistente. Navegador a 375 × 812: detalle con imagen, actualización y recarga; sin desbordamiento y controles de 44 px o más. Falta el recorrido en teléfono real del día 10. |
 | 5 | Alertas | ✅ | 2026-09-05 | Evidencia en `openspec/changes/add-routine-execution/session-verification.md`: `npm run test:routines:sessions` (18/18 en el recorrido documentado) genera dolor persistente tras tres sesiones y comprueba contexto y acceso de ambos profesionales a cargo y admin; el profesional ajeno no accede. Incluye recorrido por formularios HTTP y lectura del aviso por admin, sin duplicarlo al repetir el cierre. Falta el recorrido en teléfono real del día 10. |

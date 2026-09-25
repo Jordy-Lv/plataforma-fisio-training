@@ -2,7 +2,7 @@
 
 Aplicación web (PWA) que centraliza en una sola herramienta la operación de un negocio
 que combina **entrenamiento físico** y **fisioterapia**: registro de clientes, asignación
-automática de rutinas por reglas, ejecución desde el celular con reporte de dolor,
+de rutinas por el profesional, ejecución desde el celular con reporte de dolor,
 tamizaje con gráficas de evolución, control de asistencia y control de mensualidades.
 
 Hoy ese trabajo se hace con Excel, Drive, WhatsApp y papel. No hay forma de saber, de un
@@ -30,7 +30,7 @@ vistazo, quién está cumpliendo, quién reportó dolor o quién dejó de asisti
 - [`docs/00-contexto-y-alcance.md`](docs/00-contexto-y-alcance.md) — el problema, qué entra y qué **no** entra en la demo.
 - [`docs/01-arquitectura.md`](docs/01-arquitectura.md) — stack, por qué cada pieza, estructura del repositorio.
 - [`docs/02-modelo-de-datos.md`](docs/02-modelo-de-datos.md) — tablas, relaciones y convenciones de esquema.
-- [`docs/03-motor-de-reglas.md`](docs/03-motor-de-reglas.md) — cómo se asigna una rutina automáticamente, sin IA.
+- [`docs/03-motor-de-reglas.md`](docs/03-motor-de-reglas.md) — cómo el profesional elige, ajusta y asigna una rutina.
 - [`docs/04-roles-y-permisos.md`](docs/04-roles-y-permisos.md) — los roles y la matriz de acceso que implementa RLS.
 - [`docs/05-flujo-de-trabajo.md`](docs/05-flujo-de-trabajo.md) — OpenSpec, ramas, PRs y el protocolo anti-colisión.
 - [`docs/06-cronograma-y-slices.md`](docs/06-cronograma-y-slices.md) — las dos semanas, los 4 slices y quién es dueño de qué.
