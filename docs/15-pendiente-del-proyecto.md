@@ -430,8 +430,10 @@ eso, «adelgazar» dejó de ser el paso previo que bloqueaba todo lo demás, que
   `git status` limpio, `railway up`). Antes de cualquier demo, A.7: el proyecto de Supabase no
   pausado.
 - **F** — ~~subir los documentos de ADR-0009~~ (hecho); empezar el flujo de asignación de
-  rutinas: inventario de dependencias de `assignment_rules` y rediseño de
-  `/pro/routines/[patientId]`.
+  rutinas. Plan en el change
+  [`manual-routine-assignment`](../openspec/changes/manual-routine-assignment/proposal.md)
+  (con [ADR-0010](adr/0010-especialidad-en-la-asignacion-de-rutinas.md)); la retirada del motor
+  va aparte, en `retire-rules-engine`.
 
 Lo anterior, en su orden original:
 
