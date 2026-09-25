@@ -196,7 +196,7 @@ npm run build
 lee los archivos y falla si aparece un color literal fuera de `app/globals.css` y
 `lib/pwa/theme.ts`, una tipografía escrita a mano, una copia de `inputClass`, un grupo de
 rutas sin sus estados de carga y de error o un segmento dinámico con página sin su
-`loading.tsx`. Son las tres cosas que rompen la identidad
+`loading.tsx`. Son las cinco cosas que rompen la identidad
 visual sin que `typecheck` ni `lint` digan nada.
 
 Lo que la auditoría no puede ver —contraste real, tamaño táctil, foco visible, lectura a
