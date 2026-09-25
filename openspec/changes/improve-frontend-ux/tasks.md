@@ -203,6 +203,7 @@ final, después de la 16.
   - Solo 2 de 11 lo tenían. Se añadieron los 9 que faltaban, cada uno con la forma de su pantalla (decidido con Jordy el 2026-09-25, en vez de una lista de excepciones). `test:design` 5/5, y falla nombrando el archivo si se quita uno.
 - [ ] 13.5 Recorrer los caminos del paciente en un teléfono real y registrar el resultado
 - [ ] 13.6 Las veinticinco suites en verde sobre la rama fusionada, más los cuatro de CI
+  - **2026-09-25, sobre `main` = `c7be7ea`** (PR #43 fusionado), tras `db:reset`, `seed:exercises`, `seed:templates` y `seed:progress-demo`, contra `next start` en el 3000: hoy son **31** suites, no veinticinco. **30 de 31 en verde** (324 subtests). Los cuatro de CI (`typecheck`, `lint`, `test:design` 5/5, `build`) en verde. Solo `test:smoke` queda en 7/11: fallan 6–8 por KAN-19 (el acuse «guardado» no aparece en la sesión del paciente con JavaScript), igual que en la 7.1 de `manual-routine-assignment`. Queda abierta hasta que se cierre KAN-19.
 
 ## 14. Densidad de los listados — rama `ui/densidad-listados`
 

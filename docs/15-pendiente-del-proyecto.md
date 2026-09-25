@@ -62,8 +62,10 @@ bloque de operación que nunca estuvo en ninguna lista.
 
 ## Estado de las suites y tickets abiertos
 
-**Dos suites fallan en `main` a 2026-09-25**, las dos ajenas al PR #41 (se comprobó
-corriéndolas sobre `origin/main` sin sus cambios):
+**Pasada completa del 2026-09-25 sobre `main` = `c7be7ea`** (tarea 13.6 de
+`improve-frontend-ux`): **30 de 31 suites en verde** tras `db:reset`, `seed:exercises`,
+`seed:templates` y `seed:progress-demo`. Solo `test:smoke` queda en 7/11, por KAN-19 (§F).
+Antes de esa pasada fallaban dos suites en `main`, las dos ajenas al PR #41:
 
 - **`test:calendar` 3/9** — fallan «El editor conserva fecha y vista al abrir, buscar y
   cerrar el catálogo» («La rutina debe abrirse desde la cuadrícula.») y «Recorrido completo:
@@ -74,7 +76,14 @@ corriéndolas sobre `origin/main` sin sus cambios):
   de acuerdo con Jordy: 9/9.
 - **`test:catalog` 3/9** tras `seed:calendar-demo`: esa semilla crea tres ejercicios
   «· Ejemplo» y la suite espera exactamente los 868 de free-exercise-db (871 ≠ 868).
-  `npm run db:clean` también los señala.
+  `npm run db:clean` también los señala. **Diagnosticado el 2026-09-25: el fallo es de la
+  suite, no de la aplicación.** `verify-catalog-list` compara el total que muestra
+  `/exercises` con `count(*) … where is_custom = false`, pero `/exercises` lista **todos**
+  los ejercicios (la política de lectura es `using (true)` para cualquier autenticado), así
+  que cualquier ejercicio propio —de esa semilla o creado a mano en la demo— descuadra el
+  total. **Corregido de acuerdo con Jordy (2026-09-25):** la suite compara con el total de
+  la tabla; la guarda de «catálogo sembrado» sigue contando solo lo sembrado. Reproducido
+  antes (6/9 tras `seed:calendar-demo`) y 9/9 después, con y sin esa semilla.
 
 El último defecto real de código (KAN-17, abajo) se cerró el 2026-09-11. Aviso operativo del 2026-09-12, no de código:
 `npm run seed:exercises` depende de descargar
@@ -87,6 +96,13 @@ En la ejecución de CI del PR #41, `Typecheck, lint y build` terminó correctame
 specs` no llegó a ejecutar OpenSpec porque el workflow intenta instalar `openspec@1`, una
 versión que npm no publica (`ETARGET`). Es un defecto del workflow independiente de la
 facturación; el problema histórico de minutos de Actions sigue documentado abajo.
+**Corregido el 2026-09-25:** el paquete `openspec` de npm es un marcador vacío (solo publica
+`0.0.0`); OpenSpec se publica como `@fission-ai/openspec`, que es lo que instala ahora
+`ci.yml`. Con él, `openspec validate --all --strict` pasaba 7 de 8 changes: fallaba
+`simplify-navigation-and-panel`, cuya propuesta declaraba cuatro capacidades modificadas pero
+no tenía ningún delta en `specs/`. **Resuelto el mismo día, de acuerdo con Jordy:** se
+escribieron sus deltas a partir del código vigente (sin KAN-7 ni KAN-9, que ya no lo están)
+y ahora pasan los 8.
 
 Cuatro tickets quedaron abiertos en Jira el 2026-09-10/11, sin `tasks.md` propio porque no son
 parte de ningún change de OpenSpec en curso:
