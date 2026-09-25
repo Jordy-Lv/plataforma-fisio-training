@@ -28,10 +28,19 @@ pide [`CLAUDE.md`](../../../CLAUDE.md) §12.
 
 ### Modified Capabilities
 
-- `auth-and-roles`: cierre y reasignación de `care_assignments`, y su vista en Personas.
-- `exercise-library-and-rules`: presentación del apartado de asignación y alta de plantilla.
-- `routine-execution`: disparo automático del motor y reparto de alertas por especialidad.
-- `progress-and-memberships`: agregación del cumplimiento en la base.
+- `user-auth`: menú de ocho entradas por rol (KAN-11) y paneles separados de `/admin` y
+  `/pro`, con el cumplimiento agregado en la base (KAN-5, KAN-12).
+- `staff-and-patient-management`: cierre y reasignación de `care_assignments` (KAN-13),
+  quién acompaña a cada paciente (KAN-6) y el aviso de cuánta gente queda fuera del
+  listado de Personas (KAN-14).
+- `clinical-alerts`: reparto de alertas por especialidad (KAN-10).
+- `routine-templates`: alta de plantilla con su primer día (KAN-8).
+
+KAN-7 y KAN-9 no llevan delta. KAN-9 (el motor dispara al terminar el registro) lo revirtió
+`manual-routine-assignment` ([ADR-0009](../../../docs/adr/0009-asignacion-manual-de-rutinas.md)),
+y KAN-7 es interfaz del motor de reglas, que se retira en `retire-rules-engine`. Los deltas
+se escribieron el 2026-09-25, después de implementar el change, a partir del código vigente:
+hasta entonces el change no pasaba `openspec validate --strict`.
 
 ### New Capabilities
 
