@@ -3,7 +3,7 @@ import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const status = JSON.parse(
-  execFileSync(fileURLToPath(new URL("../node_modules/.bin/supabase", import.meta.url)), ["status", "--output", "json"], {
+  execFileSync(process.execPath, [fileURLToPath(new URL("../node_modules/supabase/dist/supabase.js", import.meta.url)), "status", "--output", "json"], {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   }),

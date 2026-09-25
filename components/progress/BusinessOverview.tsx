@@ -1,15 +1,25 @@
-import type { BusinessOverview as Overview } from "@/lib/progress/overview-queries";
 import {
-  formatMonth,
-  formatTimes,
-  monthStart,
-} from "@/lib/progress/vocabulary";
+  ArrowDownRight,
+  ArrowUpRight,
+  CalendarCheck,
+  Minus,
+  Target,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
+
+import type {
+  BusinessOverview as Overview,
+  PreviousMonth,
+} from "@/lib/progress/overview-queries";
+import { formatMonth, monthStart } from "@/lib/progress/vocabulary";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ButtonLink } from "@/components/ui/ButtonLink";
+import { Progress } from "@/components/ui/Progress";
 import { cn } from "cn";
 import { cardVariants } from "@/components/ui/Card";
 
-const cardClass = cn(cardVariants(), "grid gap-2");
+const cardClass = cn(cardVariants(), "grid content-start gap-2");
 
 const percentFormat = new Intl.NumberFormat("es-CO", {
   style: "percent",
@@ -20,37 +30,100 @@ const percentFormat = new Intl.NumberFormat("es-CO", {
 const patients = (count: number) =>
   count === 1 ? "1 paciente" : `${count} pacientes`;
 
-/** Una cifra con su título y la frase que la explica. */
+const visits = (count: number) =>
+  count === 1 ? "1 visita" : `${count} visitas`;
+
+/**
+ * Una cifra con su título y la frase que la explica.
+ *
+ * **El orden `<h3>` → cifra → frase es contrato**: `verify-progress-overview`
+ * lee `Título</h3>` seguido de dos `<p>`. Por eso el icono va *dentro* del
+ * `<h3>`, antes del texto, y lo que se añade —la barra, la comparación— va
+ * después de la frase.
+ */
 function Metric({
   title,
+  icon: Icon,
   value,
   children,
+  footer,
 }: {
   title: string;
+  icon: LucideIcon;
   value: string;
   children: React.ReactNode;
+  footer?: React.ReactNode;
 }) {
   return (
     <article className={cardClass}>
-      <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
-      <p className="text-3xl font-semibold tracking-tight">{value}</p>
+      <h3 className="flex items-center gap-3 text-sm font-medium text-muted-foreground">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-soft-foreground">
+          <Icon className="size-5" aria-hidden="true" />
+        </span>
+        {title}
+      </h3>
+      <p className="mt-1 text-4xl font-semibold tracking-tight">{value}</p>
       <p className="text-sm leading-6 text-muted-foreground">{children}</p>
+      {footer}
     </article>
   );
 }
 
 /**
- * El panorama del negocio: clientes activos, cumplimiento y asistencia del mes
- * en curso. Lo que tiene pantalla propia —alertas, membresías y planes— se
- * enlaza, no se repite aquí.
- *
- * Desde KAN-5 solo la ve el administrador, así que los enlaces del pie ya no
- * dependen del rol. Cuando la veía también el profesional, `/plans` —que es
- * `requireAdmin`— lo mandaba a un rebote (defecto D3).
+ * Cómo se mueve una cifra frente al mes anterior. El color acompaña, pero el
+ * texto dice siempre si sube o baja (WCAG 1.4.1).
  */
-export function BusinessOverview({ overview }: { overview: Overview }) {
+function Trend({
+  delta,
+  unit,
+  month,
+}: {
+  delta: number;
+  unit: (value: number) => string;
+  month: string;
+}) {
+  const Icon = delta > 0 ? ArrowUpRight : delta < 0 ? ArrowDownRight : Minus;
+  const text =
+    delta === 0
+      ? `Igual que en ${month}`
+      : `${delta > 0 ? "Sube" : "Baja"} ${unit(Math.abs(delta))} frente a ${month}`;
+  return (
+    <p
+      className={cn(
+        "flex items-center gap-1.5 text-xs font-medium",
+        delta > 0 && "text-success",
+        delta < 0 && "text-danger",
+        delta === 0 && "text-muted-foreground",
+      )}
+    >
+      <Icon className="size-4 shrink-0" aria-hidden="true" />
+      {text}
+    </p>
+  );
+}
+
+/** El mes sin el año: «agosto». Para comparar, el año sobra. */
+const monthName = (value: string) => formatMonth(value).split(" ")[0];
+
+/**
+ * El panorama del negocio: clientes activos, cumplimiento y asistencia del mes
+ * en curso, cada uno con su comparación frente al mes anterior. Lo que pide
+ * acción hoy y los accesos a cada pantalla los monta `AdminHome` alrededor.
+ *
+ * Desde KAN-5 solo la ve el administrador.
+ */
+export function BusinessOverview({
+  overview,
+  previous,
+  newPatients,
+}: {
+  overview: Overview;
+  previous: PreviousMonth;
+  newPatients: number;
+}) {
   const { activePatients, compliance, attendance } = overview;
   const month = formatMonth(monthStart());
+  const lastMonth = monthName(previous.since);
 
   return (
     <section className="grid gap-6">
@@ -72,17 +145,53 @@ export function BusinessOverview({ overview }: { overview: Overview }) {
         </EmptyState>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Metric title="Clientes activos" value={String(activePatients)}>
+          <Metric
+            title="Clientes activos"
+            icon={Users}
+            value={String(activePatients)}
+            footer={
+              <p className="text-xs font-medium text-muted-foreground">
+                {newPatients === 0
+                  ? "Ningún alta nueva este mes."
+                  : newPatients === 1
+                    ? "1 alta nueva este mes."
+                    : `${newPatients} altas nuevas este mes.`}
+              </p>
+            }
+          >
             {patients(activePatients)} con acceso a la plataforma. Un paciente
             desactivado deja de contar aquí.
           </Metric>
 
           <Metric
             title="Cumplimiento"
+            icon={Target}
             value={
               compliance.rate === null
                 ? "—"
                 : percentFormat.format(compliance.rate)
+            }
+            footer={
+              compliance.rate !== null && (
+                <>
+                  <Progress
+                    value={compliance.done}
+                    max={compliance.logged}
+                    label="Ejercicios hechos sobre los registrados este mes"
+                  />
+                  {previous.complianceRate !== null && (
+                    <Trend
+                      delta={Math.round(
+                        (compliance.rate - previous.complianceRate) * 100,
+                      )}
+                      unit={(value) =>
+                        value === 1 ? "1 punto" : `${value} puntos`
+                      }
+                      month={lastMonth}
+                    />
+                  )}
+                </>
+              )
             }
           >
             {compliance.rate === null
@@ -90,28 +199,24 @@ export function BusinessOverview({ overview }: { overview: Overview }) {
               : `${compliance.done} de ${compliance.logged} ejercicios hechos en ${compliance.sessions === 1 ? "1 sesión" : `${compliance.sessions} sesiones`} del mes. Los saltados no cuentan.`}
           </Metric>
 
-          <Metric title="Asistencia" value={String(attendance.visits)}>
+          <Metric
+            title="Asistencia"
+            icon={CalendarCheck}
+            value={String(attendance.visits)}
+            footer={
+              <Trend
+                delta={attendance.visits - previous.visits}
+                unit={visits}
+                month={lastMonth}
+              />
+            }
+          >
             {attendance.visits === 0
               ? "Nadie ha venido este mes, o nadie está tomando la asistencia. Regístrala en la ficha de cada paciente."
-              : `Vino ${patients(attendance.attended)} de ${activePatients}; entre todos asistieron ${formatTimes(attendance.visits)}.`}
+              : `${attendance.attended === 1 ? "Vino 1" : `Vinieron ${attendance.attended}`} de ${patients(activePatients)}, con ${visits(attendance.visits)} en total.`}
           </Metric>
         </div>
       )}
-
-      <div className="flex flex-wrap gap-3">
-        <ButtonLink href="/attendance">
-          Asistencia por paciente
-        </ButtonLink>
-        <ButtonLink href="/pro/alerts">
-          Alertas
-        </ButtonLink>
-        <ButtonLink href="/memberships">
-          Membresías
-        </ButtonLink>
-        <ButtonLink href="/plans">
-          Planes y servicios
-        </ButtonLink>
-      </div>
     </section>
   );
 }

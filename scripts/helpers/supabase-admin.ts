@@ -18,7 +18,7 @@ export function entornoLocal() {
 
   // Sin variables de entorno se asume el Supabase local, igual que db:env.
   const estado = JSON.parse(
-    execFileSync(path.join(raiz, "node_modules/.bin/supabase"), ["status", "--output", "json"], {
+    execFileSync(process.execPath, [path.join(raiz, "node_modules/supabase/dist/supabase.js"), "status", "--output", "json"], {
       cwd: raiz,
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"],

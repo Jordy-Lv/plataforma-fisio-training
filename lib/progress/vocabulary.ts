@@ -105,6 +105,43 @@ export function monthStart() {
   return `${today().slice(0, 7)}-01`;
 }
 
+/** El primer día del mes anterior, para comparar el mes en curso con él. */
+export function previousMonthStart() {
+  const [year, month] = today().split("-").map(Number);
+  return month === 1
+    ? `${year - 1}-12-01`
+    : `${year}-${String(month - 1).padStart(2, "0")}-01`;
+}
+
+/** La hora de ahora (0-23) en la zona del negocio, para saludar a tiempo. */
+export function currentHour() {
+  return Number(
+    new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      hourCycle: "h23",
+      timeZone,
+    }).format(new Date()),
+  );
+}
+
+/** La fecha `YYYY-MM-DD` de un `timestamptz` en el día del negocio. */
+function dayOf(value: string) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone }).format(new Date(value));
+}
+
+/**
+ * Cuándo pasó algo, dicho como se dice: «Hoy · 8:15 a. m.», «Ayer · 6:02 p. m.»
+ * o «21 sept · 10:29 p. m.». Cuenta en la zona del negocio, no la del servidor.
+ */
+export function formatWhen(value: string) {
+  const day = dayOf(value);
+  const now = Date.parse(`${today()}T00:00:00Z`);
+  const days = Math.round((now - Date.parse(`${day}T00:00:00Z`)) / 86_400_000);
+  const label =
+    days === 0 ? "Hoy" : days === 1 ? "Ayer" : formatShortDate(day);
+  return `${label} · ${formatTime(value)}`;
+}
+
 /**
  * "1 vez" y "3 veces": el plural en español no sale de añadir una `s`, así que
  * el recuento de asistencias se escribe aquí y no en cada pantalla.

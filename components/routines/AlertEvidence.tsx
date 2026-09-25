@@ -5,6 +5,7 @@ import { Badge, PainBadge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { DetailDialog } from "@/components/ui/DetailDialog";
 import { bodyPartLabels, bodyParts } from "@/lib/catalog/body-parts";
+import { formatDate } from "@/lib/progress/vocabulary";
 import type { ClinicalAlert } from "@/lib/routines/alert-queries";
 import type { SessionDetails } from "@/lib/routines/session-queries";
 
@@ -32,7 +33,7 @@ function EvidenceItem({
     <div className="grid gap-2 rounded-lg bg-muted p-3">
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-sm font-medium">
-          Sesión del {evidence.performed_on}
+          Sesión del {formatDate(evidence.performed_on)}
         </span>
         <PainBadge level={evidence.pain_level} />
         {evidence.pain_location && (

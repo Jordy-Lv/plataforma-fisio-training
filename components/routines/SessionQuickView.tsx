@@ -8,6 +8,7 @@ import { Badge, sessionBadgeVariant } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { DetailPanel } from "@/components/ui/DetailDialog";
+import { formatDate } from "@/lib/progress/vocabulary";
 import { statusLabels } from "@/lib/routines/session-labels";
 import type {
   PatientSession,
@@ -78,14 +79,14 @@ export function SessionQuickView({
           </Badge>
         </div>
         <p className="text-sm text-muted-foreground">
-          {session.performed_on} · Día {session.routine_days?.day_number}
+          {formatDate(session.performed_on)} · Día {session.routine_days?.day_number}
         </p>
       </Card>
 
       {report && (
         <DetailPanel
           title={name}
-          description={`Sesión del ${session.performed_on}`}
+          description={`Sesión del ${formatDate(session.performed_on)}`}
           open={open}
           onClose={() => setOpen(false)}
           keepMounted={false}

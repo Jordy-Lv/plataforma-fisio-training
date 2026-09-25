@@ -8,12 +8,12 @@ export const metadata: Metadata = {
 };
 
 /**
- * El panel del administrador es el panorama del negocio del mes. El trabajo
- * del día es del profesional y vive en `/pro`; el directorio y el alta, en
- * `/people`.
+ * El panel del administrador: lo que pide su atención hoy y el panorama del
+ * negocio del mes. El trabajo clínico del día es del profesional y vive en
+ * `/pro`; el directorio y el alta, en `/people`.
  */
 export default async function Page() {
   const profile = await requireAdmin();
 
-  return <AdminHome name={profile.fullName} />;
+  return <AdminHome id={profile.id} name={profile.fullName} />;
 }
