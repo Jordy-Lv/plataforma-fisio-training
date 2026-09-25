@@ -15,7 +15,7 @@ dependencias de bloqueo entre personas.
 | Slice | Change de OpenSpec | Alcance |
 |---|---|---|
 | **1 — Auth y roles** | `add-auth-and-roles` | Autenticación, `profiles`, RLS base, alta y baja de personal y pacientes, onboarding del paciente (objetivo, entorno, equipamiento, condiciones) |
-| **2 — Catálogo y reglas** | `add-exercise-library-and-rules` | `exercises`, siembra de free-exercise-db, plantillas de rutina, motor de `assignment_rules`, panel de parametrización con simulador |
+| **2 — Catálogo y plantillas** | `add-exercise-library-and-rules` | `exercises`, siembra de free-exercise-db y plantillas de rutina para selección del profesional |
 | **3 — Rutinas y ejecución** | `add-routine-execution` | Asignación con snapshot, ajuste por el profesional, checklist móvil, registro de dolor y observaciones, generación de alertas |
 | **4 — Progreso y negocio** | `add-progress-and-memberships` | Tamizaje con gráficas, asistencia, planes y servicios, membresías, job de vencimientos |
 
@@ -65,10 +65,10 @@ Nadie más commitea. Al final del día 2, en `main`:
 |---|---|---|---|---|
 | **Día 3** | Login, registro, `profiles` | Siembra de ejercicios, listado | Modelo de asignación y snapshot | Tamizaje: alta y listado |
 | **Día 4** | Alta de personal y pacientes (admin) | Plantillas: CRUD | Vista del paciente: ver su rutina | Asistencia |
-| **Día 5** | Onboarding del paciente completo | Motor de reglas + panel | Checklist móvil básico | Planes y servicios |
+| **Día 5** | Onboarding del paciente completo | Catálogo y plantillas | Asignación de rutina por el profesional + checklist móvil básico | Planes y servicios |
 
-**Cierre del día 5 — el hito que no se negocia:** un paciente nuevo se registra, el motor
-le asigna una rutina base según su perfil, y la ve en el celular.
+**Cierre del día 5 — el hito que no se negocia:** un paciente nuevo se registra, su
+entrenador o fisioterapeuta elige y asigna una rutina, y el paciente la ve en el celular.
 
 Si el viernes eso no funciona, se recorta alcance de la semana 2, no se estira el plazo.
 
@@ -125,5 +125,5 @@ En este orden, y se avisa al cliente:
 3. Vitrina de servicios adicionales (los planes se quedan)
 4. Alerta de baja asistencia (el registro de asistencia se queda)
 
-**Nunca se recorta:** RLS, el motor de reglas, el registro de dolor ni el checklist. Son
+**Nunca se recorta:** RLS, la asignación de rutinas por el profesional, el registro de dolor ni el checklist. Son
 lo que el cliente pidió explícitamente y lo que diferencia esto de una hoja de cálculo.

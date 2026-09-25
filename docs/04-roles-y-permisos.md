@@ -8,7 +8,7 @@
 
 | Rol en el sistema | Cómo lo llama el cliente | Qué hace |
 |---|---|---|
-| `admin` | Jefe / Administrador | Da de alta y de baja al personal y a los pacientes. Define plantillas, reglas, planes y servicios. Ve el panorama completo del negocio |
+| `admin` | Jefe / Administrador | Da de alta y de baja al personal y a los pacientes. Define plantillas, planes y servicios. Ve el panorama completo del negocio |
 | `professional` + `specialty = 'training'` | Entrenador | Arma y ajusta rutinas de entrenamiento, hace seguimiento de sus pacientes asignados |
 | `professional` + `specialty = 'physio'` | Fisioterapeuta | Arma y ajusta rutinas de rehabilitación, revisa el dolor reportado, ajusta el tratamiento |
 | `patient` | Cliente / Paciente | Registra su condición y objetivo, ejecuta su rutina, reporta dolor y esfuerzo, ve su progreso y su plan |
@@ -38,7 +38,6 @@ Esta es la regla que hay que tener en la cabeza al escribir cualquier política.
 | `care_assignments` | total | lectura de las suyas | lectura de las suyas |
 | `exercises` | total | lectura + creación de propios | **solo lectura** |
 | `routine_templates` / `template_*` | total | lectura | — |
-| `assignment_rules` | total | lectura | — |
 | `routines` / `routine_days` / `routine_items` | total | lectura/escritura de asignados | **solo lectura de las propias** |
 | `sessions` | lectura total | lectura de asignados | lectura/escritura propias |
 | `routine_schedules` | lectura/programación/cancelación | lectura/programación/cancelación de asignados | solo lectura propia |

@@ -28,11 +28,10 @@ donde:
 
 1. El cliente registra sus datos, su objetivo, su entorno de entrenamiento y sus
    condiciones o limitaciones.
-2. La plataforma **propone una rutina base automáticamente**, aplicando reglas que el
-   equipo profesional parametrizó previamente. Sin inteligencia artificial: son
-   validaciones de código sobre parámetros configurables.
-3. El profesional a cargo la revisa, la ajusta al caso puntual y la asigna. **El ajuste
-   no altera la rutina base.**
+2. El entrenador o fisioterapeuta a cargo **elige una plantilla** para el paciente.
+3. La plataforma copia la plantilla a una rutina propia del paciente (**snapshot**). El
+   profesional revisa y ajusta esa copia, y luego confirma la asignación; **la plantilla
+   base no cambia**.
 4. El cliente la ejecuta desde el celular: marca lo que completó, registra series,
    repeticiones y peso reales, y reporta esfuerzo, dolor y observaciones.
 5. Todo queda registrado: cumplimiento, asistencia, dolor, tamizaje y vencimientos.
@@ -56,11 +55,13 @@ Esta es la lista completa. **Lo que no está aquí, no entra.**
 - Datos básicos, objetivo, nivel, entorno (casa o gimnasio) y equipamiento disponible.
 - Condiciones y limitaciones (parte del cuerpo, severidad, notas).
 
-### Motor de asignación por reglas
-- Reglas parametrizadas y editables desde el panel de administración.
-- Al registrarse el paciente, se evalúan por prioridad y la primera que coincide asigna
-  una rutina base.
+### Asignación de rutinas
+- El profesional responsable selecciona una plantilla del tipo que corresponde a su
+  especialidad y la asigna al paciente.
+- La plantilla se copia como snapshot; los cambios posteriores afectan solo a ese paciente.
 - Los ejercicios contraindicados por una condición registrada quedan excluidos.
+- Al terminar el registro, el paciente no recibe una rutina automáticamente: queda a la
+  espera de que su profesional la asigne.
 
 ### Rutinas
 - Plantillas base definidas por el equipo (`routine_templates`).
