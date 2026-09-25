@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { Workspace } from "@/components/auth/Workspace";
+import { isInMobileBar } from "@/components/shell/nav-items";
 import { BusinessOverview } from "@/components/progress/BusinessOverview";
 import { Badge, type BadgeVariant } from "@/components/ui/Badge";
 import { cardVariants } from "@/components/ui/Card";
@@ -171,24 +172,27 @@ const shortcuts: Shortcut[] = [
 ];
 
 /**
- * Teléfono: lo que la barra inferior esconde tras «Menú». Personas, Catálogo,
- * Rutinas y Sesiones ya están en la barra; repetirlos aquí sería ruido.
+ * Teléfono: solo lo que la barra inferior **no** enseña. Regla de las vistas
+ * móviles: si un destino ya está en la barra —como entrada o como pestaña de
+ * una entrada—, repetirlo aquí solo añade ruido. Por eso la lista se filtra
+ * con `isInMobileBar` en vez de fijarse a mano: si el menú cambia, los
+ * accesos se ajustan solos. Hoy quedan los seis que viven tras «Menú».
  */
 const mobileShortcuts: Shortcut[] = [
-  { href: "/memberships", label: "Membresías", icon: CreditCard },
-  { href: "/plans", label: "Planes", icon: Store },
   { href: "/pro/alerts", label: "Alertas", icon: Bell },
+  { href: "/memberships", label: "Membresías", icon: CreditCard },
   { href: "/attendance", label: "Asistencia", icon: CalendarCheck },
   { href: "/screenings", label: "Tamizaje", icon: Ruler },
+  { href: "/plans", label: "Planes", icon: Store },
+  { href: "/offer", label: "Vitrina", icon: Megaphone },
   { href: "/templates", label: "Plantillas", icon: ClipboardList },
   { href: "/rules", label: "Asignación", icon: Workflow },
-  { href: "/offer", label: "Vitrina", icon: Megaphone },
-];
+].filter((shortcut) => !isInMobileBar("admin", shortcut.href));
 
 /**
  * Los accesos rápidos. En escritorio, una fila de cuatro botones de 48 px; en
- * el teléfono, una rejilla de ocho iconos con su nombre debajo, cada uno de
- * más de 44 px, para llegar a cualquier sección sin abrir el menú.
+ * el teléfono, una rejilla de tres columnas de iconos con su nombre debajo,
+ * cada uno de más de 44 px, con lo que la barra inferior no enseña.
  */
 function Shortcuts() {
   return (
@@ -196,7 +200,7 @@ function Shortcuts() {
       <h2 id="accesos-rapidos" className="sr-only">
         Accesos rápidos
       </h2>
-      <ul className="grid grid-cols-4 gap-2 sm:hidden">
+      <ul className="grid grid-cols-3 gap-2 sm:hidden">
         {mobileShortcuts.map((shortcut) => (
           <li key={shortcut.href}>
             <Link
