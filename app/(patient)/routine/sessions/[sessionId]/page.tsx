@@ -6,6 +6,7 @@ import { SessionReport } from "@/components/routines/SessionReport";
 import { SessionItemForm } from "@/components/routines/SessionItemForm";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { requireRole } from "@/lib/auth/session";
+import { formatDate } from "@/lib/progress/vocabulary";
 import { closeSessionSchema } from "@/lib/routines/schemas";
 import {
   executionExercises,
@@ -64,7 +65,7 @@ export default async function Page({
       title={session.routines?.name ?? "Mi sesión"}
       name={actor.fullName}
       role="patient"
-      description={`Día ${session.routine_days?.day_number} · ${session.routine_days?.title} · ${session.performed_on}`}
+      description={`Día ${session.routine_days?.day_number} · ${session.routine_days?.title} · ${formatDate(session.performed_on)}`}
       actions={
         <ButtonLink href="/routine">
           Mis rutinas
