@@ -6,7 +6,8 @@
  * Requiere Supabase local encendido con la semilla base (`npm run db:reset`)
  * y `npm run dev` en marcha. No necesita catálogo, plantillas ni reglas
  * sembradas: usa la cuenta `admin@demo.local` de la semilla base y crea sus
- * propias personas, ejercicios y plantillas, y los borra al terminar.
+ * propias personas, ejercicios y plantillas, y los borra al terminar. La
+ * asignación va por el ciclo de ADR-0009: elegir plantilla y confirmar.
  *
  * Uso:  npm run test:calendar
  */
@@ -46,15 +47,13 @@ test(
       otherDayId = randomUUID();
     const exerciseId = randomUUID(),
       itemId = randomUUID();
-    const templateId = randomUUID(),
-      ruleId = randomUUID();
+    const templateId = randomUUID();
     const today = todayInBogota();
     const tomorrow = addDays(today, 1);
     t.after(async () => {
       sql(`delete from public.routine_schedules where routine_day_id in ('${dayId}','${otherDayId}')
         or routine_day_id in (select d.id from public.routine_days d join public.routines r on r.id=d.routine_id where r.source_template_id='${templateId}');
       delete from public.routines where id in ('${routineId}','${otherRoutineId}') or source_template_id='${templateId}';
-      delete from public.assignment_rules where id='${ruleId}';
       delete from public.routine_templates where id='${templateId}';
       delete from public.exercises where id='${exerciseId}';`);
       for (const user of users) {
@@ -96,7 +95,11 @@ test(
     insert into public.exercises(id,name) values('${exerciseId}','Ejercicio de prueba del calendario');
     insert into public.routines(id,patient_id,kind,name,assigned_by) values('${routineId}','${patient.id}','training','Rutina de calendario','${pro.id}'),('${otherRoutineId}','${other.id}','training','Rutina ajena','${outsider.id}');
     insert into public.routine_days(id,routine_id,day_number,title) values('${dayId}','${routineId}',1,'Día de prueba del calendario'),('${otherDayId}','${otherRoutineId}',1,'Día ajeno');
-    insert into public.routine_items(id,routine_day_id,exercise_id,position,sets,reps,notes) values('${itemId}','${dayId}','${exerciseId}',0,3,10,'Indicación personalizada de prueba');`);
+    insert into public.routine_items(id,routine_day_id,exercise_id,position,sets,reps,notes) values('${itemId}','${dayId}','${exerciseId}',0,3,10,'Indicación personalizada de prueba');
+    insert into public.routine_templates(id,name,kind) values('${templateId}','Plantilla de recorrido completo','training');
+    insert into public.template_days(template_id,day_number,title) values('${templateId}',1,'Primera sesión');
+    insert into public.template_items(template_day_id,exercise_id,position,sets,reps)
+      select id,'${exerciseId}',position,3,12 from public.template_days cross join generate_series(1,3) position where template_id='${templateId}';`);
     const web = httpClient();
     expectRedirect(
       await web.submit("/login", { email: pro.email, password }),
@@ -547,6 +550,9 @@ test(
           createHref,
           `/pro/routines/${patient.id}?calendarDate=${tomorrow}&calendarView=week#assign-routine`,
         );
+        // ADR-0009: sin rutina activa, la pantalla abre en «Elegir plantilla»;
+        // `#assign-routine` aparece con el borrador.
+        await web.submit(createHref.split("#")[0], {}, `value="${templateId}"`);
         const assignment = await web.request(createHref.split("#")[0]);
         const assignmentDocument = new JSDOM(assignment.html).window.document;
         assert.ok(assignmentDocument.querySelector("#assign-routine"));
@@ -619,13 +625,7 @@ test(
         const newcomer = await person("patient");
         sql(`insert into public.patient_details(profile_id,goal,level,environment,equipment,onboarding_step)
           values('${newcomer.id}','general_health','beginner','home','{none}',3);
-        insert into public.care_assignments(patient_id,professional_id,kind) values('${newcomer.id}','${pro.id}','training');
-        insert into public.routine_templates(id,name,kind) values('${templateId}','Plantilla de recorrido completo','training');
-        insert into public.template_days(template_id,day_number,title) values('${templateId}',1,'Primera sesión');
-        insert into public.template_items(template_day_id,exercise_id,position,sets,reps)
-          select id,'${exerciseId}',position,3,12 from public.template_days cross join generate_series(1,3) position where template_id='${templateId}';
-        insert into public.assignment_rules(id,name,priority,conditions,template_id)
-          values('${ruleId}','Regla del recorrido completo',-1000000,'{"goal":["general_health"],"level":["beginner"],"environment":["home"]}','${templateId}');`);
+        insert into public.care_assignments(patient_id,professional_id,kind) values('${newcomer.id}','${pro.id}','training');`);
 
         const calendarRoute = `/pro/routines/${newcomer.id}/calendar`;
         const empty = await web.request(
@@ -642,6 +642,9 @@ test(
           )
           ?.getAttribute("href");
         assert.ok(createHref);
+        // ADR-0009: primero se elige la plantilla, que crea el borrador; el
+        // formulario `#assign-routine` es el de confirmarlo.
+        await web.submit(createHref, {}, `value="${templateId}"`);
         const assigned = await web.submit(
           createHref,
           { patientId: newcomer.id },

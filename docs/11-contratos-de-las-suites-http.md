@@ -154,7 +154,9 @@ suite los exige **todos en el mismo formulario**.
 
 | Pantalla | Marcador | Suite |
 |---|---|---|
-| `/pro/routines/[patientId]` · asignar | `name="patientId"`, cuerpo `{}` | `test:routines` |
+| `/pro/routines/[patientId]` · elegir plantilla (paso ①) | `value="<templateId>"` + `$ACTION_`, **sin `name="patientId"`** | `test:routines`, `test:calendar`, `test:smoke` |
+| `/pro/routines/[patientId]` · confirmar (paso ②) | `name="patientId"` e `id="assign-routine"`, cuerpo `{}`; es el **primer** formulario con `name="patientId"` cuando hay borrador | `test:routines`, `test:calendar`, `test:smoke` |
+| `/pro/routines/[patientId]` · descartar (paso ②) | `value="<routineId>"` + `$ACTION_`, **sin `name="patientId"`** | `test:routines` |
 | `/pro/routines/[patientId]` · prescripción | `value="<itemId>"` + `name="sets"` | `test:routines:items` |
 | `/pro/routines/[patientId]` · quitar | `value="<itemId>"` + `$ACTION_`, **sin `name="sets"`** | `test:routines:items` |
 | `/pro/routines/[patientId]?dia=<dayId>&q=…` · añadir | `value="<exerciseId>"` + `value="<dayId>"` | `test:routines:items` |
@@ -163,6 +165,16 @@ suite los exige **todos en el mismo formulario**.
 | `/routine/sessions/[id]` · registrar | `name="itemId"` | `test:routines:sessions` |
 | `/routine/sessions/[id]` · cerrar | texto **`Terminar sesión`** | `test:routines:sessions` |
 | `/pro/alerts` · marcar leída | `value="<alertId>"` | `test:routines:sessions` |
+
+> **La asignación va por pasos (ADR-0009, change `manual-routine-assignment`).** Elegir una
+> plantilla lleva el paciente ligado con `.bind`, no como campo: así el primer formulario con
+> `name="patientId"` sigue siendo el de confirmar, que va **antes de cualquier formulario de
+> ejercicio**. El de confirmar también lleva el `routineId`, así que el de descartar se
+> distingue por **no** llevar `name="patientId"`. Dentro de `#assign-routine` va el enlace
+> «Volver al calendario para programar» cuando se llega desde el calendario, y tras confirmar
+> la respuesta del POST conserva `#assign-routine` con la frase de éxito y ese enlace
+> (`test:calendar`): los tres formularios viven en `AssignmentFlow`, montado con la misma
+> `key` en los tres pasos, y por eso sus acuses sobreviven al cambio de paso (§5).
 
 > **`?dia=` y `?item=` son contrato, no detalle.** `test:routines:items` abre literalmente
 > `/pro/routines/<id>?dia=<dayId>&q=<texto>` y `?item=<itemId>&q=<texto>`, y espera encontrar
@@ -223,7 +235,7 @@ Se leen dentro de `role="status"` o `role="alert"`. Cambiar la redacción rompe 
 - Plantillas: `Día 1 añadido`, `Día 2 añadido`, `Día eliminado`, `Ejercicio añadido al día`, `Ejercicio subido`, `Ejercicio bajado`, `Plantilla activada`, `Plantilla desactivada`, `no tiene ningún día`, `día 1 no tiene ejercicios`, `menos de 3 ejercicios`, `entre 1 y 7`, `series deben ser un número entre 1 y 12`, `Desactívala en lugar de eliminarla`.
 - Reglas: `Esta regla no se está aplicando`, `condiciones no son válidas y el motor la ignora`, `criterios que ya no existen: mood`, `objetivo que no está en la lista`.
 - Personas: `Persona dada de baja.`, `Confirma la baja para continuar.`, `Perfil actualizado.`, `Condición guardada.`, `Selecciona tu objetivo.`, `Parte del cuerpo inválida.`, `no ha creado ningún paciente`.
-- Rutinas: `Rutina asignada. El paciente ya puede consultarla`, `Ejercicio ajustado para este paciente.`, `Ejercicio quitado de la rutina. La plantilla de origen no cambia.`, `Ejercicio añadido al final del día.`, `Ejercicio sustituido. Conserva su posición y su prescripción.`, `contraindicado para Rodilla`, `Sustitúyelo por otro`.
+- Rutinas: `Rutina asignada. El paciente ya puede consultarla`, `Borrador creado`, `ya tiene un borrador`, `Borrador descartado`, `El día 2 no tiene ejercicios`, `tiene menos de tres ejercicios`, `Qué se excluyó`, `Contraindicado para Rodilla`, `Ejercicio ajustado para este paciente.`, `Ejercicio quitado de la rutina. La plantilla de origen no cambia.`, `Ejercicio añadido al final del día.`, `Ejercicio sustituido. Conserva su posición y su prescripción.`, `contraindicado para Rodilla`, `Sustitúyelo por otro`.
 - Sesiones: `Registro guardado`, `Hecho … guardado`, `Terminar sesión`, `Sesión completada|Completada`, `Real:`, `Tu profesional está preparando tu rutina`.
 - Seguimiento: `Asistencia registrada.`, `Ese paciente ya tiene la asistencia registrada ese día.`, `has venido` en `/attendance/me`; `Plan …`, `Vencimiento`, `por vencer|está vencida` en `/memberships/me`; `Próximas a vencer`, `Vencidas`, `vence en 3 días` en `/memberships`.
 - Acceso: `No pudimos iniciar sesión.`, `Escribe un correo válido.`, `Las contraseñas deben coincidir.`, `al menos 3 caracteres`.
@@ -238,6 +250,11 @@ Tan contrato como las presencias:
   `patientRoutines(actor.id, true)` y sin ese `true` se cuela una rutina en revisión.
 - Tras cerrar sesión de usuario, la página **no** puede contener `Cerrar sesión`.
 - `/evolution/[id]` sin datos **no** puede montar la gráfica.
+- `/pro/routines/[patientId]` en el paso ① **no** puede contener `name="patientId"` ni el
+  buscador del catálogo (`id="catalogo-buscador"`): el buscador solo aparece con `?dia=` o
+  `?item=` (`test:routines`).
+- `/pro/routines/[patientId]` de un profesional **no** muestra plantillas del otro tipo, ni
+  forzando `?tipo=` (`test:routines`).
 
 ---
 

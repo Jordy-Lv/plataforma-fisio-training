@@ -3,7 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { getActiveProfile } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-import { assignmentSchema, prepareAssignment, type AssignmentState } from "@/lib/routines/assignment";
+import {
+  chooseTemplateSchema,
+  routineDraftSchema,
+  type RoutineActionState,
+} from "@/lib/routines/schemas";
 
 /**
  * Los mensajes que escribe la base ya están en español y dicen qué hacer, así
@@ -13,32 +17,75 @@ const propios = new Set(["22023", "42501"]);
 const mensaje = (error: { code?: string; message: string }, marco: string) =>
   error.code && propios.has(error.code) ? error.message : `${marco}: ${error.message}`;
 
-export async function assignRoutine(_previous: AssignmentState, form: FormData): Promise<AssignmentState> {
-  const parsed = assignmentSchema.safeParse({ patientId: form.get("patientId") });
-  if (!parsed.success) return { error: parsed.error.issues[0].message };
-  const actor = await getActiveProfile();
-  if (!actor || actor.role === "patient") return { error: "No tienes permiso para asignar rutinas." };
-  const supabase = await createClient();
-  const { patientId } = parsed.data;
-  const context = await supabase.rpc("routine_assignment_context", { target_patient: patientId });
-  if (context.error) return { error: mensaje(context.error, "No se pudo evaluar la asignación") };
-  let decision;
-  try { decision = prepareAssignment(context.data); }
-  catch (error) { return { error: error instanceof Error ? error.message : "No se pudo evaluar la asignación." }; }
-  const result = await supabase.rpc("commit_routine_assignment", {
-    target_patient: patientId,
-    expected_context: context.data,
-    ...(decision.selectedRule ? { selected_rule: decision.selectedRule } : {}),
-    excluded_exercises: decision.excludedExercises,
-    assignment_notes: decision.notes,
-  });
-  if (result.error) return { error: mensaje(result.error, "No se pudo asignar la rutina") };
+/** Lo que cambia al crear, descartar o confirmar un borrador. */
+function revalidar(patientId: string) {
   revalidatePath(`/pro/routines/${patientId}`);
   revalidatePath(`/pro/routines/${patientId}/calendar`);
+  revalidatePath("/pro/routines");
   revalidatePath("/routine");
   revalidatePath("/routine/calendar");
-  const outcome = (result.data as { outcome: string }).outcome;
-  return { success: outcome === "assigned" ? "Rutina asignada. El paciente ya puede consultarla."
-    : outcome === "pending_review" ? "Propuesta guardada para revisión: hay días con menos de tres ejercicios. Se avisó al equipo y se conservó la rutina anterior."
-    : "No hay una regla compatible. Se avisó al equipo para preparar la rutina del paciente." };
+}
+
+/**
+ * Elegir una plantilla crea el borrador (ADR-0009). El `patientId` llega ligado
+ * con `.bind` desde la página, no como campo del formulario: así el primer
+ * `<form>` con `name="patientId"` sigue siendo el de confirmar (`docs/11`).
+ */
+export async function createRoutineDraft(
+  patientId: string,
+  _previous: RoutineActionState,
+  form: FormData,
+): Promise<RoutineActionState> {
+  const parsed = chooseTemplateSchema.safeParse({ patientId, templateId: form.get("templateId") });
+  if (!parsed.success) return { error: parsed.error.issues[0].message, at: Date.now() };
+  const actor = await getActiveProfile();
+  if (!actor || actor.role === "patient") return { error: "No tienes permiso para preparar rutinas.", at: Date.now() };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("create_routine_draft", {
+    target_patient: parsed.data.patientId,
+    template_id: parsed.data.templateId,
+  });
+  if (error) return { error: mensaje(error, "No se pudo crear el borrador"), at: Date.now() };
+  revalidar(parsed.data.patientId);
+  return { success: "Borrador creado. El paciente no lo verá hasta que lo confirmes.", at: Date.now() };
+}
+
+/** Descartar archiva el borrador; la rutina activa, si la hay, no cambia. */
+export async function discardRoutineDraft(
+  patientId: string,
+  _previous: RoutineActionState,
+  form: FormData,
+): Promise<RoutineActionState> {
+  const parsed = routineDraftSchema.safeParse({ patientId, routineId: form.get("routineId") });
+  if (!parsed.success) return { error: parsed.error.issues[0].message, at: Date.now() };
+  const actor = await getActiveProfile();
+  if (!actor || actor.role === "patient") return { error: "No tienes permiso para descartar rutinas.", at: Date.now() };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("discard_routine_draft", {
+    target_routine: parsed.data.routineId,
+  });
+  if (error) return { error: mensaje(error, "No se pudo descartar el borrador"), at: Date.now() };
+  revalidar(parsed.data.patientId);
+  return { success: "Borrador descartado. Elige otra plantilla cuando quieras.", at: Date.now() };
+}
+
+/** Confirmar publica el borrador: desde aquí el paciente ya ve su rutina. */
+export async function confirmRoutineDraft(
+  _previous: RoutineActionState,
+  form: FormData,
+): Promise<RoutineActionState> {
+  const parsed = routineDraftSchema.safeParse({
+    patientId: form.get("patientId"),
+    routineId: form.get("routineId"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0].message, at: Date.now() };
+  const actor = await getActiveProfile();
+  if (!actor || actor.role === "patient") return { error: "No tienes permiso para asignar rutinas.", at: Date.now() };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("confirm_routine_draft", {
+    target_routine: parsed.data.routineId,
+  });
+  if (error) return { error: mensaje(error, "No se pudo asignar la rutina"), at: Date.now() };
+  revalidar(parsed.data.patientId);
+  return { success: "Rutina asignada. El paciente ya puede consultarla.", at: Date.now() };
 }

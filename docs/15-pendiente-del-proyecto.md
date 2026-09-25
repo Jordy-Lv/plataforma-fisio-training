@@ -64,8 +64,10 @@ corriéndolas sobre `origin/main` sin sus cambios):
 - **`test:calendar` 3/9** — fallan «El editor conserva fecha y vista al abrir, buscar y
   cerrar el catálogo» («La rutina debe abrirse desde la cuadrícula.») y «Recorrido completo:
   día vacío, asignación, programación y primera sesión completada» (URL del día esperada
-  distinta). Sin diagnosticar. Sospecha: depende de la hora (se corrió de noche en Bogotá)
-  o del estado que deja `seed:calendar-demo`.
+  distinta). **Diagnosticado el 2026-09-25:** «El editor conserva fecha y vista…» hace
+  `querySelector('form[method="get"]')` y se queda con el buscador de pacientes de la
+  cabecera (PR #34), que va antes que el del catálogo. Arreglarlo es cambiar el selector de
+  la suite: pendiente de acordarlo (`CLAUDE.md` §12). «Recorrido completo» ya pasa.
 - **`test:catalog` 3/9** tras `seed:calendar-demo`: esa semilla crea tres ejercicios
   «· Ejemplo» y la suite espera exactamente los 868 de free-exercise-db (871 ≠ 868).
   `npm run db:clean` también los señala.
@@ -428,10 +430,33 @@ decisiones de diseño (todas en su `design.md`):
   `#assign-routine` (tarea 5.1). Las filas nuevas de `docs/11` entran con la implementación
   (tarea 4.9).
 
-**Siguiente paso:** `/opsx:apply` sobre `manual-routine-assignment`, desde la tarea 1.2. La
-1.3 (avisar al equipo de que se reescribe `finish_patient_onboarding`, del slice 1) va antes
-de abrir el PR. Necesita la base local de Supabase (`npm run db:reset`) para las tareas del
-grupo 2.
+**Implementado el 2026-09-25** en la rama `claude/nifty-clarke-s8tcs6` (32 de 34 tareas):
+migración [`20260925120000_routines_manual_assignment`](../supabase/migrations/20260925120000_routines_manual_assignment.sql),
+acciones y consultas en `lib/routines/`, la pantalla por pasos (`AssignmentFlow`,
+`AssignmentSteps`, `TemplateChoice`, `RoutineDraftBar`, `RoutineEditor`), `test:routines`
+reescrita (14/14) y el paso de elegir plantilla en `test:calendar` y `test:smoke`. Quedan
+abiertas **7.1** (dos suites arrastran fallos previos, abajo) y **7.2** (teléfono real).
+
+**Deuda anotada:** `public.copy_routine_template` sigue creando una rutina **activa** sin
+borrador ni exclusión de contraindicados (ahora sí con ADR-0010). La usan
+`test:routines:snapshot`, `test:routines:items` y `test:calendar` para preparar datos;
+cerrarla del todo exige cambiar esas suites (design, Risks).
+
+**KAN-19 se reproduce aquí de forma fiable, y ya se sabe algo más.** Con JavaScript, tras
+elegir o confirmar, la base se actualiza pero el botón puede quedarse en «Asignando…» y la
+pantalla no cambia de paso. Diagnóstico del 2026-09-25 con Chromium a 375 px:
+
+- El servidor termina la respuesta de la acción en ~0,2 s (medido con `curl` y desde la
+  página); no quedan peticiones abiertas ni *chunks* por cargar.
+- No es la precarga: en el cuelgue no hay ninguna petición `_rsc`.
+- Si la respuesta se entrega **entera** al cliente de React (en un trozo o re-troceada hasta
+  en trozos de 1 byte, pero ya descargada), funciona siempre (8 de 8). Si React la procesa
+  **mientras llega**, se cuelga en la mayoría de los intentos.
+- Next 15.5.26 (el último 15.x) no lo corrige (2 cuelgues de 3).
+
+Es un problema de tiempos del cliente de Next/React al consumir en *streaming* la respuesta
+de una server action, no de esta pantalla: `test:smoke` falla igual en `main` en la sesión
+del paciente. Sin JavaScript (lo que recorren las suites HTTP) todo funciona.
 
 **Fuera de este change:** retirar `assignment_rules`, `/rules`, el simulador, `seed:rules` y
 las suites `test:rules*` va en otro change, `retire-rules-engine`, todavía sin proponer.
@@ -443,9 +468,7 @@ activa y la «restaura» después, pero el trigger `closed_routine_cancels_calen
 su calendario al cerrarla, y restaurarla no lo recupera. El borrador nuevo no usa ese camino, y
 el motor se retira en `retire-rules-engine`.
 
-KAN-19 (el «Guardando…» que se queda colgado) sigue abierto como **parcial** y se reprodujo
-precisamente en las pantallas de rutina y calendario del profesional: tenerlo presente al
-rehacer esa pantalla.
+KAN-19 sigue abierto: ver el diagnóstico de arriba.
 
 ---
 

@@ -72,19 +72,24 @@ plantillas, no al editar una rutina ya asignada.
 
 ## Estado de implementación
 
-La aplicación todavía contiene el motor `assignment_rules` de la decisión anterior
-([ADR-0003](adr/0003-motor-de-reglas-sin-ia.md)). Este documento y
-[ADR-0009](adr/0009-asignacion-manual-de-rutinas.md) establecen el comportamiento deseado:
-asignación elegida por el profesional. Retirar el motor del flujo y actualizar sus pruebas
-y pantallas requiere un cambio de implementación separado; la documentación no afirma que
-ese cambio de código ya esté hecho.
+La aplicación **ya asigna a mano**, con el change
+[`manual-routine-assignment`](../openspec/changes/manual-routine-assignment/proposal.md)
+(migración [`20260925120000`](../supabase/migrations/20260925120000_routines_manual_assignment.sql)):
 
-Hoy el código asigna por reglas en dos puntos: `public.finish_patient_onboarding` llama a
-`private.assign_routine_from_rules` en la misma transacción que cierra el registro
-(KAN-9, [`20260910130000`](../supabase/migrations/20260910130000_routines_auto_assignment.sql)),
-y el botón «Evaluar y asignar rutina» de `/pro/routines/[patientId]` entra por
-`public.commit_routine_assignment`, que exige una regla ganadora. Los dos son lo que el
-cambio de implementación tiene que retirar.
+- Terminar el registro (`public.finish_patient_onboarding`) guarda el perfil y las
+  condiciones y **no crea ninguna rutina**.
+- En `/pro/routines/[patientId]` el profesional elige una plantilla de su especialidad, se
+  crea un borrador (`pending_review`) que el paciente no ve —sin los ejercicios
+  contraindicados, y con la lista de lo que se quitó—, lo ajusta y lo confirma. Solo al
+  confirmar se cierra la rutina activa del mismo tipo.
+- La especialidad la comprueba la base de datos ([ADR-0010](adr/0010-especialidad-en-la-asignacion-de-rutinas.md)).
+
+El motor `assignment_rules` de la decisión anterior
+([ADR-0003](adr/0003-motor-de-reglas-sin-ia.md)) queda como **código legado que la
+aplicación ya no invoca**: la tabla, `/rules`, el simulador, `seed:rules`,
+`public.commit_routine_assignment`, `private.assign_routine_from_rules` y las suites
+`test:rules*` siguen en el repositorio hasta el change `retire-rules-engine`, que los
+retira.
 
 ## Qué debe demostrarse
 

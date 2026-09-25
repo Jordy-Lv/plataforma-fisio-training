@@ -72,8 +72,8 @@ export async function PatientProfile({ patientId }: { patientId: string }) {
       role={actor.role}
       description={
         esPropio
-          ? "Tu objetivo y tus condiciones deciden qué rutina se te asigna. Manténlos al día."
-          : "El objetivo y las condiciones del paciente deciden qué rutina le corresponde."
+          ? "Tu profesional usa tu objetivo y tus condiciones para elegir tu rutina. Manténlos al día."
+          : "El objetivo y las condiciones del paciente son lo que su profesional usa para elegir su rutina."
       }
     >
       {/*

@@ -43,7 +43,6 @@ test("Smoke de demo: trainer, fisioterapeuta y cliente", { timeout: 300_000 }, a
   const users = [];
   const templates = [randomUUID(), randomUUID()];
   const exercises = [randomUUID(), randomUUID(), randomUUID(), randomUUID()];
-  const ruleId = randomUUID();
   const today = todayInBogota();
   const browser = await chromium.launch({ headless: true });
   const failures = [];
@@ -62,8 +61,7 @@ test("Smoke de demo: trainer, fisioterapeuta y cliente", { timeout: 300_000 }, a
       delete from public.person_registrations where email in (${emails})
         or created_by in (select id from auth.users where email in (${emails}));
       delete from auth.users where email in (${emails});`);
-    sql(`delete from public.assignment_rules where id='${ruleId}';
-      delete from public.routine_templates where id in ('${templates.join("','")}');
+    sql(`delete from public.routine_templates where id in ('${templates.join("','")}');
       delete from public.exercises where id in ('${exercises.join("','")}');`);
     await admin.auth.signOut();
     for (const user of users) await user.api?.auth.signOut();
@@ -163,13 +161,13 @@ test("Smoke de demo: trainer, fisioterapeuta y cliente", { timeout: 300_000 }, a
     insert into public.template_items(template_day_id,exercise_id,position,sets,reps,rest_seconds)
       select d.id,e.id,e.position,3,10,60 from public.template_days d
       cross join (values ${exercises.map((e, i) => `('${e}'::uuid,${i + 1})`).join(",")}) e(id,position) where d.template_id='${id}';`);
-  sql(`insert into public.assignment_rules(id,name,priority,conditions,template_id)
-    values('${ruleId}','Regla smoke ${marker}',-2000000,'{"goal":["performance"],"level":["advanced"],"environment":["gym"],"equipment_all_of":["barbell"]}','${templates[0]}')`);
   const original = value(`select jsonb_agg(to_jsonb(i) order by i.id) from public.template_items i join public.template_days d on d.id=i.template_day_id where d.template_id in ('${templates.join("','")}')`);
 
   for (const [index, actor] of [trainer, physio].entries()) await t.test(`${index === 0 ? "Trainer" : "Fisioterapeuta"}: asignar, excluir contraindicación, ajustar y programar`, async () => {
-    sql(`update public.assignment_rules set template_id='${templates[index]}' where id='${ruleId}'`);
     const route = `/pro/routines/${patient.id}`;
+    // ADR-0009: cada profesional elige la plantilla de su especialidad, que crea
+    // el borrador; después confirma con el formulario `name="patientId"`.
+    await actor.web.submit(route, {}, `value="${templates[index]}"`);
     const result = await actor.web.submit(route, {}, 'name="patientId"');
     assert.match(result.html, /Rutina asignada\. El paciente ya puede consultarla/);
     const routine = await rows(actor.api.from("routines").select("id,kind").eq("patient_id", patient.id).eq("source_template_id", templates[index]).eq("status", "active").single());
