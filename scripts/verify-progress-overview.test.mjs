@@ -184,9 +184,9 @@ async function cuadra(client, mensaje) {
       assert.match(
         asistencia.frase,
         new RegExp(
-          `Vino ${
-            base.vinieron === 1 ? "1 paciente" : `${base.vinieron} pacientes`
-          } de ${base.activos}`,
+          `${base.vinieron === 1 ? "Vino 1" : `Vinieron ${base.vinieron}`} de ${
+            base.activos === 1 ? "1 paciente" : `${base.activos} pacientes`
+          }`,
         ),
         `El desglose de la asistencia no cuadra (${mensaje})`,
       );
