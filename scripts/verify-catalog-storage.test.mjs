@@ -34,7 +34,7 @@ const OTRO = Buffer.from(
 
 test("El contenido visual del catálogo se sirve públicamente y solo lo escribe su dueño", { timeout: 120_000 }, async (t) => {
   const status = JSON.parse(
-    execFileSync(path.join(root, "node_modules/.bin/supabase"), ["status", "--output", "json"], {
+    execFileSync(process.execPath, [path.join(root, "node_modules/supabase/dist/supabase.js"), "status", "--output", "json"], {
       cwd: root,
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"],

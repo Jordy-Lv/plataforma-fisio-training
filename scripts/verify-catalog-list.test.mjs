@@ -19,7 +19,7 @@ assert.ok(
   "Estas pruebas solo admiten una app local.",
 );
 const status = JSON.parse(
-  execFileSync("./node_modules/.bin/supabase", ["status", "--output", "json"], {
+  execFileSync(process.execPath, ["node_modules/supabase/dist/supabase.js", "status", "--output", "json"], {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   }),

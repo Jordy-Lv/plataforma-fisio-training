@@ -37,7 +37,8 @@ const contents = (id, template = false) => JSON.parse(sql(`
 `));
 
 test("Asignación transaccional de rutinas por API", { timeout: 120_000 }, async (t) => {
-  const status = JSON.parse(execFileSync("node_modules/.bin/supabase", [
+  const status = JSON.parse(execFileSync(process.execPath, [
+    "node_modules/supabase/dist/supabase.js",
     "status", "--output", "json",
   ], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }));
   assert.ok(["127.0.0.1", "localhost"].includes(new URL(status.API_URL).hostname));

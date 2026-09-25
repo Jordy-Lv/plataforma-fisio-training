@@ -8,7 +8,7 @@ import {
 } from "../lib/routines/calendar.ts";
 
 const status = JSON.parse(
-  execFileSync("./node_modules/.bin/supabase", ["status", "--output", "json"], {
+  execFileSync(process.execPath, ["node_modules/supabase/dist/supabase.js", "status", "--output", "json"], {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   }),
