@@ -227,7 +227,9 @@ test(
             const searchPage = await web.request(searchHref);
             const searchWindow = new JSDOM(searchPage.html).window;
             const form =
-              searchWindow.document.querySelector('form[method="get"]');
+              searchWindow.document.querySelector(
+                'form[method="get"][aria-label="Buscar en el catálogo"]',
+              );
             assert.ok(form);
             form.querySelector('[name="q"]').value = "Ejercicio de prueba";
             const parameters = new URLSearchParams(
