@@ -19,9 +19,14 @@ import { Progress } from "@/components/ui/Progress";
 import { cn } from "cn";
 import { cardVariants } from "@/components/ui/Card";
 
+/*
+  En el teléfono cada cifra es una ficha pequeña —título y número— y las tres
+  caben en una fila; la frase y la comparación se ven desde `sm`. Siguen en el
+  HTML aunque no se vean: es lo que lee `verify-progress-overview`.
+*/
 const cardClass = cn(
   cardVariants({ padding: "sm" }),
-  "grid grid-cols-[minmax(0,1fr)_auto] content-start items-center gap-x-3 gap-y-2",
+  "grid content-between gap-x-3 gap-y-1 p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:content-start sm:items-center sm:gap-y-2 sm:p-4",
 );
 
 const percentFormat = new Intl.NumberFormat("es-CO", {
@@ -68,19 +73,21 @@ async function Metric({
 }) {
   return (
     <article className={cardClass}>
-      <h3 className="flex min-w-0 items-center gap-2.5 text-sm font-medium text-muted-foreground">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-soft-foreground">
+      <h3 className="flex min-w-0 items-center gap-2.5 text-xs font-medium leading-4 text-muted-foreground sm:text-sm">
+        <span className="hidden size-8 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-soft-foreground sm:flex">
           <Icon className="size-4" aria-hidden="true" />
         </span>
         {title}
       </h3>
-      <p className="col-start-2 row-start-1 text-3xl font-semibold tracking-tight">
+      <p className="text-2xl font-semibold tracking-tight sm:col-start-2 sm:row-start-1 sm:text-3xl">
         {value}
       </p>
-      <p className="col-span-2 text-xs leading-5 text-muted-foreground">
+      <p className="hidden text-xs leading-5 text-muted-foreground sm:col-span-2 sm:block">
         {children}
       </p>
-      {footer && <div className="col-span-2 grid gap-2">{footer}</div>}
+      {footer && (
+        <div className="hidden gap-2 sm:col-span-2 sm:grid">{footer}</div>
+      )}
     </article>
   );
 }
@@ -145,7 +152,7 @@ export function BusinessOverview({
     <section className="grid gap-3">
       <div className="flex flex-wrap items-baseline gap-x-2">
         <h2 className="text-base font-semibold">Panorama del negocio</h2>
-        <p className="text-sm text-muted-foreground first-letter:uppercase">
+        <p className="hidden text-sm text-muted-foreground first-letter:uppercase sm:block">
           {month} · clientes activos de hoy; el resto, del mes en curso.
         </p>
       </div>
@@ -159,7 +166,7 @@ export function BusinessOverview({
           primero desde el panel de personas.
         </EmptyState>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
           <Metric
             title="Clientes activos"
             icon={Users}

@@ -5,12 +5,16 @@ import {
   CheckCircle2,
   ChevronRight,
   CircleAlert,
+  ClipboardList,
   Clock,
   CreditCard,
+  Megaphone,
+  Ruler,
   Store,
   UserPlus,
   UserX,
   Users,
+  Workflow,
   type LucideIcon,
 } from "lucide-react";
 
@@ -139,7 +143,7 @@ function AttentionPanel({ attention }: { attention: AdminAttention }) {
                   <span className="text-sm font-semibold sm:shrink-0">
                     {task.title}
                   </span>
-                  <span className="text-xs leading-5 text-muted-foreground sm:truncate">
+                  <span className="hidden text-xs leading-5 text-muted-foreground sm:inline sm:truncate">
                     {task.description}
                   </span>
                 </span>
@@ -156,11 +160,10 @@ function AttentionPanel({ attention }: { attention: AdminAttention }) {
   );
 }
 
-const shortcuts: {
-  href: string;
-  label: string;
-  icon: LucideIcon;
-}[] = [
+type Shortcut = { href: string; label: string; icon: LucideIcon };
+
+/** Escritorio: los cuatro destinos de todos los días; el resto está en el menú. */
+const shortcuts: Shortcut[] = [
   { href: "/people", label: "Personas", icon: UserPlus },
   { href: "/attendance", label: "Asistencia", icon: CalendarCheck },
   { href: "/memberships", label: "Membresías", icon: CreditCard },
@@ -168,8 +171,24 @@ const shortcuts: {
 ];
 
 /**
- * Los cuatro destinos que más usa el administrador, en una fila de cuatro en
- * escritorio y en dos por dos en el teléfono. Cada botón mide 48 px de alto.
+ * Teléfono: lo que la barra inferior esconde tras «Menú». Personas, Catálogo,
+ * Rutinas y Sesiones ya están en la barra; repetirlos aquí sería ruido.
+ */
+const mobileShortcuts: Shortcut[] = [
+  { href: "/memberships", label: "Membresías", icon: CreditCard },
+  { href: "/plans", label: "Planes", icon: Store },
+  { href: "/pro/alerts", label: "Alertas", icon: Bell },
+  { href: "/attendance", label: "Asistencia", icon: CalendarCheck },
+  { href: "/screenings", label: "Tamizaje", icon: Ruler },
+  { href: "/templates", label: "Plantillas", icon: ClipboardList },
+  { href: "/rules", label: "Asignación", icon: Workflow },
+  { href: "/offer", label: "Vitrina", icon: Megaphone },
+];
+
+/**
+ * Los accesos rápidos. En escritorio, una fila de cuatro botones de 48 px; en
+ * el teléfono, una rejilla de ocho iconos con su nombre debajo, cada uno de
+ * más de 44 px, para llegar a cualquier sección sin abrir el menú.
  */
 function Shortcuts() {
   return (
@@ -177,7 +196,26 @@ function Shortcuts() {
       <h2 id="accesos-rapidos" className="sr-only">
         Accesos rápidos
       </h2>
-      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <ul className="grid grid-cols-4 gap-2 sm:hidden">
+        {mobileShortcuts.map((shortcut) => (
+          <li key={shortcut.href}>
+            <Link
+              href={shortcut.href}
+              className={cn(
+                cardVariants({ interactive: true, padding: "none" }),
+                "flex h-full min-h-16 flex-col items-center justify-center gap-1 px-1 py-2 text-center text-xs font-medium leading-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+              )}
+            >
+              <shortcut.icon
+                className="size-5 shrink-0 text-brand"
+                aria-hidden="true"
+              />
+              {shortcut.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <ul className="hidden grid-cols-4 gap-3 sm:grid">
         {shortcuts.map((shortcut) => (
           <li key={shortcut.href}>
             <Link
@@ -208,6 +246,9 @@ function Shortcuts() {
  * la derecha y, si no cabe, la lista se desplaza dentro de la tarjeta en vez
  * de alargar la página.
  */
+/** En el teléfono solo se ven las tres más recientes: el resto alarga la página. */
+const MOBILE_ACTIVITY = 3;
+
 function RecentActivity({ items }: { items: ActivityItem[] }) {
   return (
     <section
@@ -224,10 +265,14 @@ function RecentActivity({ items }: { items: ActivityItem[] }) {
         </p>
       ) : (
         <ol className="-mx-1 grid content-start overflow-y-auto px-1 xl:flex-1">
-          {items.map((item) => (
+          {items.map((item, index) => (
             <li
               key={`${item.kind}-${item.id}`}
-              className="flex items-start gap-3 border-b border-border py-2.5 last:border-b-0"
+              className={cn(
+                "flex items-start gap-3 border-b border-border py-2.5 last:border-b-0",
+                index >= MOBILE_ACTIVITY && "hidden sm:flex",
+                index === MOBILE_ACTIVITY - 1 && "max-sm:border-b-0",
+              )}
             >
               <span
                 className={cn(
