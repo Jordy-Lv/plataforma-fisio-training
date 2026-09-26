@@ -34,8 +34,8 @@ cuatro cosas, y ninguna se empieza sin decidirla antes con Jordy:
    **C.3** — decidir si la aplicación tiene que poder usarse sin JavaScript: hoy un navegador
    sin JavaScript solo ve el esqueleto de carga, y eso deja abierta la 11.7.
 3. **`retire-rules-engine`** (§F) — proponer el change que retira el motor de reglas.
-4. **Operación** (§A) — la CI ya corre y está en verde en `main`, pero no bloquea el merge y
-   su job de pruebas funcionales falla por dos defectos del propio workflow (A.1); el
+4. **Operación** (§A) — la CI ya corre y está en verde en `main`, pero no bloquea el merge
+   (A.1); los dos defectos del job de pruebas funcionales se corrigen en esta rama. El
    despliegue sigue siendo manual (A.2).
 
 `openspec validate --all --strict` pasa los 8 changes desde el #44. Los changes que ya no
@@ -197,8 +197,9 @@ aplicación:
   no ejecuta `npx playwright install chromium`. Aunque lo hiciera, la suite quedaría en 7/11
   por KAN-19 (§F).
 
-Arreglar las dos es añadir dos pasos a `ci.yml`; queda por decidir con Jordy, porque con eso
-el job solo quedaría en rojo por KAN-19.
+**Corregido el 2026-09-26** en `claude/gifted-bell-619sct`: el job instala
+`@fission-ai/openspec@1` y `npx playwright install --with-deps chromium` antes de sembrar. Con
+eso el job solo debería quedar en rojo por KAN-19; se confirma en la primera ejecución del PR.
 
 **Lo que sigue abierto.** `main` **no tiene protección de rama** (la API la da como
 `protected: false`), así que la CI informa pero no impide fusionar en rojo: donde
@@ -597,15 +598,15 @@ eso, «adelgazar» dejó de ser el paso previo que bloqueaba todo lo demás, que
 - **B.3** — 13.1–13.4 fusionadas (PR #43). 13.6 corrida (PR #44): 30 de 31, abierta por
   KAN-19. Queda 13.5 (§C.1).
 - **CI y OpenSpec** — el job «Validar specs» instala ya `@fission-ai/openspec` y los 8 changes
-  validan (PR #44). La CI corre y `main` está en verde, pero sin protección de rama y con el
-  job funcional en rojo por dos defectos del workflow (A.1).
+  validan (PR #44). La CI corre y `main` está en verde, pero sin protección de rama (A.1). Los
+  dos defectos del job funcional se corrigen en `claude/gifted-bell-619sct`.
 
 Lo anterior, en su orden original:
 
 1. ~~**KAN-17** — fusionar el PR #31.~~ Hecho: fusionado en `main` (`a5c8bcc`).
 2. **A.1 y A.2** — decidir qué se hace con la CI y con el despliegue. La señal de la CI ya
-   existe (2026-09-25); falta que bloquee el merge y que el job funcional no falle por el
-   propio workflow. El despliegue sigue sin automatizar.
+   existe (2026-09-25); falta que bloquee el merge (protección de rama, la activa Jordy en
+   GitHub). El despliegue sigue sin automatizar.
 3. **C.1** — la pasada con el teléfono: media hora, cierra cinco casillas de cuatro `tasks.md`
    distintos y es lo único que valida de verdad la experiencia del paciente, que es el usuario
    que importa.
