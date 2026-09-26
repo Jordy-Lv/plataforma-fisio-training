@@ -65,9 +65,16 @@ const timeFormat = new Intl.DateTimeFormat("es-CO", {
 /**
  * La hora de un `timestamptz`, o `null` si la columna viene vacía —es lo que
  * ocurre cuando se registra un día pasado, del que nadie recuerda la hora.
+ *
+ * Los espacios se normalizan porque la ICU de Node escribe «p. m.» con un
+ * espacio corriente y la de Chromium con uno de no separación (U+00A0): si la
+ * hora se pinta en un componente que se hidrata, React ve dos textos distintos
+ * y rehace el árbol (lo detectó el subtest 10 de `test:smoke`).
  */
 export function formatTime(value: string | null | undefined) {
-  return value === null || value === undefined ? null : timeFormat.format(new Date(value));
+  return value === null || value === undefined
+    ? null
+    : timeFormat.format(new Date(value)).replace(/[  ]/g, " ");
 }
 
 const shortDateFormat = new Intl.DateTimeFormat("es-CO", {
