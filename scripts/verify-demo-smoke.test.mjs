@@ -254,7 +254,7 @@ test("Smoke de demo: trainer, fisioterapeuta y cliente", { timeout: 300_000 }, a
     }
   });
 
-  await t.test("Fisioterapeuta: dolor persistente visible y lectura independiente de alertas", async () => {
+  await t.test("Fisioterapeuta: dolor persistente visible y repartido según KAN-10", async () => {
     const alerts = await rows(physio.api.from("alerts").select("id,payload,read_at").eq("patient_id", patient.id).eq("type", "pain"));
     assert.ok(alerts.length > 0, "Tres sesiones deben generar dolor persistente");
     assert.ok(alerts.some((a) => new Set(a.payload.evidence.flat().map((e) => e.session_id)).size >= 3));
@@ -262,8 +262,10 @@ test("Smoke de demo: trainer, fisioterapeuta y cliente", { timeout: 300_000 }, a
     const result = await physio.web.submit("/pro/alerts", { alertId: alert.id }, `value="${alert.id}"`);
     assert.equal(result.response.status, 200);
     assert.ok((await rows(physio.api.from("alerts").select("read_at").eq("id", alert.id).single())).read_at);
-    const trainerAlerts = await rows(trainer.api.from("alerts").select("read_at").eq("patient_id", patient.id).eq("type", "pain"));
-    assert.ok(trainerAlerts.length > 0 && trainerAlerts.every((a) => a.read_at === null));
+    // Matriz de KAN-10 (docs/04): con fisioterapeuta en el equipo, el dolor le toca solo a él.
+    // Contrato acordado con Jordy el 2026-09-26; antes se esperaba copia al entrenador.
+    const trainerAlerts = await rows(trainer.api.from("alerts").select("id").eq("patient_id", patient.id).eq("type", "pain"));
+    assert.deepEqual(trainerAlerts, [], "El entrenador no recibe alertas de dolor si el paciente tiene fisioterapeuta");
   });
 
   await t.test("Aislamiento: controles positivos y rechazo de lectura o escritura ajenas", async () => {

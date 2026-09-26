@@ -1,7 +1,11 @@
 # Lo que falta por hacer
 
-Foto del **2026-09-26**, tomada con `main` = `d4ef9a2` (sin cambios desde la noche del 25;
-el estado de la CI se revisó este día en Actions, ver A.1). El 25 se fusionaron, en
+Foto del **2026-09-26**, tomada con `main` = `82f56e1` (PR
+[#46](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/46): cierre de la sección 6,
+estado real de la CI y arreglo de su job funcional) más lo que lleva la rama
+`claude/gifted-bell-619sct` (PR [#47](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/47):
+KAN-19 resuelto con Next 16.3.6, `test:smoke` en verde y la propuesta `retire-rules-engine`).
+El 25 se fusionaron, en
 orden: [#42](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/42) (asignación
 manual de rutinas, sección F),
 [#43](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/43) (cierre de
@@ -22,21 +26,36 @@ delante de `main` el commit que puso al día este documento tras el #45; ese com
 
 ### Dónde retomar
 
-**Ya no queda código pendiente en ningún change.** Todo lo que está abierto es una de estas
-cuatro cosas, y ninguna se empieza sin decidirla antes con Jordy:
+**Actualizado el 2026-09-26, tras el PR #46 (`82f56e1`) y con la rama
+`claude/gifted-bell-619sct` (PR #47).** KAN-19 está resuelto (§F) y, con él, las 31 suites
+pasan contra `next start`. Lo que queda abierto:
 
-1. **KAN-19** (§F) — con JavaScript, tras una server action, el botón puede quedarse en
-   «Asignando…» o sin su acuse. Es lo único que deja `test:smoke` en 7/11 y lo que mantiene
-   abiertas la 13.6 de `improve-frontend-ux` y la 7.1 de `manual-routine-assignment`. Decidido
-   dejarlo para un change propio: ni parche en el shell compartido sin consenso, ni subir
-   Next/React sin confirmar que es del framework.
-2. **C.1** — la pasada con el teléfono real. Cierra cinco casillas de una vez.
-   **C.3** — decidir si la aplicación tiene que poder usarse sin JavaScript: hoy un navegador
-   sin JavaScript solo ve el esqueleto de carga, y eso deja abierta la 11.7.
-3. **`retire-rules-engine`** (§F) — proponer el change que retira el motor de reglas.
-4. **Operación** (§A) — la CI ya corre y está en verde en `main`, pero no bloquea el merge
-   (A.1); los dos defectos del job de pruebas funcionales se corrigen en esta rama. El
-   despliegue sigue siendo manual (A.2).
+1. **C.1** — la pasada con el teléfono real. Es lo único que falta en cuatro de los cinco
+   changes con tareas abiertas: 13.5 (`improve-frontend-ux`), 6.1 (`add-routine-execution`),
+   1.2 (`simplify-navigation-and-panel`), 7.2 (`manual-routine-assignment`) y la instalación
+   de la PWA. Una sola sesión.
+2. **`retire-rules-engine`** (§F) — **propuesto el 2026-09-26**
+   ([`proposal.md`](../openspec/changes/retire-rules-engine/proposal.md), valida con
+   `--strict`). Antes de implementarlo, Jordy tiene que responder las nueve preguntas abiertas
+   (P1–P9) de su `design.md`: qué pasa con los datos de las reglas, con `copy_routine_template`,
+   con borrar plantillas que ya tienen rutinas, etc.
+3. **Deuda nueva de la subida a Next 16** (§F, KAN-19), ninguna urgente:
+   - `eslint-config-next` sigue en 15.5.25: la 16 trae reglas nuevas de React Hooks
+     (`react-hooks/set-state-in-effect`) que marcan 6 errores en código existente, entre otros
+     `components/ui/FilterForm.tsx` (compartido) y `lib/theme/use-theme.ts`.
+   - Next 16 avisa de que `middleware.ts` pasa a llamarse `proxy.ts` (hay un codemod,
+     `npx @next/codemod@canary middleware-to-proxy .`). Hoy funciona igual.
+   - El job funcional de la CI arranca la app con `npm run dev`, donde KAN-19 no se
+     reproducía. Pasarlo a `next start` exige que `scripts/verify.sh` no recompile con el
+     servidor en marcha (hoy lo hace en su paso «Build»).
+   - `next dev` de Next 16 añade un bloque en inglés a `AGENTS.md` **cuando lo arranca un
+     agente de IA** (`node_modules/next/dist/server/lib/generate-agent-files.js`). No se ha
+     commiteado; decidir si se acepta o se descarta cada vez.
+4. **Operación** (§A) — la CI ya corre y está en verde, pero `main` no tiene protección de
+   rama (A.1, lo activa Jordy en GitHub). El despliegue sigue siendo manual (A.2) y
+   `railway.json` queda deprecado el 2026-12-01 (A.3).
+
+La decisión sobre el uso sin JavaScript ya está tomada (C.3): no es requisito.
 
 `openspec validate --all --strict` pasa los 8 changes desde el #44. Los changes que ya no
 tienen tareas abiertas (`add-auth-and-roles`, `add-exercise-library-and-rules`,
@@ -71,20 +90,20 @@ Notación: **[código]** hay que escribirlo · **[verif.]** es comprobar, medir 
 | `add-routine-execution` | 28 | — | **1** |
 | `add-routine-calendar` | 14 | — | — |
 | `simplify-navigation-and-panel` | 12 | — | **1** |
-| `improve-frontend-ux` | 135 | 3 | **4** |
-| `manual-routine-assignment` | 32 | — | **2** |
+| `improve-frontend-ux` | 138 | 1 | **3** |
+| `manual-routine-assignment` | 33 | — | **1** |
+| `retire-rules-engine` | 0 | — | **31** (propuesto) |
 
 Los seis primeros changes funcionales están cerrados salvo dos verificaciones en teléfono
 real (`add-routine-execution` 6.1 y `simplify-navigation-and-panel` 1.2), que caben en la
 misma sesión que la 13.5 de `improve-frontend-ux` y la 7.2 de `manual-routine-assignment`
-(§C.1). A `manual-routine-assignment` le queda además la 7.1, que espera a KAN-19 (§F). Las secciones
+(§C.1). La 7.1 de `manual-routine-assignment`, que esperaba a KAN-19, se cerró el 2026-09-26 (§F). Las secciones
 16 y 14 de `improve-frontend-ux` —el bulto de código que quedaba— ya están las dos en `main`
 (PRs [#34](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/34) y
 [#35](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/35)). Lo que quedaba vivo en
 código era solo la sección 13, cuyas cuatro tareas de código (13.1–13.4) están en `main`
-(PR #43). La sección 6 se cerró el 2026-09-26 (C.2). Quedan la 7.2 y la 11.7 de C.2 (una por
-KAN-19 y otra por C.3), la 13.5–13.6, más el bloque de operación que nunca estuvo en ninguna
-lista.
+(PR #43). La sección 6, la 7.2, la 11.7 y la 13.6 se cerraron el 2026-09-26 (C.2 y §F). Queda
+la 13.5 (teléfono), más el bloque de operación que nunca estuvo en ninguna lista.
 
 ---
 
@@ -198,8 +217,37 @@ aplicación:
   por KAN-19 (§F).
 
 **Corregido el 2026-09-26** en `claude/gifted-bell-619sct`: el job instala
-`@fission-ai/openspec@1` y `npx playwright install --with-deps chromium` antes de sembrar. Con
-eso el job solo debería quedar en rojo por KAN-19; se confirma en la primera ejecución del PR.
+`@fission-ai/openspec@1` y `npx playwright install --with-deps chromium` antes de sembrar.
+
+**Lo que enseñó la primera ejecución con `test:smoke` de verdad** (PR #46, `ea09c4d`): specs
+válidas y 30 de 31 suites en verde; `test:smoke` en 8/11. El job arranca la app con
+`npm run dev`, no con `next start`, y ahí **KAN-19 no se reproduce**: el subtest 6 (el acuse
+«guardado») pasa. Con eso salieron a la luz dos fallos que el subtest 6 tapaba en local:
+
+- **Subtest 10, claves repetidas en `/evolution`.** `EvolutionChart` usaba la fecha como
+  `key` de cada punto, y la progresión de carga puede tener dos sesiones el mismo día. React
+  solo lo avisa en desarrollo. **Corregido en la misma rama:** la clave es la posición del
+  punto. Reproducido con dos tamizajes de la misma fecha en `next dev` (aviso en consola) y
+  sin aviso tras el cambio.
+- **Subtest 7, el entrenador ya no recibe alertas de dolor.** La suite espera que el
+  entrenador también reciba la alerta de dolor, pero la matriz de KAN-10
+  ([`04`](04-roles-y-permisos.md), 2026-09-10) se la da solo al fisioterapeuta cuando el
+  paciente tiene los dos. La aplicación hace lo documentado; la suite llegó con el PR #21
+  (2026-09-12) sin recoger KAN-10. **Contrato acordado con Jordy el 2026-09-26** (CLAUDE.md
+  §12): la suite comprueba la matriz —el fisioterapeuta recibe la alerta y la marca leída; el
+  entrenador no recibe ninguna—.
+
+Al arreglar esos dos salió un tercero, que el subtest 10 tapaba con el primero:
+
+- **Subtest 10, hidratación en `/pro/alerts`.** `formatTime` (`lib/progress/vocabulary.ts`)
+  escribe «10:56 p. m.»: la ICU de Node pone un espacio corriente antes de «m.» y la de
+  Chromium uno de no separación (U+00A0). `SessionReport` se hidrata dentro del diálogo de
+  evidencias y React ve dos textos distintos. **Corregido:** `formatTime` normaliza los
+  espacios. Se compararon con Node y Chromium todos los formateadores `Intl` del proyecto;
+  solo el de la hora difería.
+
+Con los tres, `test:smoke` pasa **11/11 con `next dev`** (lo que corre la CI). Con `next start`
+seguía en 7/11 por KAN-19, hasta subir a Next 16.3.6 (§F): desde entonces, 11/11 también ahí.
 
 **Lo que sigue abierto.** `main` **no tiene protección de rama** (la API la da como
 `protected: false`), así que la CI informa pero no impide fusionar en rojo: donde
@@ -340,7 +388,8 @@ Queda:
 
 - **[verif.] 13.6** — Las veinticinco suites en verde sobre la rama fusionada, más los cuatro
   de CI. **Corrida el 2026-09-25 sobre `c7be7ea`:** hoy son 31 suites y pasan 30, más los
-  cuatro de CI. Solo `test:smoke` queda en 7/11 por KAN-19, así que la casilla sigue abierta.
+  cuatro de CI. Solo `test:smoke` quedaba en 7/11 por KAN-19. **Cerrada el 2026-09-26:** con
+  Next 16.3.6, 31 de 31 contra `next start`.
 - **[verif.] 13.5** — el teléfono real (§C.1).
 
 ---
@@ -383,13 +432,15 @@ contenedor que el servidor**, sobre `d4ef9a2`:
   persona: si se quiere el recorrido humano, cabe en la pasada de C.1.
 - ~~**6.6**~~ — Cerrada. Las cinco suites en verde (46 subtests) y los cuatro de CI. Con eso
   la sección 6 de `improve-frontend-ux` queda completa.
-- **7.2** *(parcial)* — Al guardar un registro de la sesión, el bloque sigue abierto y
-  «Registro guardado» permanece a la vista. **Bloqueada por KAN-19:** `test:smoke` se corrió en
+- ~~**7.2**~~ — Cerrada con KAN-19 resuelto: con Next 16.3.6, el subtest 6 de `test:smoke`
+  ve el acuse dentro del bloque en los doce registros, tres veces seguidas. Antes estaba
+  **bloqueada por KAN-19:** `test:smoke` se corrió en
   este entorno y cae justo ahí (7/11, `getByText(/guardado/)` no aparece en 15 s), igual que
   en la pasada del 2026-09-25.
-- **11.7** *(parcial)* — Las seis confirmaciones de `ConfirmSubmit` con JavaScript **activado y
-  desactivado**. Por HTTP está verificado que las seis pantallas conservan sus `<form action>`
-  con sus marcadores. **La mitad «sin JavaScript» no se puede cerrar hoy:** ver C.3.
+- ~~**11.7**~~ — Cerrada. Con JavaScript, las siete confirmaciones de `ConfirmSubmit` (la
+  asignación manual añadió «Descartar y elegir otra») abren su diálogo, «Cancelar» no envía y
+  confirmar sí envía; recorrido con Chromium contra `next dev` por KAN-19. La mitad «sin
+  JavaScript» no aplica (C.3).
 
 ### C.3 — Sin JavaScript, el navegador solo pinta el esqueleto de carga *(hallazgo del 2026-09-26)*
 
@@ -405,10 +456,19 @@ encuentran los formularios aunque estén en el bloque oculto; nunca pintan la p�
 como «sin JavaScript todo funciona» (§F) o «sin JavaScript la lista se ve entera» (§D, 3.3)
 valen para el HTML del servidor, no para lo que ve una persona.
 
-**No se ha tocado.** Cualquier arreglo choca con algo ya decidido: quitar los `loading.tsx`
-deshace la 13.4 y rompe `test:design`; forzar el contenido visible sin JavaScript toca el shell
-compartido. Pendiente de decidir con Jordy si el uso sin JavaScript es un requisito de la demo
-o solo una garantía del HTML para las suites.
+**Decidido por Jordy el 2026-09-26: el uso sin JavaScript no es requisito.** Es una PWA; lo
+que se garantiza sin JavaScript es el HTML del servidor (lo que leen las suites), no la
+experiencia en un navegador sin JavaScript. No se cambia el marcado y la mitad «sin
+JavaScript» de la 11.7 queda como no aplicable.
+
+Opciones evaluadas antes de decidir (Chromium a 375 px, en un worktree aparte), por si se
+reabre:
+
+| Opción | Sin JavaScript | Con JavaScript | Coste |
+|---|---|---|---|
+| `<noscript><style>` en `app/layout.tsx` | Se ve y se envía, pero **fuera de su sitio**: el login sale fuera de la tarjeta y en `/people/[id]` los formularios salen de su `<details>`, apilados al final. | Sin cambio. | 1 archivo compartido; depende de detalles internos de React (`B:`/`S:`) y de las capas de Tailwind v4; ninguna suite lo vigila. |
+| Quitar los 24 `loading.tsx` | Correcto, igual que con JavaScript. | Se pierde el esqueleto de carga (13.4). | Deshace la 13.4; `test:design` 3/5; toca los seis grupos de rutas. |
+| Algo propio de Next 15.5 | No existe: el HTML completo solo se espera para bots con PPR, y PPR es solo canary. | — | — |
 
 ---
 
@@ -422,7 +482,7 @@ o solo una garantía del HTML para las suites.
   `lib/catalog/exercise-instructions.es.json` y correr `npm run seed:exercises:textos`.
 - **3.3 — Filtros por URL en `PeoplePanel`.** Congelado: desde que `/people` son cuatro
   tarjetas con `SheetModal`, un filtro en la URL navega y cierra el modal en cada tecla.
-  `PeopleFilter` ya filtra en el cliente y sin JavaScript la lista se ve entera. Reabrir
+  `PeopleFilter` ya filtra en el cliente y sin JavaScript el HTML trae la lista entera (C.3). Reabrir
   cuando el modal conserve su estado en la URL.
   **Revisado el 2026-09-11 con KAN-14 y vuelto a congelar.** Paginar en el servidor
   manteniendo el filtro en el cliente sería peor que no hacerlo: el buscador solo alcanza lo
@@ -537,7 +597,7 @@ migración [`20260925120000_routines_manual_assignment`](../supabase/migrations/
 acciones y consultas en `lib/routines/`, la pantalla por pasos (`AssignmentFlow`,
 `AssignmentSteps`, `TemplateChoice`, `RoutineDraftBar`, `RoutineEditor`), `test:routines`
 reescrita (14/14) y el paso de elegir plantilla en `test:calendar` y `test:smoke`. Quedan
-abiertas **7.1** (`test:smoke` arrastra KAN-19, abajo) y **7.2** (teléfono real).
+abiertas **7.1** (`test:smoke` arrastraba KAN-19; cerrada el 2026-09-26) y **7.2** (teléfono real).
 
 **Deuda anotada:** `public.copy_routine_template` sigue creando una rutina **activa** sin
 borrador ni exclusión de contraindicados (ahora sí con ADR-0010). La usan
@@ -558,6 +618,8 @@ pantalla no cambia de paso. Diagnóstico del 2026-09-25 con Chromium a 375 px:
   en trozos de 1 byte, pero ya descargada), funciona siempre (8 de 8). Si React la procesa
   **mientras llega**, se cuelga en la mayoría de los intentos.
 - Next 15.5.26 (el último 15.x) no lo corrige (2 cuelgues de 3).
+- **Solo con el build de producción** (2026-09-26): en la CI, que arranca con `npm run dev`,
+  el subtest 6 de `test:smoke` pasa; en local con `next start` falla siempre en el mismo sitio.
 
 Es un problema de tiempos del cliente de Next/React al consumir en *streaming* la respuesta
 de una server action, no de esta pantalla: `test:smoke` falla igual en `main` en la sesión
@@ -565,7 +627,8 @@ del paciente. Sin JavaScript (lo que recorren las suites HTTP) todo funciona en 
 servidor, aunque un navegador sin JavaScript solo pinta el esqueleto de carga (C.3).
 
 **Fuera de este change:** retirar `assignment_rules`, `/rules`, el simulador, `seed:rules` y
-las suites `test:rules*` va en otro change, `retire-rules-engine`, todavía sin proponer.
+las suites `test:rules*` va en otro change, `retire-rules-engine`, propuesto el 2026-09-26 y
+pendiente de las preguntas P1–P9 de su `design.md`.
 Hasta entonces el motor queda como código legado que la aplicación ya no invoca.
 
 **Fallo encontrado en el camino de reglas, sin arreglar a propósito:** cuando el motor deja
@@ -574,7 +637,28 @@ activa y la «restaura» después, pero el trigger `closed_routine_cancels_calen
 su calendario al cerrarla, y restaurarla no lo recupera. El borrador nuevo no usa ese camino, y
 el motor se retira en `retire-rules-engine`.
 
-KAN-19 sigue abierto: ver el diagnóstico de arriba.
+**KAN-19 resuelto el 2026-09-26: era del framework, y se arregla subiendo a Next 16.3.6.**
+Confirmado antes de subir, como pedía la decisión de Jordy:
+
+- Se reproduce en una app Next mínima **sin una línea del proyecto**: server action +
+  `revalidatePath` + un `loading.tsx` por encima de la página + respuesta RSC en varios trozos
+  + build de producción. Quitar `revalidatePath` o todos los `loading.tsx` de la cadena lo
+  hace desaparecer; el shell, el middleware, la precarga o la `key` no influyen.
+- La causa es el React canary que Next 15.5 trae dentro
+  (`19.2.0-canary-0bdb9206-20250818`; el `react` 19.1.0 de `package.json` no lo usa el App
+  Router). Coincide con [vercel/next.js#86055](https://github.com/vercel/next.js/issues/86055)
+  y [facebook/react#35399](https://github.com/facebook/react/issues/35399): una carrera en
+  `resolveLazy` al consumir la respuesta mientras llega.
+- En la pantalla del paciente: 20 de 20 sesiones colgadas con 15.5.25 y con 15.5.26; **0 de 20
+  con 16.3.6** (y con 15.4.11, línea anterior que no se recomienda).
+- Con 16.3.6, contra `next start` tras `db:reset`: las 31 suites en verde y `test:smoke` 11/11
+  tres veces seguidas. Cerró la 7.1 de `manual-routine-assignment` y la 13.6 y la 7.2 de
+  `improve-frontend-ux`.
+- Riesgo anotado: [vercel/next.js#97990](https://github.com/vercel/next.js/issues/97990)
+  describe el mismo síntoma en 16.2.9–16.3.3, cerrado sin reproducción. Aquí 16.3.6 lo
+  resuelve, pero es una medición nuestra, no una garantía.
+
+Lo que dejó la subida está en «Dónde retomar», punto 3.
 
 ---
 
@@ -593,10 +677,10 @@ eso, «adelgazar» dejó de ser el paso previo que bloqueaba todo lo demás, que
   git pull`, `git status` limpio, `railway up`). Antes de cualquier demo, A.7: el proyecto de
   Supabase no pausado.
 - **F** — ~~subir los documentos de ADR-0009~~, ~~proponer el plan~~ e ~~implementarlo~~
-  (PR #42 fusionado, `87039ad`). Quedan la 7.1 (KAN-19) y la 7.2 (teléfono, §C.1). La
-  retirada del motor va aparte, en `retire-rules-engine`, todavía sin proponer.
-- **B.3** — 13.1–13.4 fusionadas (PR #43). 13.6 corrida (PR #44): 30 de 31, abierta por
-  KAN-19. Queda 13.5 (§C.1).
+  (PR #42 fusionado, `87039ad`). La 7.1 se cerró con KAN-19; queda la 7.2 (teléfono, §C.1). La
+  retirada del motor va aparte, en `retire-rules-engine`: propuesto, pendiente de P1–P9.
+- **B.3** — 13.1–13.4 fusionadas (PR #43). 13.6 cerrada el 2026-09-26 (31 de 31 con Next
+  16.3.6). Queda 13.5 (§C.1).
 - **CI y OpenSpec** — el job «Validar specs» instala ya `@fission-ai/openspec` y los 8 changes
   validan (PR #44). La CI corre y `main` está en verde, pero sin protección de rama (A.1). Los
   dos defectos del job funcional se corrigen en `claude/gifted-bell-619sct`.
@@ -614,7 +698,7 @@ Lo anterior, en su orden original:
 5. ~~**B.2**~~ Hecha, PR #35 fusionado. Queda **KAN-15** suelto (mismo patrón de paginación en
    `/attendance`), en pausa a propósito.
 6. ~~**A.4**~~ Hecho, PR #36 fusionado. ~~**KAN-16**~~ Hecho, PR #37 fusionado.
-7. **B.3** — ~~13.1–13.4~~ fusionadas (PR #43). Quedan 13.5 (C.1) y 13.6 (KAN-19).
+7. **B.3** — ~~13.1–13.4~~ fusionadas (PR #43); ~~13.6~~ cerrada con KAN-19. Queda 13.5 (C.1).
 8. ~~**KAN-3**~~ Hecho: PR #21 fusionado (`d50f05d`).
 9. ~~**`test:calendar` y `test:catalog`**~~ — los dos corregidos: `test:calendar` en el PR #42
    y `test:catalog` en el PR #44.
