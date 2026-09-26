@@ -113,9 +113,10 @@ final, después de la 16.
 
 - [x] 7.1 Cambiar la `key` de la tarjeta de ejercicio a `key={item.id}` y comentar por qué no puede volver a depender del registro
   - `app/(patient)/routine/sessions/[sessionId]/page.tsx`: la `key` era `` `${item.id}-${JSON.stringify(logs.get(item.id) ?? null)}` ``; ahora es `key={item.id}` con el comentario que explica que al depender del registro cada guardado remontaba el bloque y borraba el «Registro guardado» del `useActionState` (docs/11, §5).
-- [~] 7.2 Comprobar en el navegador que al guardar un registro el bloque sigue abierto y «Registro guardado» permanece a la vista
+- [x] 7.2 Comprobar en el navegador que al guardar un registro el bloque sigue abierto y «Registro guardado» permanece a la vista
   - Pendiente de confirmar en un navegador real. `test:routines:sessions` sí verifica que la respuesta del POST de guardado contiene `Registro guardado` (18/18), y la `key` estable es el arreglo documentado.
   - 2026-09-26: bloqueada por KAN-19. Con Chromium contra `next start`, `test:smoke` cae justo en este acuse (`getByText(/guardado/)` no aparece en 15 s; 7/11), igual que el 2026-09-25.
+  - **Cerrada el 2026-09-26** con KAN-19 resuelto (Next 16.3.6): en Chromium contra `next start`, el subtest 6 de `test:smoke` guarda doce registros en cuatro sesiones y en cada uno espera el acuse «guardado» visible dentro del bloque del ejercicio (`#ejercicio-<id>`), que por tanto sigue abierto. Pasa tres veces seguidas. Verificado con un navegador automatizado, no por una persona.
 - [x] 7.3 Mover el acuse de cierre al informe de la sesión, que sí se renderiza tras cerrar; **no** usar `redirect()`
   - `SessionReport` acepta `justClosed?` y pinta un `Notice tone="success"` con «Sesión completada. Tu profesional ya puede consultarla.» —el mismo texto que devuelve `closeSession`—. Lo pasa solo la pantalla del paciente: `recienCerrada(session)` compara `completed_at` (lo fija el trigger de la migración `20260905210000`) con ahora, con una ventana de dos minutos, porque sin `redirect()` el acuse no puede viajar en la URL. `closeSession` sigue sin redirigir.
   - De paso: `SessionReport` mezclaba `performed_on` en ISO y `completed_at` en formato local en la misma línea (hallazgo de 9.6). Ahora las dos salen de `formatDate`/`formatTime` de `lib/progress/vocabulary.ts`: «Sesión del 3 de septiembre de 2026 · cerrada a las 8:30».
@@ -208,8 +209,9 @@ final, después de la 16.
 - [x] 13.4 Añadir a `scripts/verify-design-system.test.mjs` la comprobación de que todo segmento dinámico con `page.tsx` tiene su `loading.tsx`
   - Solo 2 de 11 lo tenían. Se añadieron los 9 que faltaban, cada uno con la forma de su pantalla (decidido con Jordy el 2026-09-25, en vez de una lista de excepciones). `test:design` 5/5, y falla nombrando el archivo si se quita uno.
 - [ ] 13.5 Recorrer los caminos del paciente en un teléfono real y registrar el resultado
-- [ ] 13.6 Las veinticinco suites en verde sobre la rama fusionada, más los cuatro de CI
+- [x] 13.6 Las veinticinco suites en verde sobre la rama fusionada, más los cuatro de CI
   - **2026-09-25, sobre `main` = `c7be7ea`** (PR #43 fusionado), tras `db:reset`, `seed:exercises`, `seed:templates` y `seed:progress-demo`, contra `next start` en el 3000: hoy son **31** suites, no veinticinco. **30 de 31 en verde** (324 subtests). Los cuatro de CI (`typecheck`, `lint`, `test:design` 5/5, `build`) en verde. Solo `test:smoke` queda en 7/11: fallan 6–8 por KAN-19 (el acuse «guardado» no aparece en la sesión del paciente con JavaScript), igual que en la 7.1 de `manual-routine-assignment`. Queda abierta hasta que se cierre KAN-19.
+  - **Cerrada el 2026-09-26**: con KAN-19 resuelto (Next 16.3.6) y los arreglos de los subtests 7 y 10 de `test:smoke`, las **31 de 31** suites en verde contra `next start` —`test:smoke` 11/11 tres veces seguidas— y los cuatro de CI.
 
 ## 14. Densidad de los listados — rama `ui/densidad-listados`
 
