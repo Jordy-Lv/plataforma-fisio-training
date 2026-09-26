@@ -23,10 +23,10 @@ export function MembershipReviewButton() {
   );
 
   return (
-    <form action={action} className="grid gap-3">
+    <form action={action} className="flex flex-wrap items-center gap-2">
       <SubmitButton
         variant="outline"
-        className="min-h-11 justify-self-start"
+        className="min-h-11"
         pendingLabel="Revisando…"
       >
         Revisar vencimientos ahora

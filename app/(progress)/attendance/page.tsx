@@ -10,8 +10,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { cardVariants } from "@/components/ui/Card";
-import { Field, Input } from "@/components/ui/Field";
-import { ListFilters } from "@/components/ui/ListFilters";
+import { Input } from "@/components/ui/Field";
+import { FilterField, ListFilters, filterControlClass } from "@/components/ui/ListFilters";
 import { Pagination } from "@/components/ui/Pagination";
 
 export const metadata: Metadata = {
@@ -68,11 +68,9 @@ export default async function Page({
         choices={choices} chips={chips}
         search={{ label: "Buscar paciente", placeholder: "Escribe un nombre…" }}
         extra={
-          <div className="mt-4 grid gap-2">
-            <Field label="Mes">
-              <Input type="month" name="month" defaultValue={month} />
-            </Field>
-          </div>
+          <FilterField label="Mes">
+            <Input type="month" name="month" defaultValue={month} className={filterControlClass} />
+          </FilterField>
         } />
 
       {/*

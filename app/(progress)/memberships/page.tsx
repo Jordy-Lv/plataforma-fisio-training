@@ -181,20 +181,33 @@ async function AdminView({ name, filters }: { name?: string | null; filters: Mem
     <Workspace
       title="Membresías"
       name={name}
-      description="El control administrativo de mensualidades: fecha de ingreso, fecha de vencimiento, monto y estado. No procesa pagos."
+      description="Fechas, montos y estado de cada mensualidad. No procesa pagos."
     >
-      <section className={cn(cardVariants(), "mb-10 grid gap-4")}>
-        <h2 className="text-base font-semibold">Revisión de vencimientos</h2>
-        <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-          Cada día, un proceso automático marca las membresías próximas a vencer
-          y las vencidas, avisa al equipo y envía el correo al paciente. Ahora
-          mismo se avisa con {noticeDays} días de antelación. Puedes lanzar la
-          revisión a mano para la demostración.
-        </p>
-        <div className="grid gap-6 sm:grid-cols-2">
+      {/*
+        Una barra y no una tarjeta: quien entra aquí viene a ver qué vence, y
+        a 375 px la revisión no debe empujar el listado fuera de la pantalla.
+        El ajuste del plazo se pliega; un `<details>` cerrado lo emite igual
+        en el HTML y no altera el orden de los formularios (docs/11).
+      */}
+      <section aria-labelledby="membership-review" className="mb-6 grid gap-1 border-b border-border pb-3">
+        <h2 id="membership-review" className="sr-only">Revisión de vencimientos</h2>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <p className="text-sm leading-6 text-muted-foreground">
+            <span className="font-medium text-foreground">
+              Aviso con {noticeDays} {noticeDays === 1 ? "día" : "días"} de antelación
+            </span>{" "}
+            · Revisión diaria automática
+          </p>
           <MembershipReviewButton />
-          <MembershipNoticeDaysForm current={noticeDays} />
         </div>
+        <details className="text-sm">
+          <summary className="flex min-h-11 cursor-pointer items-center font-medium">
+            Cambiar plazo
+          </summary>
+          <div className="pb-2">
+            <MembershipNoticeDaysForm current={noticeDays} />
+          </div>
+        </details>
       </section>
 
       <ListFilters action="/memberships" label="Filtros de membresías" values={filters}
