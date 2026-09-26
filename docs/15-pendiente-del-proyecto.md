@@ -31,8 +31,8 @@ cuatro cosas, y ninguna se empieza sin decidirla antes con Jordy:
    dejarlo para un change propio: ni parche en el shell compartido sin consenso, ni subir
    Next/React sin confirmar que es del framework.
 2. **C.1** — la pasada con el teléfono real. Cierra cinco casillas de una vez.
-   **C.3** — decidir si la aplicación tiene que poder usarse sin JavaScript: hoy un navegador
-   sin JavaScript solo ve el esqueleto de carga, y eso deja abierta la 11.7.
+   **C.3** — ~~decidir si la aplicación tiene que poder usarse sin JavaScript~~: decidido que
+   no es requisito (2026-09-26).
 3. **`retire-rules-engine`** (§F) — **propuesto el 2026-09-26**
    ([`proposal.md`](../openspec/changes/retire-rules-engine/proposal.md), valida con
    `--strict`). Antes de implementarlo, Jordy tiene que responder las nueve preguntas abiertas
@@ -218,8 +218,21 @@ válidas y 30 de 31 suites en verde; `test:smoke` en 8/11. El job arranca la app
   entrenador también reciba la alerta de dolor, pero la matriz de KAN-10
   ([`04`](04-roles-y-permisos.md), 2026-09-10) se la da solo al fisioterapeuta cuando el
   paciente tiene los dos. La aplicación hace lo documentado; la suite llegó con el PR #21
-  (2026-09-12) sin recoger KAN-10. **Pendiente de acordar el contrato con Jordy** (CLAUDE.md
-  §12) antes de tocar la suite.
+  (2026-09-12) sin recoger KAN-10. **Contrato acordado con Jordy el 2026-09-26** (CLAUDE.md
+  §12): la suite comprueba la matriz —el fisioterapeuta recibe la alerta y la marca leída; el
+  entrenador no recibe ninguna—.
+
+Al arreglar esos dos salió un tercero, que el subtest 10 tapaba con el primero:
+
+- **Subtest 10, hidratación en `/pro/alerts`.** `formatTime` (`lib/progress/vocabulary.ts`)
+  escribe «10:56 p. m.»: la ICU de Node pone un espacio corriente antes de «m.» y la de
+  Chromium uno de no separación (U+00A0). `SessionReport` se hidrata dentro del diálogo de
+  evidencias y React ve dos textos distintos. **Corregido:** `formatTime` normaliza los
+  espacios. Se compararon con Node y Chromium todos los formateadores `Intl` del proyecto;
+  solo el de la hora difería.
+
+Con los tres, `test:smoke` pasa **11/11 con `next dev`** (lo que corre la CI). Con `next start`
+sigue en 7/11 por KAN-19.
 
 **Lo que sigue abierto.** `main` **no tiene protección de rama** (la API la da como
 `protected: false`), así que la CI informa pero no impide fusionar en rojo: donde
@@ -409,7 +422,8 @@ contenedor que el servidor**, sobre `d4ef9a2`:
   en la pasada del 2026-09-25.
 - **11.7** *(parcial)* — Las seis confirmaciones de `ConfirmSubmit` con JavaScript **activado y
   desactivado**. Por HTTP está verificado que las seis pantallas conservan sus `<form action>`
-  con sus marcadores. **La mitad «sin JavaScript» no se puede cerrar hoy:** ver C.3.
+  con sus marcadores. La mitad «sin JavaScript» **no aplica** (C.3, decisión del 2026-09-26);
+  queda el recorrido visual con JavaScript activado.
 
 ### C.3 — Sin JavaScript, el navegador solo pinta el esqueleto de carga *(hallazgo del 2026-09-26)*
 
@@ -425,10 +439,19 @@ encuentran los formularios aunque estén en el bloque oculto; nunca pintan la p�
 como «sin JavaScript todo funciona» (§F) o «sin JavaScript la lista se ve entera» (§D, 3.3)
 valen para el HTML del servidor, no para lo que ve una persona.
 
-**No se ha tocado.** Cualquier arreglo choca con algo ya decidido: quitar los `loading.tsx`
-deshace la 13.4 y rompe `test:design`; forzar el contenido visible sin JavaScript toca el shell
-compartido. Pendiente de decidir con Jordy si el uso sin JavaScript es un requisito de la demo
-o solo una garantía del HTML para las suites.
+**Decidido por Jordy el 2026-09-26: el uso sin JavaScript no es requisito.** Es una PWA; lo
+que se garantiza sin JavaScript es el HTML del servidor (lo que leen las suites), no la
+experiencia en un navegador sin JavaScript. No se cambia el marcado y la mitad «sin
+JavaScript» de la 11.7 queda como no aplicable.
+
+Opciones evaluadas antes de decidir (Chromium a 375 px, en un worktree aparte), por si se
+reabre:
+
+| Opción | Sin JavaScript | Con JavaScript | Coste |
+|---|---|---|---|
+| `<noscript><style>` en `app/layout.tsx` | Se ve y se envía, pero **fuera de su sitio**: el login sale fuera de la tarjeta y en `/people/[id]` los formularios salen de su `<details>`, apilados al final. | Sin cambio. | 1 archivo compartido; depende de detalles internos de React (`B:`/`S:`) y de las capas de Tailwind v4; ninguna suite lo vigila. |
+| Quitar los 24 `loading.tsx` | Correcto, igual que con JavaScript. | Se pierde el esqueleto de carga (13.4). | Deshace la 13.4; `test:design` 3/5; toca los seis grupos de rutas. |
+| Algo propio de Next 15.5 | No existe: el HTML completo solo se espera para bots con PPR, y PPR es solo canary. | — | — |
 
 ---
 
@@ -442,7 +465,7 @@ o solo una garantía del HTML para las suites.
   `lib/catalog/exercise-instructions.es.json` y correr `npm run seed:exercises:textos`.
 - **3.3 — Filtros por URL en `PeoplePanel`.** Congelado: desde que `/people` son cuatro
   tarjetas con `SheetModal`, un filtro en la URL navega y cierra el modal en cada tecla.
-  `PeopleFilter` ya filtra en el cliente y sin JavaScript la lista se ve entera. Reabrir
+  `PeopleFilter` ya filtra en el cliente y sin JavaScript el HTML trae la lista entera (C.3). Reabrir
   cuando el modal conserve su estado en la URL.
   **Revisado el 2026-09-11 con KAN-14 y vuelto a congelar.** Paginar en el servidor
   manteniendo el filtro en el cliente sería peor que no hacerlo: el buscador solo alcanza lo
