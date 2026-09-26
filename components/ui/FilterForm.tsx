@@ -73,7 +73,7 @@ export function FilterForm({ action, label, debounceMs = 300, className, childre
       onCompositionEnd={(event) => { composing.current = false; schedule(event.currentTarget); }}
     >
       {children}
-      <Button type="submit" size="lg" className="mt-4 w-full group-data-[enhanced=true]/filters:hidden sm:w-auto">
+      <Button type="submit" className="mt-4 min-h-11 w-full group-data-[enhanced=true]/filters:hidden sm:w-auto sm:justify-self-start">
         Aplicar filtros
       </Button>
       <p role="status" className="sr-only">{pending ? "Actualizando resultados…" : ""}</p>

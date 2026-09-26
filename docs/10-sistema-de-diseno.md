@@ -111,8 +111,8 @@ El estado de un listado —búsqueda, filtros, orden, vista y página— vive en
 
 | Componente | Notas |
 |---|---|
-| `ListFilters` | La barra de filtros de un listado: buscador, desplegables y, **fuera** del formulario, las píldoras que quitan cada filtro. Todo filtro nace en «Todos». |
-| `FilterForm` | El `<form method="get">` de servidor que hay debajo de `ListFilters` y `CatalogPicker`, con autoenvío: desplegable al instante, texto tras 300 ms. «Aplicar filtros» se emite siempre y se oculta al hidratar. |
+| `ListFilters` | La barra de filtros de un listado: buscador, desplegables y, **fuera** del formulario, las píldoras que quitan cada filtro. Todo filtro nace en «Todos». Sin tarjeta: el buscador (44 px, con lupa y rótulo solo para lectores de pantalla) ocupa una fila y los desplegables se reparten en la siguiente, dos por fila a 375 px; en escritorio, todo en una. Cada desplegable lleva el rótulo **dentro** del control («Estado  Todos ⌄») con `FilterField`, que es también el patrón para un `extra` como el «Mes» de `/attendance`. |
+| `FilterForm` | El `<form method="get">` de servidor que hay debajo de `ListFilters` y `CatalogPicker`, con autoenvío: desplegable al instante, texto tras 300 ms. «Aplicar filtros» (44 px) se emite siempre y se oculta al hidratar. |
 | `Chip` | Filtro activo como **enlace** que lo quita. Es también la forma de filtrar por persona: un `<select>` de uuids capturaría el formulario de una suite que busca `value="<uuid>"`. |
 | `Pagination` | Anterior/siguiente con enlaces; desaparece con una sola página. |
 | `PeriodFilter` | Estrecha por año o mes un historial que el servidor ya pintó entero. **No es un `<form>`**: sirve en pantallas cuyo marcador es un uuid. Sin JavaScript se ve todo. |
