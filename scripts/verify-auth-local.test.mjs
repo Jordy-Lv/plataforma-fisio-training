@@ -58,7 +58,9 @@ test("Autenticación y cookies SSR contra Supabase local", { timeout: 120_000 },
   await cp(path.join(root, "tsconfig.json"), path.join(fixture, "tsconfig.json"));
   await symlink(path.join(root, "node_modules"), path.join(fixture, "node_modules"), "dir");
   await writeFile(path.join(fixture, "package.json"), JSON.stringify({ private: true }));
-  await writeFile(path.join(fixture, "next.config.mjs"), `export default { outputFileTracingRoot: ${JSON.stringify(root)} };`);
+  // La prueba no copia `lib/db/types.ts`: sus importaciones son solo de tipos y no
+  // cambian lo que se ejecuta. Antes corría con `next dev`, que tampoco comprobaba tipos.
+  await writeFile(path.join(fixture, "next.config.mjs"), `export default { outputFileTracingRoot: ${JSON.stringify(root)}, typescript: { ignoreBuildErrors: true } };`);
   await writeFile(path.join(fixture, "app/layout.tsx"), "export default function Layout({ children }: { children: React.ReactNode }) { return <html lang='es'><body>{children}</body></html>; }");
   await writeFile(path.join(fixture, "app/page.tsx"), `
     import { createClient } from '@/lib/supabase/server';
@@ -70,9 +72,15 @@ test("Autenticación y cookies SSR contra Supabase local", { timeout: 120_000 },
     }
   `);
 
-  server = spawn(process.execPath, [path.join(root, "node_modules/next/dist/bin/next"), "dev", fixture, "--hostname", "127.0.0.1", "--port", "0"], {
+  // Compilada para producción, como se despliega. Desde Next 16, `next dev` reescribe
+  // `Cache-Control` y la prueba de `no-store` ya no mediría lo que llega al usuario.
+  // `--webpack`: Turbopack no resuelve el `node_modules` enlazado fuera de la carpeta.
+  const next = path.join(root, "node_modules/next/dist/bin/next");
+  const env = { ...process.env, NEXT_TELEMETRY_DISABLED: "1", NEXT_PUBLIC_SUPABASE_URL: status.API_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY: status.ANON_KEY };
+  execFileSync(process.execPath, [next, "build", "--webpack", fixture], { cwd: fixture, env, stdio: "pipe" });
+  server = spawn(process.execPath, [next, "start", fixture, "--hostname", "127.0.0.1", "--port", "0"], {
     cwd: fixture,
-    env: { ...process.env, NEXT_TELEMETRY_DISABLED: "1", NEXT_PUBLIC_SUPABASE_URL: status.API_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY: status.ANON_KEY },
+    env,
     stdio: ["ignore", "pipe", "pipe"],
   });
   server.stdout.on("data", (chunk) => { output += chunk.toString(); });
