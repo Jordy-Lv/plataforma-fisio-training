@@ -31,6 +31,8 @@ cuatro cosas, y ninguna se empieza sin decidirla antes con Jordy:
    dejarlo para un change propio: ni parche en el shell compartido sin consenso, ni subir
    Next/React sin confirmar que es del framework.
 2. **C.1** — la pasada con el teléfono real. Cierra cinco casillas de una vez.
+   **C.3** — decidir si la aplicación tiene que poder usarse sin JavaScript: hoy un navegador
+   sin JavaScript solo ve el esqueleto de carga, y eso deja abierta la 11.7.
 3. **`retire-rules-engine`** (§F) — proponer el change que retira el motor de reglas.
 4. **Operación** (§A) — la CI ya corre y está en verde en `main`, pero no bloquea el merge y
    su job de pruebas funcionales falla por dos defectos del propio workflow (A.1); el
@@ -69,7 +71,7 @@ Notación: **[código]** hay que escribirlo · **[verif.]** es comprobar, medir 
 | `add-routine-execution` | 28 | — | **1** |
 | `add-routine-calendar` | 14 | — | — |
 | `simplify-navigation-and-panel` | 12 | — | **1** |
-| `improve-frontend-ux` | 132 | — | **7** |
+| `improve-frontend-ux` | 135 | 3 | **4** |
 | `manual-routine-assignment` | 32 | — | **2** |
 
 Los seis primeros changes funcionales están cerrados salvo dos verificaciones en teléfono
@@ -80,8 +82,9 @@ misma sesión que la 13.5 de `improve-frontend-ux` y la 7.2 de `manual-routine-a
 (PRs [#34](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/34) y
 [#35](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/35)). Lo que quedaba vivo en
 código era solo la sección 13, cuyas cuatro tareas de código (13.1–13.4) están en `main`
-(PR #43). Quedan las verificaciones a mano de la sección 6, de C.2 y la 13.5–13.6, más el
-bloque de operación que nunca estuvo en ninguna lista.
+(PR #43). La sección 6 se cerró el 2026-09-26 (C.2). Quedan la 7.2 y la 11.7 de C.2 (una por
+KAN-19 y otra por C.3), la 13.5–13.6, más el bloque de operación que nunca estuvo en ninguna
+lista.
 
 ---
 
@@ -369,21 +372,42 @@ El registro va en la sección «Registro de la ejecución» de [`docs/07`](07-pl
 ### C.2 — Navegador con el `next start` local
 
 Quedaron abiertas porque los navegadores disponibles en la sesión eran remotos y no alcanzaban
-el servidor local.
+el servidor local. **El 2026-09-26 se recorrieron con Chromium (Playwright) en el mismo
+contenedor que el servidor**, sobre `d4ef9a2`:
 
+- ~~**6.3**~~ — Cerrada. Sin tamizajes no se monta ninguna gráfica y se ve el estado vacío;
+  con datos, las dos `<option>` exactas están en el HTML y la gráfica cambia de Peso a IMC.
+- ~~**6.5**~~ — Cerrada. 90 de 90 toques entre las seis secciones, como admin y como
+  entrenador, a 375 px; pestañas de 44 px. Hecha con un navegador automatizado, no por una
+  persona: si se quiere el recorrido humano, cabe en la pasada de C.1.
+- ~~**6.6**~~ — Cerrada. Las cinco suites en verde (46 subtests) y los cuatro de CI. Con eso
+  la sección 6 de `improve-frontend-ux` queda completa.
 - **7.2** *(parcial)* — Al guardar un registro de la sesión, el bloque sigue abierto y
-  «Registro guardado» permanece a la vista. La suite ya verifica que la respuesta del POST
-  contiene el texto; falta verlo con los ojos.
+  «Registro guardado» permanece a la vista. **Bloqueada por KAN-19:** `test:smoke` se corrió en
+  este entorno y cae justo ahí (7/11, `getByText(/guardado/)` no aparece en 15 s), igual que
+  en la pasada del 2026-09-25.
 - **11.7** *(parcial)* — Las seis confirmaciones de `ConfirmSubmit` con JavaScript **activado y
   desactivado**. Por HTTP está verificado que las seis pantallas conservan sus `<form action>`
-  con sus marcadores; falta el recorrido visual.
-- **6.3** — Verificar que `/evolution/[patientId]` conserva `<option value="weight">Peso</option>`
-  e `<option value="bmi">IMC</option>`, y que la gráfica sigue sin montarse cuando no hay datos.
-- **6.5** — Desde cualquier sección de un paciente se llega a las otras cinco en un toque.
-- **6.6** — `npm run test:routines`, `test:routines:items`, `test:attendance`,
-  `test:screenings` y `test:evolution` en verde, más los cuatro de CI. Cierra la sección 6 de
-  `improve-frontend-ux` (montaje de cabecera y pestañas en la ficha del paciente), que hasta
-  ahora no aparecía en este documento.
+  con sus marcadores. **La mitad «sin JavaScript» no se puede cerrar hoy:** ver C.3.
+
+### C.3 — Sin JavaScript, el navegador solo pinta el esqueleto de carga *(hallazgo del 2026-09-26)*
+
+En Chromium con JavaScript desactivado, `/login`, `/pro`, `/people/[id]`, `/memberships`,
+`/exercises` y `/evolution/[patientId]` muestran **solo el esqueleto** de su `loading.tsx`: ni
+el título ni los formularios se ven. El contenido real sí llega en el HTML, pero dentro de un
+`<div hidden id="S:…">` del *streaming* de React, que solo pasa a la vista con el script que
+lo acompaña. Como todos los grupos de rutas tienen `loading.tsx` (el de `(auth)` desde el
+2026-09-07; la 13.4 añadió el resto de segmentos dinámicos), le pasa a toda la aplicación.
+
+**Por qué no lo detectó nada:** las suites HTTP leen el HTML crudo con expresiones regulares y
+encuentran los formularios aunque estén en el bloque oculto; nunca pintan la página. Frases
+como «sin JavaScript todo funciona» (§F) o «sin JavaScript la lista se ve entera» (§D, 3.3)
+valen para el HTML del servidor, no para lo que ve una persona.
+
+**No se ha tocado.** Cualquier arreglo choca con algo ya decidido: quitar los `loading.tsx`
+deshace la 13.4 y rompe `test:design`; forzar el contenido visible sin JavaScript toca el shell
+compartido. Pendiente de decidir con Jordy si el uso sin JavaScript es un requisito de la demo
+o solo una garantía del HTML para las suites.
 
 ---
 
@@ -536,7 +560,8 @@ pantalla no cambia de paso. Diagnóstico del 2026-09-25 con Chromium a 375 px:
 
 Es un problema de tiempos del cliente de Next/React al consumir en *streaming* la respuesta
 de una server action, no de esta pantalla: `test:smoke` falla igual en `main` en la sesión
-del paciente. Sin JavaScript (lo que recorren las suites HTTP) todo funciona.
+del paciente. Sin JavaScript (lo que recorren las suites HTTP) todo funciona en el HTML del
+servidor, aunque un navegador sin JavaScript solo pinta el esqueleto de carga (C.3).
 
 **Fuera de este change:** retirar `assignment_rules`, `/rules`, el simulador, `seed:rules` y
 las suites `test:rules*` va en otro change, `retire-rules-engine`, todavía sin proponer.

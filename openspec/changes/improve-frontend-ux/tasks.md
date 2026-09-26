@@ -100,11 +100,14 @@ final, después de la 16.
   - Solo las pestañas: la cabecera de 5.3 necesita la agregación de 5.1, que sigue abierta. `test:routines` 12/12 y `test:routines:items` 9/9 contra el build vivo.
 - [x] 6.2 Montarlas en `/pro/sessions` cuando hay paciente seleccionado, `/attendance/[patientId]`, `/screenings/[patientId]` y `/evolution/[patientId]`
   - También en `/people/[id]`, y **solo para el personal**: `PatientProfile` es la misma pantalla que `/patient/profile`, y el paciente no entra en las otras cinco vistas. Los botones sueltos de cabecera —«Ver su asistencia», «Ver su evolución»— se retiran: los sustituye la banda.
-- [ ] 6.3 Verificar que `/evolution/[patientId]` conserva `<option value="weight">Peso</option>` e `<option value="bmi">IMC</option>`, y que la gráfica sigue sin montarse cuando no hay datos
+- [x] 6.3 Verificar que `/evolution/[patientId]` conserva `<option value="weight">Peso</option>` e `<option value="bmi">IMC</option>`, y que la gráfica sigue sin montarse cuando no hay datos
+  - 2026-09-26, Chromium a 375 px contra `next start` sobre `d4ef9a2`, como entrenador. Sin tamizajes (Diego y Elena de la semilla), ninguna de las dos secciones monta `svg[role="img"]` y las dos muestran su estado vacío. Con tres tamizajes temporales de Diego (borrados después), el HTML trae las dos `<option>` exactas, la gráfica dice «Peso: de 82 kg a 79 kg» y al elegir IMC pasa a «IMC: de 25,9 a 24,9».
 - [x] 6.4 Enlazar a la ficha desde `PeoplePanel`, `/pro/routines`, `/attendance` y `/screenings`
   - Los dos primeros ya enlazaban. En las tarjetas de `/attendance` y `/screenings` el enlace «Ver ficha» lleva `relative`: sin eso queda debajo del `after:inset-0` que hace clicable toda la tarjeta.
-- [ ] 6.5 Comprobar a mano que desde cualquier sección de un paciente se llega a las otras cinco en un toque
-- [ ] 6.6 `npm run test:routines`, `test:routines:items`, `test:attendance`, `test:screenings` y `test:evolution` en verde, más los cuatro de CI
+- [x] 6.5 Comprobar a mano que desde cualquier sección de un paciente se llega a las otras cinco en un toque
+  - 2026-09-26, recorrido con Chromium (Playwright) a 375 px con toques, no con una persona: como admin (Diego y Elena) y como entrenador (Diego), desde cada una de las seis secciones se tocó cada una de las otras cinco y se comprobó que la pestaña de destino queda activa y la URL es la suya. 90 de 90 toques (18 secciones de partida × 5 destinos), pestañas de 44 px de alto. Al entrenador, Elena (que no tiene asignada) le da 404, sin banda.
+- [x] 6.6 `npm run test:routines`, `test:routines:items`, `test:attendance`, `test:screenings` y `test:evolution` en verde, más los cuatro de CI
+  - 2026-09-26 sobre `d4ef9a2`, tras `supabase start`, `seed:exercises`, `seed:templates` y `seed:progress-demo`, contra `next start` en el 3000: 14/14, 9/9, 8/8, 8/8 y 7/7. `typecheck`, `lint`, `test:design` 5/5 y `build` en verde.
 
 ## 7. Los dos defectos del paciente — rama `fix/sesion-acuses`
 
@@ -112,6 +115,7 @@ final, después de la 16.
   - `app/(patient)/routine/sessions/[sessionId]/page.tsx`: la `key` era `` `${item.id}-${JSON.stringify(logs.get(item.id) ?? null)}` ``; ahora es `key={item.id}` con el comentario que explica que al depender del registro cada guardado remontaba el bloque y borraba el «Registro guardado» del `useActionState` (docs/11, §5).
 - [~] 7.2 Comprobar en el navegador que al guardar un registro el bloque sigue abierto y «Registro guardado» permanece a la vista
   - Pendiente de confirmar en un navegador real. `test:routines:sessions` sí verifica que la respuesta del POST de guardado contiene `Registro guardado` (18/18), y la `key` estable es el arreglo documentado.
+  - 2026-09-26: bloqueada por KAN-19. Con Chromium contra `next start`, `test:smoke` cae justo en este acuse (`getByText(/guardado/)` no aparece en 15 s; 7/11), igual que el 2026-09-25.
 - [x] 7.3 Mover el acuse de cierre al informe de la sesión, que sí se renderiza tras cerrar; **no** usar `redirect()`
   - `SessionReport` acepta `justClosed?` y pinta un `Notice tone="success"` con «Sesión completada. Tu profesional ya puede consultarla.» —el mismo texto que devuelve `closeSession`—. Lo pasa solo la pantalla del paciente: `recienCerrada(session)` compara `completed_at` (lo fija el trigger de la migración `20260905210000`) con ahora, con una ventana de dos minutos, porque sin `redirect()` el acuse no puede viajar en la URL. `closeSession` sigue sin redirigir.
   - De paso: `SessionReport` mezclaba `performed_on` en ISO y `completed_at` en formato local en la misma línea (hallazgo de 9.6). Ahora las dos salen de `formatDate`/`formatTime` de `lib/progress/vocabulary.ts`: «Sesión del 3 de septiembre de 2026 · cerrada a las 8:30».
@@ -175,6 +179,7 @@ final, después de la 16.
 - [x] 11.5 Aplicarlo a eliminar una regla — `DeleteRuleForm` en `components/catalog/RuleForm.tsx`. `test:rules:panel` 12/12
 - [x] 11.6 Aplicarlo a asignar una rutina cuando reemplaza a la activa, **sin añadir ningún campo obligatorio** al formulario — `AssignmentForm` recibe `replacesActive` (lo calcula la página con `routines.some(r => r.status === "active")`); con rutina activa el botón es `ConfirmSubmit` (`tone="default"`), sin ella sigue siendo `SubmitButton`. Ningún `<input>` nuevo. `test:routines` 12/12
 - [~] 11.7 Comprobar las seis confirmaciones con JavaScript activado y desactivado — *pendiente: los dos navegadores conectados por la extensión son remotos (Windows) y no alcanzan el `next start` local. Verificado por HTTP que las seis pantallas conservan sus `<form action>` con sus marcadores en el HTML del servidor (las cuatro suites recorren esos formularios). Falta el recorrido visual con JS on/off.*
+  - 2026-09-26: la mitad «JS desactivado» no se puede cerrar hoy. En Chromium sin JavaScript, las pantallas solo pintan el esqueleto de su `loading.tsx`; el contenido llega en un `<div hidden>` del *streaming* que solo revela el script. Ver `docs/15` C.3; pendiente de decidir si el uso sin JavaScript es requisito.
 - [x] 11.8 `npm run test:templates`, `test:rules:panel`, `test:routines` y `test:routines:items` en verde, más los cuatro de CI — las cuatro suites en verde contra un `next start` propio en el 3220 con Supabase local por el túnel ssh del 54321; typecheck, lint (solo el aviso preexistente de `verify-auth-screens`), `test:design` 4/4 y `build` en verde. Sin migraciones
 
 ## 12. Construir una plantilla sin recargar — rama `ui/catalogo-embebido`
