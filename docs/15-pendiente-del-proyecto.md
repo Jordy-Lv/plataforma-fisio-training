@@ -33,7 +33,11 @@ cuatro cosas, y ninguna se empieza sin decidirla antes con Jordy:
 2. **C.1** — la pasada con el teléfono real. Cierra cinco casillas de una vez.
    **C.3** — decidir si la aplicación tiene que poder usarse sin JavaScript: hoy un navegador
    sin JavaScript solo ve el esqueleto de carga, y eso deja abierta la 11.7.
-3. **`retire-rules-engine`** (§F) — proponer el change que retira el motor de reglas.
+3. **`retire-rules-engine`** (§F) — **propuesto el 2026-09-26**
+   ([`proposal.md`](../openspec/changes/retire-rules-engine/proposal.md), valida con
+   `--strict`). Antes de implementarlo, Jordy tiene que responder las nueve preguntas abiertas
+   (P1–P9) de su `design.md`: qué pasa con los datos de las reglas, con `copy_routine_template`,
+   con borrar plantillas que ya tienen rutinas, etc.
 4. **Operación** (§A) — la CI ya corre y está en verde en `main`, pero no bloquea el merge
    (A.1); los dos defectos del job de pruebas funcionales se corrigen en esta rama. El
    despliegue sigue siendo manual (A.2).
@@ -583,7 +587,8 @@ del paciente. Sin JavaScript (lo que recorren las suites HTTP) todo funciona en 
 servidor, aunque un navegador sin JavaScript solo pinta el esqueleto de carga (C.3).
 
 **Fuera de este change:** retirar `assignment_rules`, `/rules`, el simulador, `seed:rules` y
-las suites `test:rules*` va en otro change, `retire-rules-engine`, todavía sin proponer.
+las suites `test:rules*` va en otro change, `retire-rules-engine`, propuesto el 2026-09-26 y
+pendiente de las preguntas P1–P9 de su `design.md`.
 Hasta entonces el motor queda como código legado que la aplicación ya no invoca.
 
 **Fallo encontrado en el camino de reglas, sin arreglar a propósito:** cuando el motor deja
@@ -612,7 +617,7 @@ eso, «adelgazar» dejó de ser el paso previo que bloqueaba todo lo demás, que
   Supabase no pausado.
 - **F** — ~~subir los documentos de ADR-0009~~, ~~proponer el plan~~ e ~~implementarlo~~
   (PR #42 fusionado, `87039ad`). Quedan la 7.1 (KAN-19) y la 7.2 (teléfono, §C.1). La
-  retirada del motor va aparte, en `retire-rules-engine`, todavía sin proponer.
+  retirada del motor va aparte, en `retire-rules-engine`: propuesto, pendiente de P1–P9.
 - **B.3** — 13.1–13.4 fusionadas (PR #43). 13.6 corrida (PR #44): 30 de 31, abierta por
   KAN-19. Queda 13.5 (§C.1).
 - **CI y OpenSpec** — el job «Validar specs» instala ya `@fission-ai/openspec` y los 8 changes
