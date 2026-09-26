@@ -75,7 +75,7 @@ Notación: **[código]** hay que escribirlo · **[verif.]** es comprobar, medir 
 | `add-routine-execution` | 28 | — | **1** |
 | `add-routine-calendar` | 14 | — | — |
 | `simplify-navigation-and-panel` | 12 | — | **1** |
-| `improve-frontend-ux` | 135 | 3 | **4** |
+| `improve-frontend-ux` | 136 | 2 | **4** |
 | `manual-routine-assignment` | 32 | — | **2** |
 
 Los seis primeros changes funcionales están cerrados salvo dos verificaciones en teléfono
@@ -86,8 +86,8 @@ misma sesión que la 13.5 de `improve-frontend-ux` y la 7.2 de `manual-routine-a
 (PRs [#34](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/34) y
 [#35](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/35)). Lo que quedaba vivo en
 código era solo la sección 13, cuyas cuatro tareas de código (13.1–13.4) están en `main`
-(PR #43). La sección 6 se cerró el 2026-09-26 (C.2). Quedan la 7.2 y la 11.7 de C.2 (una por
-KAN-19 y otra por C.3), la 13.5–13.6, más el bloque de operación que nunca estuvo en ninguna
+(PR #43). La sección 6 se cerró el 2026-09-26 (C.2). Queda la 7.2 de C.2 (por
+KAN-19), la 13.5–13.6, más el bloque de operación que nunca estuvo en ninguna
 lista.
 
 ---
@@ -420,10 +420,10 @@ contenedor que el servidor**, sobre `d4ef9a2`:
   «Registro guardado» permanece a la vista. **Bloqueada por KAN-19:** `test:smoke` se corrió en
   este entorno y cae justo ahí (7/11, `getByText(/guardado/)` no aparece en 15 s), igual que
   en la pasada del 2026-09-25.
-- **11.7** *(parcial)* — Las seis confirmaciones de `ConfirmSubmit` con JavaScript **activado y
-  desactivado**. Por HTTP está verificado que las seis pantallas conservan sus `<form action>`
-  con sus marcadores. La mitad «sin JavaScript» **no aplica** (C.3, decisión del 2026-09-26);
-  queda el recorrido visual con JavaScript activado.
+- ~~**11.7**~~ — Cerrada. Con JavaScript, las siete confirmaciones de `ConfirmSubmit` (la
+  asignación manual añadió «Descartar y elegir otra») abren su diálogo, «Cancelar» no envía y
+  confirmar sí envía; recorrido con Chromium contra `next dev` por KAN-19. La mitad «sin
+  JavaScript» no aplica (C.3).
 
 ### C.3 — Sin JavaScript, el navegador solo pinta el esqueleto de carga *(hallazgo del 2026-09-26)*
 
