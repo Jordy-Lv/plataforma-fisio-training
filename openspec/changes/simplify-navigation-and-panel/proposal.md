@@ -21,10 +21,9 @@ pide [`CLAUDE.md`](../../../CLAUDE.md) §12.
 - Las alertas se reparten mirando la especialidad del profesional (**KAN-10**).
 - Se puede cerrar y reasignar el acompañamiento de un paciente (**KAN-13**), y verlo desde
   Personas (**KAN-6**).
-- Crear una plantilla deja de exigir dos fases (**KAN-8**), y los filtros de Personas viajan
-  en la URL con paginación (**KAN-14**). *Nota del 2026-09-25: los filtros por URL de KAN-14
-  no se hicieron (deuda 3.3 de `docs/15`, congelada); lo que se entregó es que Personas
-  declara cuánta gente deja fuera del listado. Ver la tarea 4.4.*
+- Crear una plantilla deja de exigir dos fases (**KAN-8**), y Personas declara cuánta gente
+  deja fuera del listado (**KAN-14**). *Nota del 2026-09-25: los filtros por URL de KAN-14
+  no se hicieron (deuda 3.3 de `docs/15`, congelada). Ver la tarea 4.4.*
 
 ## Capabilities
 
