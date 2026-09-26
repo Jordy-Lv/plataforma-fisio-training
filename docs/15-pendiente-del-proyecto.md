@@ -1,20 +1,47 @@
 # Lo que falta por hacer
 
-Foto del **2026-09-25**, tomada con `main` = `87039ad` (PR
-[#42](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/42), la asignación manual de
-rutinas, fusionado; antes, los PRs
+Foto del **2026-09-26**, tomada con `main` = `d4ef9a2` (sin cambios desde la noche del 25;
+el estado de la CI se revisó este día en Actions, ver A.1). El 25 se fusionaron, en
+orden: [#42](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/42) (asignación
+manual de rutinas, sección F),
+[#43](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/43) (cierre de
+`improve-frontend-ux`, B.3),
+[#44](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/44) (pasada de las 31 suites,
+paquete de OpenSpec en la CI, `test:catalog` y deltas de `simplify-navigation-and-panel`) y
+[#45](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/45), que es un duplicado del
+#44 hecho por Copilot: mismos cambios, sin nada nuevo. Antes, los PRs
 [#40](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/40) y
 [#41](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/41) rediseñaron el panel del
-administrador, ver «E» abajo). El
-[#21](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/21) (KAN-3, rendimiento) ya
-está en `main` (`d50f05d`). Las ramas antiguas se borraron el 2026-09-25: en el remoto solo
-queda `main`.
+administrador (ver «E» abajo), y el
+[#21](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/21) (KAN-3, rendimiento) está en
+`main` desde `d50f05d`. Además de `main`, en el remoto quedan `claude/kind-johnson-50sh63`,
+`copilot/fix-ci-job-and-suites-pending` y `docs/asignacion-manual`: **las tres están ya
+contenidas en `main`** y se pueden borrar. `claude/exciting-albattani-8jt0nu` solo lleva por
+delante de `main` el commit que puso al día este documento tras el #45; ese commit viaja en
+`claude/gifted-bell-619sct`, así que también se puede borrar cuando esta se fusione.
 
-**La asignación manual de rutinas ya está en `main`** (sección F, PR #42): de ese change solo
-quedan la 7.1, bloqueada por KAN-19, y la 7.2, en el teléfono. **El cierre de
-`improve-frontend-ux`** (B.3, tareas 13.1–13.4) va en la rama
-`claude/exciting-albattani-8jt0nu`; tras fusionarla, a ese change solo le quedan
-verificaciones a mano.
+### Dónde retomar
+
+**Ya no queda código pendiente en ningún change.** Todo lo que está abierto es una de estas
+cuatro cosas, y ninguna se empieza sin decidirla antes con Jordy:
+
+1. **KAN-19** (§F) — con JavaScript, tras una server action, el botón puede quedarse en
+   «Asignando…» o sin su acuse. Es lo único que deja `test:smoke` en 7/11 y lo que mantiene
+   abiertas la 13.6 de `improve-frontend-ux` y la 7.1 de `manual-routine-assignment`. Decidido
+   dejarlo para un change propio: ni parche en el shell compartido sin consenso, ni subir
+   Next/React sin confirmar que es del framework.
+2. **C.1** — la pasada con el teléfono real. Cierra cinco casillas de una vez.
+   **C.3** — decidir si la aplicación tiene que poder usarse sin JavaScript: hoy un navegador
+   sin JavaScript solo ve el esqueleto de carga, y eso deja abierta la 11.7.
+3. **`retire-rules-engine`** (§F) — proponer el change que retira el motor de reglas.
+4. **Operación** (§A) — la CI ya corre y está en verde en `main`, pero no bloquea el merge
+   (A.1); los dos defectos del job de pruebas funcionales se corrigen en esta rama. El
+   despliegue sigue siendo manual (A.2).
+
+`openspec validate --all --strict` pasa los 8 changes desde el #44. Los changes que ya no
+tienen tareas abiertas (`add-auth-and-roles`, `add-exercise-library-and-rules`,
+`add-progress-and-memberships`, `add-routine-calendar`) se podrían archivar con
+`/opsx:archive`, lo que crearía por primera vez `openspec/specs/`. Tampoco se ha decidido.
 
 Este documento reúne **todo** lo que queda abierto, dentro y fuera de OpenSpec. La fuente de
 verdad de cada tarea del change en curso sigue siendo su `tasks.md`, y cada casilla se marca
@@ -44,7 +71,7 @@ Notación: **[código]** hay que escribirlo · **[verif.]** es comprobar, medir 
 | `add-routine-execution` | 28 | — | **1** |
 | `add-routine-calendar` | 14 | — | — |
 | `simplify-navigation-and-panel` | 12 | — | **1** |
-| `improve-frontend-ux` | 132 | — | **7** |
+| `improve-frontend-ux` | 135 | 3 | **4** |
 | `manual-routine-assignment` | 32 | — | **2** |
 
 Los seis primeros changes funcionales están cerrados salvo dos verificaciones en teléfono
@@ -54,9 +81,10 @@ misma sesión que la 13.5 de `improve-frontend-ux` y la 7.2 de `manual-routine-a
 16 y 14 de `improve-frontend-ux` —el bulto de código que quedaba— ya están las dos en `main`
 (PRs [#34](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/34) y
 [#35](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/35)). Lo que quedaba vivo en
-código era solo la sección 13, cuyas cuatro tareas de código (13.1–13.4) están hechas en la
-rama de B.3. Quedan las verificaciones a mano de la sección 6, de C.2 y la 13.5–13.6, más el
-bloque de operación que nunca estuvo en ninguna lista.
+código era solo la sección 13, cuyas cuatro tareas de código (13.1–13.4) están en `main`
+(PR #43). La sección 6 se cerró el 2026-09-26 (C.2). Quedan la 7.2 y la 11.7 de C.2 (una por
+KAN-19 y otra por C.3), la 13.5–13.6, más el bloque de operación que nunca estuvo en ninguna
+lista.
 
 ---
 
@@ -140,22 +168,47 @@ parte de ningún change de OpenSpec en curso:
 
 Nada de esto está en un `tasks.md`, y es lo que más riesgo acumula.
 
-### A.1 — [oper.] La CI de GitHub Actions no corre. **Prioridad alta.**
+### A.1 — [oper.] La CI ya corre, pero todavía no protege `main`
 
-Las **165 ejecuciones** registradas desde la primera del 2026-09-05 están en
-`startup_failure`, en 0 segundos, sin generar jobs, logs ni check-runs. La API devuelve
-`"path": "BuildFailed"` y `gh run view` lo atribuye engañosamente al archivo del workflow.
+**Historia.** Desde el 2026-09-05, las ejecuciones del workflow anterior (165 contadas en su
+momento) acabaron en `startup_failure` en 0 segundos, sin jobs ni logs. La causa era **de facturación de la
+cuenta** (repositorio privado que consume minutos del plan), confirmada por Yordy el
+2026-09-08; el archivo del workflow estaba descartado.
 
-**Ya está descartado que sea el archivo:** `.github/workflows/ci.yml` compila limpio, el
-workflow figura `active` y en su ruta, Actions están habilitadas (`allowed_actions: all`) y
-`.nvmrc` existe. La causa es **de facturación de la cuenta** (repositorio privado que consume
-minutos del plan), confirmada por Yordy el 2026-09-08.
+**Estado al 2026-09-26, comprobado en Actions.** El workflow `CI` se volvió a registrar el
+2026-09-25 (sus ejecuciones empiezan de nuevo en la n.º 1, en el PR #40). Las tres primeras
+terminaron en segundos; desde la n.º 5 **corre de verdad**, con jobs y logs, y hasta el PR #44
+quedaba en rojo (entre otras cosas por «Validar specs» y `openspec@1`, ver arriba). La
+ejecución de `main` sobre `d4ef9a2` (n.º 23) termina en **verde**:
 
-**Consecuencia:** donde [`CLAUDE.md`](../CLAUDE.md) §11 dice «CI los repite y bloquea el merge
-si fallan», eso no ocurre. Los 36 PRs fusionados hasta hoy entraron sin ninguna verificación
-automática. **La única validación real es la que se corre a mano antes de abrir el PR.**
+| Job | Resultado en `d4ef9a2` |
+|---|---|
+| Typecheck, lint y build (incluye `test:design`) | verde |
+| Validar specs (`openspec validate --all --strict`) | verde, 8 de 8 |
+| Pruebas funcionales (Supabase local + HTTP) | **rojo**, marcado `continue-on-error` |
 
-Mientras siga así, el procedimiento obligatorio antes de cada PR es:
+El job de pruebas funcionales corre `scripts/verify.sh --full`: **30 de las 31 suites en
+verde**, las mismas que la pasada a mano de la 13.6. Falla por dos cosas, ninguna de la
+aplicación:
+
+- **`openspec: command not found`.** `verify.sh` valida las specs primero, y ese job no instala
+  `@fission-ai/openspec` (solo lo instala el job «Validar specs»).
+- **`test:smoke`** no llega a empezar: `browserType.launch: Executable doesn't exist`. El job
+  no ejecuta `npx playwright install chromium`. Aunque lo hiciera, la suite quedaría en 7/11
+  por KAN-19 (§F).
+
+**Corregido el 2026-09-26** en `claude/gifted-bell-619sct`: el job instala
+`@fission-ai/openspec@1` y `npx playwright install --with-deps chromium` antes de sembrar. Con
+eso el job solo debería quedar en rojo por KAN-19; se confirma en la primera ejecución del PR.
+
+**Lo que sigue abierto.** `main` **no tiene protección de rama** (la API la da como
+`protected: false`), así que la CI informa pero no impide fusionar en rojo: donde
+[`CLAUDE.md`](../CLAUDE.md) §11 dice «CI los repite y bloquea el merge si fallan», la primera
+mitad ya es cierta y la segunda no. Activarla (exigir «Typecheck, lint y build» y «Validar
+specs») es un ajuste del repositorio en GitHub, no de código, y lo decide Jordy. Los PRs
+anteriores al #44 entraron sin verificación automática.
+
+Hasta que la protección esté puesta, el procedimiento antes de cada PR sigue siendo:
 
 ```bash
 npm run typecheck && npm run lint && npm run test:design && npm run build
@@ -269,10 +322,10 @@ PR [#35](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/35), en `mai
 suelto que sigue relacionado con esta sección: el mismo patrón de paginación en memoria, ya
 en `/attendance` y no en `/exercises` ni `/templates`.
 
-### B.3 — Sección 13: cierre del change — **código hecho, sin fusionar**
+### B.3 — Sección 13: cierre del change — **código fusionado**
 
-Rama `claude/exciting-albattani-8jt0nu` (el plan decía `docs/cierre-frontend`). Las cuatro
-tareas de código están hechas:
+PR [#43](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/43) (el plan decía rama
+`docs/cierre-frontend`). Las cuatro tareas de código están en `main`:
 
 - ~~**13.1**~~ — [`docs/10`](10-sistema-de-diseno.md) documenta los componentes que faltaban,
   los listados, los componentes de dominio reutilizados y cuándo usar `ConfirmSubmit` frente
@@ -286,7 +339,9 @@ tareas de código están hechas:
 Queda:
 
 - **[verif.] 13.6** — Las veinticinco suites en verde sobre la rama fusionada, más los cuatro
-  de CI.
+  de CI. **Corrida el 2026-09-25 sobre `c7be7ea`:** hoy son 31 suites y pasan 30, más los
+  cuatro de CI. Solo `test:smoke` queda en 7/11 por KAN-19, así que la casilla sigue abierta.
+- **[verif.] 13.5** — el teléfono real (§C.1).
 
 ---
 
@@ -318,21 +373,42 @@ El registro va en la sección «Registro de la ejecución» de [`docs/07`](07-pl
 ### C.2 — Navegador con el `next start` local
 
 Quedaron abiertas porque los navegadores disponibles en la sesión eran remotos y no alcanzaban
-el servidor local.
+el servidor local. **El 2026-09-26 se recorrieron con Chromium (Playwright) en el mismo
+contenedor que el servidor**, sobre `d4ef9a2`:
 
+- ~~**6.3**~~ — Cerrada. Sin tamizajes no se monta ninguna gráfica y se ve el estado vacío;
+  con datos, las dos `<option>` exactas están en el HTML y la gráfica cambia de Peso a IMC.
+- ~~**6.5**~~ — Cerrada. 90 de 90 toques entre las seis secciones, como admin y como
+  entrenador, a 375 px; pestañas de 44 px. Hecha con un navegador automatizado, no por una
+  persona: si se quiere el recorrido humano, cabe en la pasada de C.1.
+- ~~**6.6**~~ — Cerrada. Las cinco suites en verde (46 subtests) y los cuatro de CI. Con eso
+  la sección 6 de `improve-frontend-ux` queda completa.
 - **7.2** *(parcial)* — Al guardar un registro de la sesión, el bloque sigue abierto y
-  «Registro guardado» permanece a la vista. La suite ya verifica que la respuesta del POST
-  contiene el texto; falta verlo con los ojos.
+  «Registro guardado» permanece a la vista. **Bloqueada por KAN-19:** `test:smoke` se corrió en
+  este entorno y cae justo ahí (7/11, `getByText(/guardado/)` no aparece en 15 s), igual que
+  en la pasada del 2026-09-25.
 - **11.7** *(parcial)* — Las seis confirmaciones de `ConfirmSubmit` con JavaScript **activado y
   desactivado**. Por HTTP está verificado que las seis pantallas conservan sus `<form action>`
-  con sus marcadores; falta el recorrido visual.
-- **6.3** — Verificar que `/evolution/[patientId]` conserva `<option value="weight">Peso</option>`
-  e `<option value="bmi">IMC</option>`, y que la gráfica sigue sin montarse cuando no hay datos.
-- **6.5** — Desde cualquier sección de un paciente se llega a las otras cinco en un toque.
-- **6.6** — `npm run test:routines`, `test:routines:items`, `test:attendance`,
-  `test:screenings` y `test:evolution` en verde, más los cuatro de CI. Cierra la sección 6 de
-  `improve-frontend-ux` (montaje de cabecera y pestañas en la ficha del paciente), que hasta
-  ahora no aparecía en este documento.
+  con sus marcadores. **La mitad «sin JavaScript» no se puede cerrar hoy:** ver C.3.
+
+### C.3 — Sin JavaScript, el navegador solo pinta el esqueleto de carga *(hallazgo del 2026-09-26)*
+
+En Chromium con JavaScript desactivado, `/login`, `/pro`, `/people/[id]`, `/memberships`,
+`/exercises` y `/evolution/[patientId]` muestran **solo el esqueleto** de su `loading.tsx`: ni
+el título ni los formularios se ven. El contenido real sí llega en el HTML, pero dentro de un
+`<div hidden id="S:…">` del *streaming* de React, que solo pasa a la vista con el script que
+lo acompaña. Como todos los grupos de rutas tienen `loading.tsx` (el de `(auth)` desde el
+2026-09-07; la 13.4 añadió el resto de segmentos dinámicos), le pasa a toda la aplicación.
+
+**Por qué no lo detectó nada:** las suites HTTP leen el HTML crudo con expresiones regulares y
+encuentran los formularios aunque estén en el bloque oculto; nunca pintan la página. Frases
+como «sin JavaScript todo funciona» (§F) o «sin JavaScript la lista se ve entera» (§D, 3.3)
+valen para el HTML del servidor, no para lo que ve una persona.
+
+**No se ha tocado.** Cualquier arreglo choca con algo ya decidido: quitar los `loading.tsx`
+deshace la 13.4 y rompe `test:design`; forzar el contenido visible sin JavaScript toca el shell
+compartido. Pendiente de decidir con Jordy si el uso sin JavaScript es un requisito de la demo
+o solo una garantía del HTML para las suites.
 
 ---
 
@@ -485,7 +561,8 @@ pantalla no cambia de paso. Diagnóstico del 2026-09-25 con Chromium a 375 px:
 
 Es un problema de tiempos del cliente de Next/React al consumir en *streaming* la respuesta
 de una server action, no de esta pantalla: `test:smoke` falla igual en `main` en la sesión
-del paciente. Sin JavaScript (lo que recorren las suites HTTP) todo funciona.
+del paciente. Sin JavaScript (lo que recorren las suites HTTP) todo funciona en el HTML del
+servidor, aunque un navegador sin JavaScript solo pinta el esqueleto de carga (C.3).
 
 **Fuera de este change:** retirar `assignment_rules`, `/rules`, el simulador, `seed:rules` y
 las suites `test:rules*` va en otro change, `retire-rules-engine`, todavía sin proponer.
@@ -510,21 +587,26 @@ eso, «adelgazar» dejó de ser el paso previo que bloqueaba todo lo demás, que
 [`16`](16-plan-de-mejora.md) §«Lo que no entra» daba por hecho al apartar 14.x y 16.x para
 «después de adelgazar»: los dos documentos ya dicen lo mismo, en vez de contradecirse.
 
-**Estado al 2026-09-25:**
+**Estado al 2026-09-25 (noche):**
 
-- **PR #41 fusionado** (`857f296`). Falta desplegar (`git checkout main && git pull`,
-  `git status` limpio, `railway up`). Antes de cualquier demo, A.7: el proyecto de Supabase no
-  pausado.
+- **PRs #41 a #45 fusionados** (`main` = `d4ef9a2`). Falta desplegar (`git checkout main &&
+  git pull`, `git status` limpio, `railway up`). Antes de cualquier demo, A.7: el proyecto de
+  Supabase no pausado.
 - **F** — ~~subir los documentos de ADR-0009~~, ~~proponer el plan~~ e ~~implementarlo~~
   (PR #42 fusionado, `87039ad`). Quedan la 7.1 (KAN-19) y la 7.2 (teléfono, §C.1). La
   retirada del motor va aparte, en `retire-rules-engine`, todavía sin proponer.
-- **B.3** — 13.1–13.4 hechas en `claude/exciting-albattani-8jt0nu`; falta fusionarla.
+- **B.3** — 13.1–13.4 fusionadas (PR #43). 13.6 corrida (PR #44): 30 de 31, abierta por
+  KAN-19. Queda 13.5 (§C.1).
+- **CI y OpenSpec** — el job «Validar specs» instala ya `@fission-ai/openspec` y los 8 changes
+  validan (PR #44). La CI corre y `main` está en verde, pero sin protección de rama (A.1). Los
+  dos defectos del job funcional se corrigen en `claude/gifted-bell-619sct`.
 
 Lo anterior, en su orden original:
 
 1. ~~**KAN-17** — fusionar el PR #31.~~ Hecho: fusionado en `main` (`a5c8bcc`).
-2. **A.1 y A.2** — decidir qué se hace con la CI y con el despliegue. Todo lo demás se
-   construye encima de esa señal, y hoy no existe.
+2. **A.1 y A.2** — decidir qué se hace con la CI y con el despliegue. La señal de la CI ya
+   existe (2026-09-25); falta que bloquee el merge (protección de rama, la activa Jordy en
+   GitHub). El despliegue sigue sin automatizar.
 3. **C.1** — la pasada con el teléfono: media hora, cierra cinco casillas de cuatro `tasks.md`
    distintos y es lo único que valida de verdad la experiencia del paciente, que es el usuario
    que importa.
@@ -532,8 +614,7 @@ Lo anterior, en su orden original:
 5. ~~**B.2**~~ Hecha, PR #35 fusionado. Queda **KAN-15** suelto (mismo patrón de paginación en
    `/attendance`), en pausa a propósito.
 6. ~~**A.4**~~ Hecho, PR #36 fusionado. ~~**KAN-16**~~ Hecho, PR #37 fusionado.
-7. **B.3** — la sección 13 cierra el change. 13.1–13.4 hechas (pendiente de fusionar); quedan
-   13.5 (C.1) y 13.6.
+7. **B.3** — ~~13.1–13.4~~ fusionadas (PR #43). Quedan 13.5 (C.1) y 13.6 (KAN-19).
 8. ~~**KAN-3**~~ Hecho: PR #21 fusionado (`d50f05d`).
-9. **`test:calendar` y `test:catalog`** — diagnosticar los dos fallos de «Estado de las
-   suites».
+9. ~~**`test:calendar` y `test:catalog`**~~ — los dos corregidos: `test:calendar` en el PR #42
+   y `test:catalog` en el PR #44.
