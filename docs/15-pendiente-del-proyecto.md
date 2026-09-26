@@ -1,6 +1,7 @@
 # Lo que falta por hacer
 
-Foto del **2026-09-25 (noche)**, tomada con `main` = `d4ef9a2`. Ese día se fusionaron, en
+Foto del **2026-09-26**, tomada con `main` = `d4ef9a2` (sin cambios desde la noche del 25;
+el estado de la CI se revisó este día en Actions, ver A.1). El 25 se fusionaron, en
 orden: [#42](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/42) (asignación
 manual de rutinas, sección F),
 [#43](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/43) (cierre de
@@ -15,7 +16,9 @@ administrador (ver «E» abajo), y el
 [#21](https://github.com/Jordy-Lv/plataforma-fisio-training/pull/21) (KAN-3, rendimiento) está en
 `main` desde `d50f05d`. Además de `main`, en el remoto quedan `claude/kind-johnson-50sh63`,
 `copilot/fix-ci-job-and-suites-pending` y `docs/asignacion-manual`: **las tres están ya
-contenidas en `main`** y se pueden borrar.
+contenidas en `main`** y se pueden borrar. `claude/exciting-albattani-8jt0nu` solo lleva por
+delante de `main` el commit que puso al día este documento tras el #45; ese commit viaja en
+`claude/gifted-bell-619sct`, así que también se puede borrar cuando esta se fusione.
 
 ### Dónde retomar
 
@@ -29,8 +32,9 @@ cuatro cosas, y ninguna se empieza sin decidirla antes con Jordy:
    Next/React sin confirmar que es del framework.
 2. **C.1** — la pasada con el teléfono real. Cierra cinco casillas de una vez.
 3. **`retire-rules-engine`** (§F) — proponer el change que retira el motor de reglas.
-4. **Operación** (§A) — la CI sigue sin correr por la facturación (A.1) y el despliegue es
-   manual (A.2).
+4. **Operación** (§A) — la CI ya corre y está en verde en `main`, pero no bloquea el merge y
+   su job de pruebas funcionales falla por dos defectos del propio workflow (A.1); el
+   despliegue sigue siendo manual (A.2).
 
 `openspec validate --all --strict` pasa los 8 changes desde el #44. Los changes que ya no
 tienen tareas abiertas (`add-auth-and-roles`, `add-exercise-library-and-rules`,
@@ -161,22 +165,46 @@ parte de ningún change de OpenSpec en curso:
 
 Nada de esto está en un `tasks.md`, y es lo que más riesgo acumula.
 
-### A.1 — [oper.] La CI de GitHub Actions no corre. **Prioridad alta.**
+### A.1 — [oper.] La CI ya corre, pero todavía no protege `main`
 
-Las **165 ejecuciones** registradas desde la primera del 2026-09-05 están en
-`startup_failure`, en 0 segundos, sin generar jobs, logs ni check-runs. La API devuelve
-`"path": "BuildFailed"` y `gh run view` lo atribuye engañosamente al archivo del workflow.
+**Historia.** Desde el 2026-09-05, las ejecuciones del workflow anterior (165 contadas en su
+momento) acabaron en `startup_failure` en 0 segundos, sin jobs ni logs. La causa era **de facturación de la
+cuenta** (repositorio privado que consume minutos del plan), confirmada por Yordy el
+2026-09-08; el archivo del workflow estaba descartado.
 
-**Ya está descartado que sea el archivo:** `.github/workflows/ci.yml` compila limpio, el
-workflow figura `active` y en su ruta, Actions están habilitadas (`allowed_actions: all`) y
-`.nvmrc` existe. La causa es **de facturación de la cuenta** (repositorio privado que consume
-minutos del plan), confirmada por Yordy el 2026-09-08.
+**Estado al 2026-09-26, comprobado en Actions.** El workflow `CI` se volvió a registrar el
+2026-09-25 (sus ejecuciones empiezan de nuevo en la n.º 1, en el PR #40). Las tres primeras
+terminaron en segundos; desde la n.º 5 **corre de verdad**, con jobs y logs, y hasta el PR #44
+quedaba en rojo (entre otras cosas por «Validar specs» y `openspec@1`, ver arriba). La
+ejecución de `main` sobre `d4ef9a2` (n.º 23) termina en **verde**:
 
-**Consecuencia:** donde [`CLAUDE.md`](../CLAUDE.md) §11 dice «CI los repite y bloquea el merge
-si fallan», eso no ocurre. Los 36 PRs fusionados hasta hoy entraron sin ninguna verificación
-automática. **La única validación real es la que se corre a mano antes de abrir el PR.**
+| Job | Resultado en `d4ef9a2` |
+|---|---|
+| Typecheck, lint y build (incluye `test:design`) | verde |
+| Validar specs (`openspec validate --all --strict`) | verde, 8 de 8 |
+| Pruebas funcionales (Supabase local + HTTP) | **rojo**, marcado `continue-on-error` |
 
-Mientras siga así, el procedimiento obligatorio antes de cada PR es:
+El job de pruebas funcionales corre `scripts/verify.sh --full`: **30 de las 31 suites en
+verde**, las mismas que la pasada a mano de la 13.6. Falla por dos cosas, ninguna de la
+aplicación:
+
+- **`openspec: command not found`.** `verify.sh` valida las specs primero, y ese job no instala
+  `@fission-ai/openspec` (solo lo instala el job «Validar specs»).
+- **`test:smoke`** no llega a empezar: `browserType.launch: Executable doesn't exist`. El job
+  no ejecuta `npx playwright install chromium`. Aunque lo hiciera, la suite quedaría en 7/11
+  por KAN-19 (§F).
+
+Arreglar las dos es añadir dos pasos a `ci.yml`; queda por decidir con Jordy, porque con eso
+el job solo quedaría en rojo por KAN-19.
+
+**Lo que sigue abierto.** `main` **no tiene protección de rama** (la API la da como
+`protected: false`), así que la CI informa pero no impide fusionar en rojo: donde
+[`CLAUDE.md`](../CLAUDE.md) §11 dice «CI los repite y bloquea el merge si fallan», la primera
+mitad ya es cierta y la segunda no. Activarla (exigir «Typecheck, lint y build» y «Validar
+specs») es un ajuste del repositorio en GitHub, no de código, y lo decide Jordy. Los PRs
+anteriores al #44 entraron sin verificación automática.
+
+Hasta que la protección esté puesta, el procedimiento antes de cada PR sigue siendo:
 
 ```bash
 npm run typecheck && npm run lint && npm run test:design && npm run build
@@ -544,13 +572,15 @@ eso, «adelgazar» dejó de ser el paso previo que bloqueaba todo lo demás, que
 - **B.3** — 13.1–13.4 fusionadas (PR #43). 13.6 corrida (PR #44): 30 de 31, abierta por
   KAN-19. Queda 13.5 (§C.1).
 - **CI y OpenSpec** — el job «Validar specs» instala ya `@fission-ai/openspec` y los 8 changes
-  validan (PR #44). La CI sigue sin correr por A.1.
+  validan (PR #44). La CI corre y `main` está en verde, pero sin protección de rama y con el
+  job funcional en rojo por dos defectos del workflow (A.1).
 
 Lo anterior, en su orden original:
 
 1. ~~**KAN-17** — fusionar el PR #31.~~ Hecho: fusionado en `main` (`a5c8bcc`).
-2. **A.1 y A.2** — decidir qué se hace con la CI y con el despliegue. Todo lo demás se
-   construye encima de esa señal, y hoy no existe.
+2. **A.1 y A.2** — decidir qué se hace con la CI y con el despliegue. La señal de la CI ya
+   existe (2026-09-25); falta que bloquee el merge y que el job funcional no falle por el
+   propio workflow. El despliegue sigue sin automatizar.
 3. **C.1** — la pasada con el teléfono: media hora, cierra cinco casillas de cuatro `tasks.md`
    distintos y es lo único que valida de verdad la experiencia del paciente, que es el usuario
    que importa.
