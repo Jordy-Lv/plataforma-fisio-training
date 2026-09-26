@@ -198,8 +198,24 @@ aplicación:
   por KAN-19 (§F).
 
 **Corregido el 2026-09-26** en `claude/gifted-bell-619sct`: el job instala
-`@fission-ai/openspec@1` y `npx playwright install --with-deps chromium` antes de sembrar. Con
-eso el job solo debería quedar en rojo por KAN-19; se confirma en la primera ejecución del PR.
+`@fission-ai/openspec@1` y `npx playwright install --with-deps chromium` antes de sembrar.
+
+**Lo que enseñó la primera ejecución con `test:smoke` de verdad** (PR #46, `ea09c4d`): specs
+válidas y 30 de 31 suites en verde; `test:smoke` en 8/11. El job arranca la app con
+`npm run dev`, no con `next start`, y ahí **KAN-19 no se reproduce**: el subtest 6 (el acuse
+«guardado») pasa. Con eso salieron a la luz dos fallos que el subtest 6 tapaba en local:
+
+- **Subtest 10, claves repetidas en `/evolution`.** `EvolutionChart` usaba la fecha como
+  `key` de cada punto, y la progresión de carga puede tener dos sesiones el mismo día. React
+  solo lo avisa en desarrollo. **Corregido en la misma rama:** la clave es la posición del
+  punto. Reproducido con dos tamizajes de la misma fecha en `next dev` (aviso en consola) y
+  sin aviso tras el cambio.
+- **Subtest 7, el entrenador ya no recibe alertas de dolor.** La suite espera que el
+  entrenador también reciba la alerta de dolor, pero la matriz de KAN-10
+  ([`04`](04-roles-y-permisos.md), 2026-09-10) se la da solo al fisioterapeuta cuando el
+  paciente tiene los dos. La aplicación hace lo documentado; la suite llegó con el PR #21
+  (2026-09-12) sin recoger KAN-10. **Pendiente de acordar el contrato con Jordy** (CLAUDE.md
+  §12) antes de tocar la suite.
 
 **Lo que sigue abierto.** `main` **no tiene protección de rama** (la API la da como
 `protected: false`), así que la CI informa pero no impide fusionar en rojo: donde
@@ -558,6 +574,8 @@ pantalla no cambia de paso. Diagnóstico del 2026-09-25 con Chromium a 375 px:
   en trozos de 1 byte, pero ya descargada), funciona siempre (8 de 8). Si React la procesa
   **mientras llega**, se cuelga en la mayoría de los intentos.
 - Next 15.5.26 (el último 15.x) no lo corrige (2 cuelgues de 3).
+- **Solo con el build de producción** (2026-09-26): en la CI, que arranca con `npm run dev`,
+  el subtest 6 de `test:smoke` pasa; en local con `next start` falla siempre en el mismo sitio.
 
 Es un problema de tiempos del cliente de Next/React al consumir en *streaming* la respuesta
 de una server action, no de esta pantalla: `test:smoke` falla igual en `main` en la sesión

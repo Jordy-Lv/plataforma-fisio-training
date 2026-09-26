@@ -80,7 +80,7 @@ function chartGeometry(points: Series["points"]) {
     const x = CHART.left + (plotWidth * index) / Math.max(points.length - 1, 1);
     const y = CHART.top + ((max - point.value) / range) * plotHeight;
 
-    return { ...point, x, y };
+    return { ...point, index, x, y };
   });
 
   const yTicks = [max, (max + min) / 2, min].map((value) => ({
@@ -228,9 +228,12 @@ export function EvolutionChart({
               </g>
             ))}
 
+            {/* La clave es la posición y no la fecha: la progresión de carga
+                puede tener dos sesiones el mismo día, y con la fecha React
+                ve claves repetidas y puede duplicar u omitir puntos. */}
             {xTicks.map((tick) => (
               <text
-                key={`${active.key}-${tick.on}`}
+                key={`${active.key}-${tick.index}`}
                 x={tick.x}
                 y={CHART.height - 12}
                 textAnchor="middle"
@@ -253,7 +256,7 @@ export function EvolutionChart({
 
             {plotted.map((point) => (
               <circle
-                key={`${active.key}-${point.on}`}
+                key={`${active.key}-${point.index}`}
                 cx={point.x}
                 cy={point.y}
                 r="4"
