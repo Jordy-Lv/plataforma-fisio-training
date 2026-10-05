@@ -153,7 +153,17 @@ export const navItemsByRole: Record<UserRole, NavItem[]> = {
   ],
   patient: [
     { href: "/patient", label: "Inicio", icon: LayoutDashboard },
-    { href: "/routine", label: "Mi rutina", icon: HeartPulse, match: ["/routine"] },
+    {
+      href: "/routine",
+      label: "Mi rutina",
+      icon: HeartPulse,
+      match: ["/routine"],
+      // Su evolución vive junto a la rutina: lo que hace y cómo avanza.
+      tabs: [
+        { href: "/routine", label: "Mi rutina" },
+        { href: "/routine/evolution", label: "Mi evolución" },
+      ],
+    },
     { href: "/routine/calendar", label: "Calendario", icon: CalendarDays },
     { href: "/attendance/me", label: "Asistencia", icon: CalendarCheck },
     { href: "/memberships/me", label: "Membresía", icon: CreditCard },

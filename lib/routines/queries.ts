@@ -6,7 +6,7 @@ export async function patientRoutines(patientId: string, activeOnly = false) {
   let query = supabase.from("routines").select(
     `id, name, kind, status, starts_on, notes,
       routine_days(id, day_number, title,
-        routine_items(id, position, sets, reps, target_weight, rest_seconds,
+        routine_items(id, position, sets, reps, target_weight, rest_seconds, notes,
           exercises(name, description, media_url)))`,
   ).eq("patient_id", patientId).order("created_at", { ascending: false });
   if (activeOnly) query = query.eq("status", "active");

@@ -12,6 +12,7 @@ import {
   needsNavOverflow,
   primaryNavItems,
 } from "@/components/shell/nav-items";
+import { useIntentPrefetch } from "@/components/shell/use-intent-prefetch";
 import type { UserRole } from "@/lib/auth/schemas";
 
 const tabClass =
@@ -33,6 +34,7 @@ export function MobileNav({ role }: { role: UserRole }) {
   const panelId = useId();
   const active = activeNavHref(role, pathname);
   const items = primaryNavItems(role);
+  const intent = useIntentPrefetch();
   const hasOverflow = needsNavOverflow(role);
 
   useEffect(() => {
@@ -117,11 +119,14 @@ export function MobileNav({ role }: { role: UserRole }) {
                 compite con el POST de la Server Action de SessionItemForm y el
                 navegador aborta peticiones de ambos a la vez —el botón se
                 queda en «Guardando…» aunque el registro sí llegó a la base—.
+                Lo que sí se precarga es la pestaña que se empieza a tocar
+                (`useIntentPrefetch`): una sola petición, justo antes del clic.
               */
               <Link
                 key={item.href}
                 href={item.href}
                 prefetch={false}
+                {...intent(item.href)}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
                   tabClass,

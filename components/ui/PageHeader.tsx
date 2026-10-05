@@ -12,22 +12,40 @@ import { cn } from "cn";
  * Las acciones van en píldoras a la derecha del título: el contenedor lleva
  * `data-slot="header-actions"` y la forma la aplica `buttonVariants`, así que
  * la pantalla sigue pasando sus `ButtonLink` como siempre.
+ *
+ * La variante `hero` es la de las pantallas del paciente: título grande en
+ * negrita y menos espacio debajo, porque detrás vienen sus pestañas.
  */
 export function PageHeader({
   title,
   description,
   actions,
   className,
+  variant = "default",
 }: {
   title: string;
   description?: ReactNode;
   actions?: ReactNode;
   className?: string;
+  variant?: "default" | "hero";
 }) {
+  const isHero = variant === "hero";
   return (
-    <div className={cn("mb-8 grid gap-4", className)}>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <h1 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+    <div className={cn(isHero ? "mb-3 grid gap-2" : "mb-8 grid gap-4", className)}>
+      <div
+        className={cn(
+          "flex flex-wrap justify-between gap-4",
+          isHero ? "items-center" : "items-start",
+        )}
+      >
+        <h1
+          className={cn(
+            "tracking-tight text-balance",
+            isHero
+              ? "text-[32px] font-extrabold leading-tight sm:text-[40px]"
+              : "text-3xl font-semibold sm:text-4xl",
+          )}
+        >
           {title}
         </h1>
         {actions && (
@@ -40,7 +58,12 @@ export function PageHeader({
         )}
       </div>
       {description && (
-        <div className="max-w-2xl leading-7 text-muted-foreground">
+        <div
+          className={cn(
+            "max-w-2xl text-muted-foreground",
+            isHero ? "text-sm leading-6" : "leading-7",
+          )}
+        >
           {description}
         </div>
       )}

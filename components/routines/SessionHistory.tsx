@@ -16,13 +16,16 @@ export function SessionHistory({
   sessions,
   staff = false,
   reports,
+  className = "mt-10",
 }: {
   sessions: PatientSession[];
   staff?: boolean;
   reports?: Map<string, SessionDetails>;
+  /** Margen de la sección; la pantalla de historial del paciente la pone arriba. */
+  className?: string;
 }) {
   return (
-    <section className="mt-10">
+    <section className={className}>
       <h2 className="mb-4 text-xl font-semibold">Sesiones recientes</h2>
 
       {sessions.length === 0 ? (

@@ -83,6 +83,19 @@ const shortDateFormat = new Intl.DateTimeFormat("es-CO", {
   timeZone: "UTC",
 });
 
+const weekdayDateFormat = new Intl.DateTimeFormat("es-CO", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  timeZone: "UTC",
+});
+
+/** La fecha con el día de la semana, sin año: "sábado 3 de octubre". */
+export function formatWeekdayDate(value: string) {
+  // `Intl` pone una coma tras el día de la semana; en un rótulo sobra.
+  return weekdayDateFormat.format(new Date(`${value}T00:00:00Z`)).replace(",", "");
+}
+
 /** La fecha como cabe en el eje de una gráfica: "5 sept". */
 export function formatShortDate(value: string) {
   return shortDateFormat.format(new Date(`${value}T00:00:00Z`));

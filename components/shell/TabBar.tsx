@@ -17,22 +17,32 @@ export type Tab = { href: string; label: string };
  *   que ningún marcador de las suites mira.
  * - **Se desplaza en horizontal a 375 px** en vez de partirse en dos filas, y
  *   cada pestaña mide 44 px de alto, que es el objetivo táctil mínimo.
+ *
+ * La variante `hero` es la de las pantallas del paciente (al estilo de la app
+ * de Smart Fit): sin línea de fondo, pestañas grandes en negrita, la activa en
+ * el color del texto con una raya dorada debajo y las demás apagadas.
  */
 export function TabBar({
   label,
   tabs,
   activeHref,
+  variant = "default",
 }: {
   label: string;
   tabs: Tab[];
   activeHref: string;
+  variant?: "default" | "hero";
 }) {
+  const isHero = variant === "hero";
   return (
     <nav
       aria-label={label}
-      className="-mx-4 mb-6 overflow-x-auto border-b border-border px-4 sm:mx-0 sm:px-0"
+      className={cn(
+        "-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0",
+        isHero ? "mb-0" : "mb-6 border-b border-border",
+      )}
     >
-      <ul className="flex min-w-max gap-1">
+      <ul className={cn("flex min-w-max", isHero ? "gap-7" : "gap-1")}>
         {tabs.map((tab) => {
           const isActive = tab.href === activeHref;
           return (
@@ -47,10 +57,15 @@ export function TabBar({
                 prefetch={false}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "flex min-h-11 items-center whitespace-nowrap border-b-2 px-3 text-sm font-medium transition-colors",
+                  "flex min-h-11 items-center whitespace-nowrap transition-colors",
                   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                  isHero
+                    ? "border-b-[3px] text-lg font-bold sm:text-xl"
+                    : "border-b-2 px-3 text-sm font-medium",
                   isActive
-                    ? "border-b-brand text-brand"
+                    ? isHero
+                      ? "border-b-brand-bright text-foreground"
+                      : "border-b-brand text-brand"
                     : "border-b-transparent text-muted-foreground hover:text-foreground",
                 )}
               >
