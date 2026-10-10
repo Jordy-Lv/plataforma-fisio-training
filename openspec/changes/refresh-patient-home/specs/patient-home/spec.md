@@ -77,10 +77,19 @@ desplegarse, y SHALL conservar el estado entre pantallas.
 La portada del paciente SHALL empezar por su semana, sin tarjeta: la racha de semanas y los
 días con lo entrenado, lo programado y hoy marcados (7 en el teléfono y 14 en escritorio,
 con la semana siguiente), la meta semanal y el acceso al calendario. Debajo SHALL mostrar qué
-le toca hoy, con sus ejercicios y el botón para hacerlo, y SHALL ofrecer accesos a «Mi
-evolución» (`/routine/evolution`) y «Mi equipo» (`/patient/profile#equipo`). En escritorio
-SHALL añadir sus próximas sesiones junto a la tarjeta de hoy. A 1280 × 720 MUST NOT
-necesitar desplazamiento. El nombre del profesional MUST salir solo si la RLS deja leerlo.
+le toca hoy, con sus ejercicios y el botón para hacerlo.
+
+#### Scenario: Teléfono
+
+- **WHEN** un paciente abre `/patient` a 390 px
+- **THEN** ve su racha y siete días, y debajo su entrenamiento de hoy
+
+### Requirement: La portada da acceso a la evolución y al equipo y cabe en escritorio
+
+La portada SHALL ofrecer accesos a «Mi evolución» (`/routine/evolution`) y «Mi equipo»
+(`/patient/profile#equipo`). En escritorio SHALL añadir sus próximas sesiones junto a la
+tarjeta de hoy, y a 1280 × 720 MUST NOT necesitar desplazamiento. El nombre del profesional
+MUST salir solo si la RLS deja leerlo.
 
 #### Scenario: Escritorio con sesión a medias
 
@@ -88,7 +97,8 @@ necesitar desplazamiento. El nombre del profesional MUST salir solo si la RLS de
 - **THEN** ve su racha, catorce días, «Te quedaste aquí» con sus ejercicios y el siguiente
   resaltado, sus próximas sesiones y los accesos a su evolución y su equipo, sin desplazar
 
-#### Scenario: Teléfono
+#### Scenario: Accesos en el teléfono
 
-- **WHEN** el mismo paciente abre `/patient` a 390 px
-- **THEN** ve su racha y siete días, su entrenamiento y los dos accesos
+- **WHEN** el paciente abre `/patient` a 390 px
+- **THEN** ve los accesos a «Mi evolución» y «Mi equipo» debajo de su entrenamiento
+
