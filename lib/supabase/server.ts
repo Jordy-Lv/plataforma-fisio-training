@@ -10,6 +10,12 @@ export async function createClient() {
   const { url, anonKey } = getSupabaseConfig();
 
   return createServerClient<Database>(url, anonKey, {
+    // Cada enlace de correo (recuperar contraseña, confirmar el alta) lleva el
+    // identificador de su flujo PKCE (`sb_flow_id`) y el callback canjea el
+    // código con **ese** verificador. Sin esto se usaba «el último guardado»,
+    // que no es el del enlace si la persona pidió dos o dejó restos de un
+    // intento anterior: el código se rechazaba y el enlace parecía vencido.
+    auth: { experimental: { appendPkceFlowIdToRedirects: true } },
     cookies: {
       getAll() {
         return cookieStore.getAll();
