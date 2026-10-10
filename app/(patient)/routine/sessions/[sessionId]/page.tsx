@@ -7,6 +7,7 @@ import { SessionItemForm } from "@/components/routines/SessionItemForm";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { requireRole } from "@/lib/auth/session";
 import { formatDate } from "@/lib/progress/vocabulary";
+import { todayInBogota } from "@/lib/routines/calendar";
 import { closeSessionSchema } from "@/lib/routines/schemas";
 import {
   executionExercises,
@@ -38,8 +39,12 @@ export default async function Page({
   const session = await sessionDetails(parsed.data.sessionId);
   if (!session) notFound();
 
+  // La rutina se hace el día que toca: una sesión a medias de un día anterior
+  // queda cerrada y ya no se puede registrar en ella (2026-10-04).
+  const isStale =
+    session.status === "in_progress" && session.performed_on < todayInBogota();
   const items =
-    session.status === "in_progress"
+    session.status === "in_progress" && !isStale
       ? await executionExercises(session.routine_day_id)
       : [];
   // Una sola consulta del catálogo por sesión, acotada a los grupos musculares
@@ -72,7 +77,15 @@ export default async function Page({
         </ButtonLink>
       }
     >
-      {session.status === "in_progress" ? (
+      {isStale ? (
+        <div className="grid gap-2 rounded-2xl border border-border bg-surface p-5">
+          <p className="text-xs font-bold uppercase tracking-[0.08em] text-brand">Sesión cerrada</p>
+          <p className="text-lg font-bold">Esta sesión quedó sin terminar el {formatDate(session.performed_on)}.</p>
+          <p className="text-muted-foreground">
+            La rutina se hace el día que toca. Lo que toca hoy está en «Mi rutina».
+          </p>
+        </div>
+      ) : session.status === "in_progress" ? (
         <>
           {/*
             La banda con el avance, los accesos a cada ejercicio y el cierre.

@@ -1,17 +1,15 @@
 import { redirect } from "next/navigation";
 import { AuthForm } from "@/components/auth/AuthForm";
+import { AuthHeading } from "@/components/auth/AuthHeading";
 import { getActiveProfile } from "@/lib/auth/session";
 
 export default async function PasswordPage() {
   if (!(await getActiveProfile())) redirect("/recuperar?error=session");
   return (
     <>
-      <h1 className="text-3xl font-semibold tracking-tight">
-        Elige tu contraseña
-      </h1>
-      <p className="mb-6 mt-3 leading-7 text-muted-foreground">
+      <AuthHeading eyebrow="Último paso" title="Elige tu contraseña">
         Guárdala en un lugar seguro. La usarás la próxima vez que entres.
-      </p>
+      </AuthHeading>
       <AuthForm mode="password" />
     </>
   );

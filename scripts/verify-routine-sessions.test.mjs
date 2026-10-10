@@ -31,7 +31,9 @@ test('Ejecución persistente, alertas y aislamiento por API y acciones HTTP', { 
       writeFileSync('/tmp/fisio-session-fixtures.json', JSON.stringify({ users: users.map(({ id, email, role }) => ({ id, email, role })), exerciseId, replacementId, routineId, dayId, itemId, otherRoutineId, otherDayId, otherItemId }));
       return;
     }
-    sql(`delete from public.routines where id in ('${routineId}', '${otherRoutineId}'); delete from public.exercises where id in ('${exerciseId}', '${replacementId}');`);
+    // Las programaciones no se borran en cascada con la rutina: van primero.
+    sql(`delete from public.routine_schedules where routine_day_id in ('${dayId}', '${otherDayId}');
+      delete from public.routines where id in ('${routineId}', '${otherRoutineId}'); delete from public.exercises where id in ('${exerciseId}', '${replacementId}');`);
     for (const user of users) { await user.api.auth.signOut(); sql(`delete from auth.users where id='${user.id}'`); }
   });
   async function person(role, specialty = null) {
@@ -174,6 +176,9 @@ test('Ejecución persistente, alertas y aislamiento por API y acciones HTTP', { 
   });
   await t.test('Camino 5 completo: tres sesiones por acciones HTTP y alerta visible para admin', async () => {
     const web=httpClient(); await web.submit('/login',{email:other.email,password});
+    // «Mi rutina» solo ofrece iniciar lo programado para hoy (2026-10-04): el
+    // día se programa antes, como lo haría su profesional.
+    sql(`insert into public.routine_schedules(patient_id, routine_day_id, scheduled_on, created_by) values ('${other.id}','${otherDayId}',(now() at time zone 'America/Bogota')::date,'${admin.id}')`);
     for(let index=0; index<3; index++) {
       const started=await web.submit('/routine',{dayId:otherDayId},`value="${otherDayId}"`);
       assert.ok(started.response.status<400);

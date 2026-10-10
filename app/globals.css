@@ -27,6 +27,11 @@
   --brand-foreground: #ffffff;
   --brand-soft: #fbf3da;
   --brand-soft-foreground: #5f4400;
+  /* El amarillo luminoso del logo, para rellenos grandes con texto oscuro
+     encima (8,4:1). Como texto sobre blanco se queda en 2,1:1: para eso está
+     `--brand`. Vale igual en los dos temas, así que `.dark` no lo redefine. */
+  --brand-bright: #e0aa25;
+  --brand-bright-foreground: #201700;
 
   /* Estados. Cada uno lleva su relleno (`--x`), el texto que va encima de ese
      relleno (`--x-foreground`) y un fondo suave (`--x-soft`) sobre el que el
@@ -174,6 +179,8 @@
   --color-brand-foreground: var(--brand-foreground);
   --color-brand-soft: var(--brand-soft);
   --color-brand-soft-foreground: var(--brand-soft-foreground);
+  --color-brand-bright: var(--brand-bright);
+  --color-brand-bright-foreground: var(--brand-bright-foreground);
 
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
@@ -205,6 +212,13 @@
 
   --font-sans: var(--font-app);
   --font-heading: var(--font-app);
+  /* Titular de la portada (`font-display`). Va en `@theme inline` para que la variable se
+     resuelva en el propio elemento: `--font-russo-one` solo existe en `/`, donde la carga
+     `app/page.tsx`; en cualquier otra pantalla cae a la tipografía de la app. */
+  --font-display: var(--font-russo-one), var(--font-app);
+  /* Marca de la barra del paciente (`font-wordmark`): Montserrat, que carga
+     `ClientWordmark`; fuera de ella cae a la tipografía de la app. */
+  --font-wordmark: var(--font-montserrat), var(--font-app);
 
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);

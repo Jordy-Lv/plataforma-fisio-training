@@ -12,6 +12,10 @@ import type { UserRole } from "@/lib/auth/schemas";
  * `role` es opcional para no reescribir esas treinta llamadas de golpe. Cuando
  * no llega, el shell lo consulta: `getActiveProfile` está memoizado por
  * petición, así que no cuesta una segunda lectura. En pantallas nuevas, pásalo.
+ *
+ * Para el paciente pasa además su id al shell, que pinta su plan vigente en la
+ * barra sin bloquear la pantalla. `title` es opcional: la portada del paciente pinta su propio
+ * saludo en lugar de la cabecera de página.
  */
 export async function Workspace({
   title,
@@ -22,7 +26,7 @@ export async function Workspace({
   withNav,
   children,
 }: {
-  title: string;
+  title?: string;
   name?: string | null;
   role?: UserRole;
   description?: ReactNode;
@@ -30,11 +34,15 @@ export async function Workspace({
   withNav?: boolean;
   children: ReactNode;
 }) {
-  const profile = role ? null : await getActiveProfile();
+  const profile = await getActiveProfile();
+  const shellRole = role ?? profile?.role ?? "patient";
+  const planPatientId =
+    shellRole === "patient" && withNav !== false ? profile?.id : undefined;
 
   return (
     <AppShell
-      role={role ?? profile?.role ?? "patient"}
+      role={shellRole}
+      planPatientId={planPatientId}
       name={name ?? profile?.fullName}
       title={title}
       description={description}

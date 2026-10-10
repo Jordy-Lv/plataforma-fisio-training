@@ -90,7 +90,9 @@ test("Smoke de demo: trainer, fisioterapeuta y cliente", { timeout: 300_000 }, a
     assert.equal(response.status(), 200, `No abrió ${route}`);
     await page.locator("h1").waitFor();
     // El tema marca su opción solo después de hidratar; no interactuar con HTML aún inerte.
-    await page.locator('[aria-label="Tema de la aplicación"] [aria-checked="true"]').waitFor();
+    // Vale el grupo de tres opciones (`ThemeToggle`) o, en el teléfono del acceso, el botón
+    // sol/luna (`ThemeSwitch`, `data-ready` al hidratar); se espera al que esté visible.
+    await page.locator('[aria-label="Tema de la aplicación"] [aria-checked="true"]:visible, [data-theme-switch][data-ready="true"]:visible').waitFor();
     assert.doesNotMatch(await page.locator("body").innerText(), /Application error|Internal Server Error|could not be found|No pudimos cargar|Algo salió mal/i);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `Desbordamiento horizontal en ${route}`);
   }

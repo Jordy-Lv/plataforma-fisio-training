@@ -43,6 +43,7 @@ vistazo, quién está cumpliendo, quién reportó dolor o quién dejó de asisti
 - [`docs/13-referencia-smart-fit.md`](docs/13-referencia-smart-fit.md) — la referencia visual que señaló el cliente y qué se toma de ella.
 - [`docs/14-auditoria-de-vistas.md`](docs/14-auditoria-de-vistas.md) — repaso pantalla por pantalla con una rúbrica fija: qué le falta a cada vista y en qué orden se arregla.
 - [`docs/15-pendiente-del-proyecto.md`](docs/15-pendiente-del-proyecto.md) — todo lo que queda abierto: código, verificaciones, operación y la deuda decidida a propósito.
+- [`docs/17-registro-de-cambios-frontend.md`](docs/17-registro-de-cambios-frontend.md) — bitácora de cada cambio del frontend: qué, por qué y cómo se verificó.
 - [`docs/adr/`](docs/adr/) — decisiones de arquitectura con su justificación y sus alternativas descartadas.
 
 ## Stack

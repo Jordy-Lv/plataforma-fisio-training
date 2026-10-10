@@ -6,6 +6,7 @@ import {
 } from "@/components/auth/PatientProfileForms";
 import { Workspace } from "@/components/auth/Workspace";
 import { CareTeamCard } from "@/components/patients/CareTeamCard";
+import { MyTeamSection } from "@/components/patients/MyTeamSection";
 import { PatientHeader } from "@/components/patients/PatientHeader";
 import { PatientTabs } from "@/components/patients/PatientTabs";
 import { ProfileSummary } from "@/components/patients/ProfileSummary";
@@ -57,13 +58,14 @@ export async function PatientProfile({ patientId }: { patientId: string }) {
   //
   // El resumen agregado reúne membresía, condiciones y estado en la cabecera
   // para que la ficha deje de ser un callejón sin salida; el paciente ve su
-  // propia versión en la portada (`/patient`). El equipo (KAN-6) es también
-  // solo para el personal: el paciente puede leer sus propias filas de
-  // `care_assignments`, pero no el perfil del profesional, así que vería una
-  // especialidad sin nombre y ningún dato nuevo.
+  // propia versión en la portada (`/patient`). El equipo (KAN-6) lo leen los
+  // dos: el personal en `CareTeamCard` y el paciente en «Mi equipo»
+  // (2026-10-03), a la que lleva la portada del teléfono. El paciente lee sus
+  // propias filas de `care_assignments`, pero no el perfil del profesional:
+  // ve la especialidad sin nombre.
   const [overview, team] = await Promise.all([
     esPropio ? null : patientOverview(patientId),
-    esPropio ? [] : getCareTeam(patientId),
+    getCareTeam(patientId),
   ]);
 
   return (
@@ -98,7 +100,9 @@ export async function PatientProfile({ patientId }: { patientId: string }) {
         la pantalla sigue siendo el de `name="goal"`. Asignar y cerrar viven en
         `/people` (`docs/11-contratos-de-las-suites-http.md`).
       */}
-      {!esPropio && (
+      {esPropio ? (
+        <MyTeamSection team={team} />
+      ) : (
         <CareTeamCard team={team} canAssign={actor.role === "admin"} />
       )}
 

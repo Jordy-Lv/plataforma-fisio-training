@@ -103,6 +103,30 @@ suite los exige **todos en el mismo formulario**.
 | `/people/[id]` · perfil | `name="goal"` | `test:people` |
 | `/people/[id]` · condición | `name="conditionId"` | `test:people` |
 
+> **Un solo conmutador de tema por pantalla, también en el acceso.** `test:smoke` (Playwright)
+> espera a `[aria-label="Tema de la aplicación"] [aria-checked="true"]` en modo estricto: dos
+> `ThemeToggle` en el DOM —aunque uno esté oculto con `hidden` según el ancho— la tumban. Por
+> eso `app/(auth)/layout.tsx` monta uno solo y lo coloca con `absolute` (2026-10-03,
+> `refresh-auth-screens`).
+>
+> **El control de tema visible marca la hidratación.** Al abrir cada pantalla, `test:smoke`
+> espera a que sea **visible** uno de estos dos controles:
+>
+> - el grupo `ThemeToggle` con su opción marcada:
+>   `[aria-label="Tema de la aplicación"] [aria-checked="true"]`;
+> - el botón sol/luna `ThemeSwitch` ya hidratado: `[data-theme-switch][data-ready="true"]`.
+>
+> Usa el que esté visible (`:visible`). Desde el 2026-10-03 el teléfono de la portada, del
+> acceso y de la barra del paciente usa `ThemeSwitch`, y el escritorio y el personal,
+> `ThemeToggle`. La suite se ajustó para aceptar los dos, de acuerdo con el usuario; antes solo
+> aceptaba el grupo, y esconderlo en el teléfono la tumbaba en 5 de 11.
+>
+> **El paciente tiene su propia barra desde el 2026-10-03** (`refresh-patient-home`), pero el
+> botón de salir **sigue llamándose «Cerrar sesión»**: `test:smoke` lo busca con
+> `getByRole("button", { name: "Cerrar sesión", exact: true })`. El botón de plegar el menú y
+> el de cerrar el aviso de membresía son `<button type="button">` sin `<form>`, así que el
+> único formulario de `/patient` sigue siendo el de cerrar sesión.
+>
 > `/people` es de las pantallas más frágiles del proyecto: el marcador de la baja es un uuid
 > suelto. Cualquier `<select>`, `<input>` u `<option>` con `value="<uuid>"` que aparezca
 > **antes** del formulario de baja —el de asignar acompañamiento tiene un `<option>` por cada
@@ -161,7 +185,7 @@ suite los exige **todos en el mismo formulario**.
 | `/pro/routines/[patientId]` · quitar | `value="<itemId>"` + `$ACTION_`, **sin `name="sets"`** | `test:routines:items` |
 | `/pro/routines/[patientId]?dia=<dayId>&q=…` · añadir | `value="<exerciseId>"` + `value="<dayId>"` | `test:routines:items` |
 | `/pro/routines/[patientId]?item=<itemId>&q=…` · sustituir | `value="<exerciseId>"` + `value="<itemId>"` | `test:routines:items` |
-| `/routine` · iniciar día | `value="<dayId>"` | `test:routines:sessions` |
+| `/routine` · iniciar día (solo los días **programados para hoy**, desde 2026-10-04) | `value="<dayId>"` | `test:routines:sessions` (programa el día antes de enviarlo) |
 | `/routine/sessions/[id]` · registrar | `name="itemId"` | `test:routines:sessions` |
 | `/routine/sessions/[id]` · cerrar | texto **`Terminar sesión`** | `test:routines:sessions` |
 | `/pro/alerts` · marcar leída | `value="<alertId>"` | `test:routines:sessions` |

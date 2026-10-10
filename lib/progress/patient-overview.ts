@@ -61,6 +61,8 @@ export type WeekDay = {
 
 export type OpenSession = {
   id: string;
+  /** El día de rutina que se está haciendo, para leer sus ejercicios. */
+  dayId: string;
   performedOn: string;
   routineName: string;
   dayTitle: string;
@@ -113,6 +115,8 @@ export type PatientOverview = {
   lastScreening: LastScreening | null;
   /** Días con visita registrada en el mes en curso. */
   monthAttendance: number;
+  /** Sesiones terminadas en el mes en curso. */
+  monthSessions: number;
   /** La rutina en curso, o `null` si aún no se le ha asignado ninguna. */
   activeRoutine: ActiveRoutine | null;
   /**
@@ -157,7 +161,7 @@ export async function patientOverview(patientId: string): Promise<PatientOvervie
       .lte("attended_on", sumarDias(lunes, 6)),
     supabase
       .from("sessions")
-      .select("id, performed_on, routines(name), routine_days(title)")
+      .select("id, routine_day_id, performed_on, routines(name), routine_days(title)")
       .eq("patient_id", patientId)
       .eq("status", "in_progress")
       .order("performed_on", { ascending: false })
@@ -259,6 +263,7 @@ export async function patientOverview(patientId: string): Promise<PatientOvervie
     openSession: open.data
       ? {
           id: open.data.id,
+          dayId: open.data.routine_day_id,
           performedOn: open.data.performed_on,
           routineName: open.data.routines?.name ?? "Tu rutina",
           dayTitle: open.data.routine_days?.title ?? "Sesión en curso",
@@ -284,6 +289,10 @@ export async function patientOverview(patientId: string): Promise<PatientOvervie
         }
       : null,
     monthAttendance: monthAttendance.count ?? 0,
+    // El historial ya trae cada sesión terminada de las últimas doce semanas,
+    // que cubren el mes en curso: se cuentan ahí, sin otra consulta.
+    monthSessions: (sessions.data ?? []).filter((row) => row.performed_on >= mes)
+      .length,
     activeRoutine: activeRoutine.data
       ? { id: activeRoutine.data.id, name: activeRoutine.data.name }
       : null,

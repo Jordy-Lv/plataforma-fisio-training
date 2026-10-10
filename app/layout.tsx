@@ -37,12 +37,15 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: CLIENT_NAME,
   },
+  // Favicon de la pestaña: el símbolo del logo blanco del cliente sobre un
+  // cuadrado oscuro (se generó desde `logo-blanco-original.png`, sin tocarlo).
+  // Solo se declaran estos dos: si aparecieran aquí `icon.svg` o los PNG de
+  // instalación, el navegador podría elegirlos para la pestaña. Esos siguen en
+  // `app/manifest.ts`, que es donde los busca la PWA.
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "48x48" },
-      { url: "/icon.svg", type: "image/svg+xml", sizes: "any" },
-      { url: "/icons/icon-192.png", type: "image/png", sizes: "192x192" },
-      { url: "/icons/icon-512.png", type: "image/png", sizes: "512x512" },
+      { url: "/favicon.ico", sizes: "16x16 32x32 48x48" },
+      { url: "/icons/favicon-96.png", type: "image/png", sizes: "96x96" },
     ],
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
