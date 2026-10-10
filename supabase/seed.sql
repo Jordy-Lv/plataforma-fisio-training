@@ -6,6 +6,15 @@
 -- operan por encima de RLS.
 -- =============================================================================
 
+-- En local se reabre el registro sin token: estas personas entran directo en
+-- auth.users y las suites de scripts/ crean sus pacientes con signUp. En
+-- producción sigue cerrado (migración 20261009120000_auth_close_open_signup).
+create or replace function private.allow_open_signup()
+returns boolean
+language sql
+stable
+as $$ select true $$;
+
 -- Identificadores fijos para que cualquier slice pueda referenciarlos sin
 -- consultarlos primero.
 do $$
