@@ -18,6 +18,7 @@
 - [x] 2.2 Mover `MembershipNoticeDaysForm` a un `<details>` «Cambiar plazo» cerrado, con la explicación del proceso como `hint` del campo y campo + «Guardar plazo» en una fila. Verificación: guardar 7 días actualiza el valor de la barra y el `FormMessage` sigue apareciendo.
 - [x] 2.3 Ajustar `MembershipReviewButton` para que su resumen o error siga visible junto a la barra sin romper la línea. Verificación: pulsar «Revisar vencimientos ahora» muestra el resumen.
 - [x] 2.4 Acortar la descripción del `Workspace` del administrador a «Fechas, montos y estado de cada mensualidad. No procesa pagos.». Verificación: la del profesional no cambia.
+- [x] 2.5 Pasar el alta «Registrar una membresía» a un modal (`DetailPanel`) abierto desde la cabecera, que se cierra y avisa con un toast al registrar (design §6). Verificación: `npm run test:memberships` pasa y el formulario sigue en el HTML del servidor.
 
 ## 3. Contratos y comprobaciones
 

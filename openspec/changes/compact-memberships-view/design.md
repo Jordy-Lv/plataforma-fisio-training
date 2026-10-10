@@ -90,14 +90,26 @@ Aviso con 4 días de antelación · Revisión diaria automática   [Revisar venc
   párrafo explicativo actual se reduce a un `hint` del campo («El proceso diario marca las
   próximas a vencer y las vencidas, avisa al equipo y envía el correo al paciente»). El
   campo y el botón «Guardar plazo» quedan en una fila.
-- El orden de los formularios en el HTML no cambia: revisión → plazo → filtros → edición de
-  tarjetas → alta. Un `<details>` cerrado emite igual su contenido (docs/11, «Plegar un
+- Orden de los formularios en el HTML: alta (en la cabecera, §6) → revisión → plazo →
+  filtros → edición de tarjetas. Ninguna suite envía formularios en `/memberships`
+  (docs/11), así que adelantar el alta no rompe ningún contrato. Un `<details>` cerrado emite igual su contenido (docs/11, «Plegar un
   formulario sin que la suite lo pierda»).
 
 ### 5. Descripción del `Workspace`
 
 Administrador: «Fechas, montos y estado de cada mensualidad. No procesa pagos.» La del
 profesional no cambia.
+
+### 6. Alta de membresía en un modal
+
+«Registrar una membresía» deja de ser un `<details>` al final de la pantalla y pasa a un
+botón en la cabecera del `Workspace` (`actions`) que abre `DetailPanel` —el modal sin
+portal de `SheetModal`—, así el formulario sigue en el HTML del servidor (ADR-0008).
+`MembershipForm` gana un `onSuccess` opcional: al registrar, el modal se cierra, avisa con
+un toast y el formulario se reinicia. La server action no se envuelve. Sin planes, el aviso
+«Crea uno aquí» se queda al final, como antes.
+
+Sin JavaScript el modal no abre, igual que los de `SheetModal` en `/people`.
 
 ## Risks / Trade-offs
 

@@ -3,6 +3,7 @@ import { Workspace } from "@/components/auth/Workspace";
 import { MembershipForm } from "@/components/progress/MembershipForm";
 import { MembershipNoticeDaysForm } from "@/components/progress/MembershipNoticeDaysForm";
 import { MembershipReviewButton } from "@/components/progress/MembershipReviewButton";
+import { NewMembershipDialog } from "@/components/progress/NewMembershipDialog";
 import { requireStaff } from "@/lib/progress/access";
 import {
   listMembershipsWithPatient,
@@ -182,6 +183,11 @@ async function AdminView({ name, filters }: { name?: string | null; filters: Mem
       title="Membresías"
       name={name}
       description="Fechas, montos y estado de cada mensualidad. No procesa pagos."
+      actions={
+        plans.length > 0 ? (
+          <NewMembershipDialog patients={patientOptions} plans={planOptions} />
+        ) : undefined
+      }
     >
       {/*
         Una barra y no una tarjeta: quien entra aquí viene a ver qué vence, y
@@ -224,7 +230,7 @@ async function AdminView({ name, filters }: { name?: string | null; filters: Mem
         </EmptyState>
       ) : memberships.length === 0 ? (
         <EmptyState title="Todavía no hay membresías registradas">
-          Ábrelo con «Registrar una membresía», al final de la pantalla.
+          Ábrelo con «Registrar una membresía», arriba de la pantalla.
           Necesitas un plan y un paciente dado de alta.
         </EmptyState>
       ) : (
@@ -249,33 +255,18 @@ async function AdminView({ name, filters }: { name?: string | null; filters: Mem
         hrefFor={(page) => membershipList.href(filters, { page })}
         label="Páginas de membresías" />
 
-      <section className="mt-12 grid gap-4">
-        {plans.length === 0 ? (
-          <>
-            <h2 className="text-xl font-semibold">Registrar una membresía</h2>
-            <p className="leading-7 text-muted-foreground">
-              Antes de registrar una membresía necesitas al menos un plan.{" "}
-              <ButtonLink variant="ghost" href="/plans">
-                Crea uno aquí
-              </ButtonLink>
-              .
-            </p>
-          </>
-        ) : (
-          /*
-            El alta se abre a demanda: quien entra a esta pantalla viene casi
-            siempre a revisar vencimientos, no a dar de alta. Ninguna suite
-            recorre este formulario por HTTP, y un `<details>` cerrado lo emite
-            igual en el HTML del servidor.
-          */
-          <details className={cardClass}>
-            <summary className="flex min-h-11 cursor-pointer items-center text-xl font-semibold text-brand">
-              Registrar una membresía
-            </summary>
-            <MembershipForm patients={patientOptions} plans={planOptions} />
-          </details>
-        )}
-      </section>
+      {plans.length === 0 && (
+        <section className="mt-12 grid gap-4">
+          <h2 className="text-xl font-semibold">Registrar una membresía</h2>
+          <p className="leading-7 text-muted-foreground">
+            Antes de registrar una membresía necesitas al menos un plan.{" "}
+            <ButtonLink variant="ghost" href="/plans">
+              Crea uno aquí
+            </ButtonLink>
+            .
+          </p>
+        </section>
+      )}
     </Workspace>
   );
 }

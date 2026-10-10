@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, FormMessage, inputClass } from "@/components/auth/FormParts";
 import { useFormValidation } from "@/lib/auth/use-form-validation";
@@ -25,23 +25,36 @@ type Option = { id: string; label: string };
  * Alta y edición de una membresía. Es un registro administrativo: fechas,
  * monto y estado. No procesa ningún pago. Con `membership` edita esa fila; sin
  * ella crea una nueva, y entonces `defaultPatientId` la deja preseleccionada.
+ *
+ * `onSuccess` recibe el mensaje de la acción cuando termina bien —el modal del
+ * alta lo usa para cerrarse—; la server action no se envuelve, así el
+ * formulario conserva su `$ACTION_ID` (ADR-0008).
  */
 export function MembershipForm({
   patients,
   plans,
   membership,
   defaultPatientId,
+  onSuccess,
 }: {
   patients: Option[];
   plans: Option[];
   membership?: MembershipWithPatient;
   defaultPatientId?: string;
+  onSuccess?: (message: string) => void;
 }) {
   const editing = Boolean(membership);
   const [state, action, pending] = useActionState(
     editing ? updateMembership : createMembership,
     {},
   );
+  const onSuccessRef = useRef(onSuccess);
+  useEffect(() => {
+    onSuccessRef.current = onSuccess;
+  }, [onSuccess]);
+  useEffect(() => {
+    if ("success" in state && state.success) onSuccessRef.current?.(state.success);
+  }, [state]);
   const validation = useFormValidation(
     editing ? updateMembershipSchema : createMembershipSchema,
     membershipFormValues,
