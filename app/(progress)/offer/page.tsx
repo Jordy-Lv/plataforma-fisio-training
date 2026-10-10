@@ -1,17 +1,13 @@
 import type { Metadata } from "next";
-import { cn } from "cn";
 import { Workspace } from "@/components/auth/Workspace";
 import { requireAuth } from "@/lib/progress/access";
 import {
   listActivePlans,
   listActiveServiceGroups,
 } from "@/lib/progress/plan-queries";
-import {
-  billingPeriodSuffix,
-  formatCurrency,
-  serviceCategoryLabels,
-} from "@/lib/progress/plan-vocabulary";
-import { cardVariants } from "@/components/ui/Card";
+import { serviceCategoryLabels } from "@/lib/progress/plan-vocabulary";
+import { OfferPlanCard } from "@/components/progress/OfferPlanCard";
+import { OfferServiceGroup } from "@/components/progress/OfferServiceGroup";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { ListFilters } from "@/components/ui/ListFilters";
@@ -52,7 +48,7 @@ export default async function Page({
     <Workspace
       title="Planes y servicios"
       name={profile.fullName}
-      description="Lo que el negocio ofrece hoy: los planes de suscripción y los servicios que se contratan aparte."
+      description="Planes de suscripción y servicios que se contratan aparte."
     >
       <section className="max-w-3xl">
         <ListFilters action="/offer" label="Filtros de la oferta" values={filters}
@@ -76,38 +72,18 @@ export default async function Page({
                 <h2 className="mb-4 text-xl font-semibold">
                   Planes de suscripción
                 </h2>
-                <ul className="mb-10 grid gap-4 sm:grid-cols-2">
-                  {plans.map((plan) => (
-                    <li
-                      key={plan.id}
-                      className={cn(cardVariants(), "grid gap-3")}
-                    >
-                      <h3 className="text-base font-semibold leading-6">
-                        {plan.name}
-                      </h3>
-                      <p>
-                        <strong className="text-lg font-semibold">
-                          {formatCurrency(plan.price)}
-                        </strong>{" "}
-                        <span className="text-sm text-muted-foreground">
-                          {billingPeriodSuffix[plan.billing_period]}
-                        </span>
-                      </p>
-                      {plan.description && (
-                        <p className="text-sm leading-6 text-muted-foreground">
-                          {plan.description}
-                        </p>
-                      )}
-                      {plan.features.length > 0 && (
-                        <ul className="grid list-disc gap-1 pl-5 text-sm leading-6 text-muted-foreground">
-                          {plan.features.map((feature) => (
-                            <li key={feature}>{feature}</li>
-                          ))}
-                        </ul>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+                <div
+                  role="region"
+                  aria-label="Planes de suscripción"
+                  tabIndex={0}
+                  className="-mx-4 mb-8 overflow-x-auto px-4 pb-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:mx-0 sm:overflow-visible sm:px-0 snap-x snap-mandatory scroll-px-4 sm:scroll-px-0"
+                >
+                  <ul aria-label="Planes de suscripción" className="flex items-stretch gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-3">
+                    {plans.map((plan) => (
+                      <OfferPlanCard key={plan.id} plan={plan} />
+                    ))}
+                  </ul>
+                </div>
               </>
             )}
 
@@ -116,33 +92,9 @@ export default async function Page({
                 <h2 className="mb-4 text-xl font-semibold">
                   Servicios adicionales
                 </h2>
-                <div className="grid gap-8">
+                <div className="grid gap-4">
                   {groups.map((group) => (
-                    <div key={group.category}>
-                      <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                        {serviceCategoryLabels[group.category]}
-                      </h3>
-                      <ul className="grid gap-3">
-                        {group.services.map((service) => (
-                          <li
-                            key={service.id}
-                            className={cardVariants()}
-                          >
-                            <div className="flex items-baseline justify-between gap-3">
-                              <p className="font-semibold">{service.name}</p>
-                              <p className="shrink-0 font-semibold">
-                                {formatCurrency(service.price)}
-                              </p>
-                            </div>
-                            {service.description && (
-                              <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                                {service.description}
-                              </p>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                    <OfferServiceGroup key={group.category} group={group} />
                   ))}
                 </div>
               </>
