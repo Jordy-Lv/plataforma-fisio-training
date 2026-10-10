@@ -1,3 +1,4 @@
+import { ExerciseVideo } from "@/components/catalog/ExerciseVideo";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import {
@@ -42,23 +43,27 @@ export function ExerciseSummary({ exercise }: { exercise: ExerciseListItem }) {
     <div className="grid gap-5">
       {/* Alto fijo, no proporción: la imagen es la mitad de la ficha y con
           `aspect-[4/3]` empujaba el resto fuera del diálogo. */}
-      <div className="h-44 overflow-hidden rounded-xl bg-muted sm:h-56">
-        {exercise.media_url ? (
-          // Sin `next/image`: el origen es el bucket de Supabase, cuyo dominio
-          // cambia entre local y producción.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={exercise.media_url}
-            alt={`Ejecución de ${exercise.name}`}
-            loading="lazy"
-            className="size-full object-cover"
-          />
-        ) : (
-          <p className="flex size-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
-            Sin imagen todavía
-          </p>
-        )}
-      </div>
+      {exercise.video_url ? (
+        <ExerciseVideo url={exercise.video_url} title={exercise.name} />
+      ) : (
+        <div className="h-44 overflow-hidden rounded-xl bg-muted sm:h-56">
+          {exercise.media_url ? (
+            // Sin `next/image`: el origen es el bucket de Supabase, cuyo dominio
+            // cambia entre local y producción.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={exercise.media_url}
+              alt={`Ejecución de ${exercise.name}`}
+              loading="lazy"
+              className="size-full object-cover"
+            />
+          ) : (
+            <p className="flex size-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
+              Sin imagen todavía
+            </p>
+          )}
+        </div>
+      )}
 
       <Badge
         className="justify-self-start"

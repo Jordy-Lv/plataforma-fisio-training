@@ -5,6 +5,7 @@ import {
   environments,
   muscleGroups,
 } from "@/lib/catalog/vocabulary";
+import { canonicalYouTubeUrl, parseYouTubeUrl } from "@/lib/catalog/youtube";
 
 /** Lo que devuelve una server action del catálogo. */
 export type CatalogState = { error?: string; success?: string };
@@ -142,6 +143,38 @@ export function exerciseFormValues(form: FormData) {
     difficulty: difficulty ? difficulty : null,
     contraindications: form.getAll("contraindications"),
     media: form.get("media") ?? undefined,
+  };
+}
+
+/**
+ * Vídeo de YouTube de la ficha. Vacío significa quitarlo. Cualquier forma del
+ * enlace se normaliza a la única que admite `exercises.video_url`.
+ */
+export const exerciseVideoSchema = z.object({
+  id: z.string().uuid("Selecciona un ejercicio válido."),
+  videoUrl: z
+    .string()
+    .trim()
+    .max(300, "El enlace es demasiado largo. Pega solo la dirección del vídeo.")
+    .transform((value, context) => {
+      if (value === "") return null;
+      const video = parseYouTubeUrl(value);
+      if (!video) {
+        context.addIssue({
+          code: "custom",
+          message:
+            "Pega un enlace de YouTube, como https://www.youtube.com/watch?v=… o https://youtu.be/…",
+        });
+        return z.NEVER;
+      }
+      return canonicalYouTubeUrl(video);
+    }),
+});
+
+export function exerciseVideoFormValues(form: FormData) {
+  return {
+    id: form.get("id") ?? undefined,
+    videoUrl: form.get("videoUrl") ?? "",
   };
 }
 

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useActionState, useState } from "react";
 
 import { FormMessage } from "@/components/auth/FormParts";
+import { ExerciseVideo } from "@/components/catalog/ExerciseVideo";
 import { Badge, PainBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/button";
 import { cardVariants } from "@/components/ui/Card";
@@ -160,8 +161,10 @@ export function SessionItemForm({
         <summary className="min-h-11 cursor-pointer py-3 font-medium">
           Ver cómo se hace
         </summary>
-        <div className="pb-4">
-          {exercise?.media_url && (
+        <div className="grid gap-3 pb-4">
+          {exercise?.video_url ? (
+            <ExerciseVideo url={exercise.video_url} title={exercise.name} />
+          ) : exercise?.media_url && (
             <Image
               src={exercise.media_url}
               alt={exercise.name}
@@ -171,7 +174,7 @@ export function SessionItemForm({
               className="h-auto w-full rounded-xl object-contain"
             />
           )}
-          <p className="whitespace-pre-wrap break-words pt-3 leading-7">
+          <p className="whitespace-pre-wrap break-words leading-7">
             {exercise?.description ||
               "Consulta las indicaciones con tu profesional antes de realizarlo."}
           </p>

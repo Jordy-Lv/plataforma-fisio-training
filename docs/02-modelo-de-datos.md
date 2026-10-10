@@ -134,6 +134,7 @@ slices: requiere aviso al equipo antes del PR.
 | `name` | `text` | |
 | `description` | `text` | Indicaciones de ejecución |
 | `media_url` | `text` | Imagen o GIF. Apunta a Supabase Storage |
+| `video_url` | `text` | Vídeo de YouTube, normalizado a `https://www.youtube.com/watch?v=<id>[&t=<n>s]` (restricción `exercises_video_url_youtube`). Si existe, sustituye a la imagen en todas las vistas y se reproduce embebido (`add-exercise-video`) |
 | `muscle_groups` | `text[]` | |
 | `equipment` | `text[]` | Debe intersecar con el equipamiento del paciente |
 | `difficulty` | `fitness_level` | |

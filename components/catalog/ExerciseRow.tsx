@@ -9,6 +9,7 @@ import {
   muscleGroupLabels,
 } from "@/lib/catalog/vocabulary";
 import type { ExerciseListItem } from "@/lib/catalog/queries";
+import { exercisePreviewUrl } from "@/lib/catalog/youtube";
 
 /*
   La versión densa de `ExerciseCard`. Misma información esencial, un tercio del
@@ -39,7 +40,7 @@ export function ExerciseRow({ exercise }: { exercise: ExerciseListItem }) {
 
   return (
     <DataRow
-      media={exercise.media_url}
+      media={exercisePreviewUrl(exercise)}
       icon={<Dumbbell aria-hidden="true" className="size-5" />}
       title={
         <h2 className="text-base font-semibold leading-6">

@@ -25,6 +25,7 @@
     "test:storage": "node --test scripts/verify-catalog-storage.test.mjs",
     "test:catalog": "node --test scripts/verify-catalog-list.test.mjs",
     "test:catalog:custom": "node --test scripts/verify-catalog-custom.test.mjs",
+    "test:catalog:video": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/helpers/alias-hook.mjs --test scripts/verify-catalog-video.test.mjs",
     "test:templates": "node --test scripts/verify-catalog-templates.test.mjs",
     "test:templates:seed": "node --test scripts/verify-templates-seed.test.mjs",
     "test:rules:seed": "node --test scripts/verify-rules-seed.test.mjs",

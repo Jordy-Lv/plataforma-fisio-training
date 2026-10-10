@@ -156,6 +156,7 @@ suite los exige **todos en el mismo formulario**.
 | `/exercises/new` | `name="name"` | `test:catalog:custom` |
 | `/exercises/[id]` · ficha | `name="name"` | `test:catalog:custom` |
 | `/exercises/[id]` · etiquetado | texto **`Guardar etiquetado clínico`** | `test:catalog:custom` |
+| `/exercises/[id]` · vídeo (el último de la ficha) | `name="videoUrl"` | `test:catalog:video` |
 | `/templates/new` | `name="name"` | `test:templates` |
 | `/templates/[id]` · cabecera | `name="daysPerWeek"` | `test:templates` |
 | `/templates/[id]` · añadir día | texto **`Añadir día`** | `test:templates` |

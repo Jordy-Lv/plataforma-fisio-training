@@ -23,16 +23,19 @@ const supabaseOrigin = (() => {
   `script-src` admite 'unsafe-inline'. Lo que sí cierra:
   - nadie puede incrustar la aplicación en un iframe (clickjacking);
   - los formularios solo se envían a la propia aplicación;
-  - imágenes y conexiones, solo a la app y a Supabase.
+  - imágenes y conexiones, solo a la app y a Supabase (más las miniaturas
+    de YouTube de los vídeos de ejercicios);
+  - el único iframe permitido es el reproductor sin cookies de YouTube.
   En desarrollo, React necesita 'unsafe-eval' para sus herramientas.
 */
 const contentSecurityPolicy = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: blob: ${supabaseOrigin}`.trim(),
+  `img-src 'self' data: blob: https://i.ytimg.com ${supabaseOrigin}`.trim(),
   "font-src 'self' data:",
   `connect-src 'self' ${supabaseOrigin}`.trim(),
+  "frame-src https://www.youtube-nocookie.com",
   "worker-src 'self'",
   "manifest-src 'self'",
   "object-src 'none'",
