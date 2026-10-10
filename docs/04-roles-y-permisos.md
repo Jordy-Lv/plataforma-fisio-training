@@ -189,6 +189,20 @@ Si aparece en cualquier otro lugar —una server action, una ruta de API, un com
 PR se rechaza sin discusión. En una variable con prefijo `NEXT_PUBLIC_` sería una fuga
 total de la base de datos.
 
+### El alta: nadie se registra solo
+
+Las cuentas las crea el admin o el profesional desde `/people`: `createPerson` reserva un
+token con `prepare_person_registration` y llama a `auth.signUp` con él. Por eso el registro
+de Supabase sigue activo, y la clave anónima, que viaja al navegador, permitiría a cualquiera
+llamar a `/auth/v1/signup` directamente.
+
+`handle_new_user` rechaza toda alta **sin token** mientras `private.allow_open_signup()`
+devuelva `false`, que es su valor en producción (migración
+`20261009120000_auth_close_open_signup`). La semilla local la redefine a `true` porque las
+suites de `scripts/` crean sus pacientes de prueba con `signUp` sin token. Cómo crear el
+primer admin con el registro cerrado está en
+[`17-puesta-en-produccion.md`](17-puesta-en-produccion.md).
+
 ## Verificación obligatoria
 
 No se muestra la demo sin ejecutar el camino 9 de

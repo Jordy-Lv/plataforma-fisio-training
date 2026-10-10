@@ -55,6 +55,15 @@ pasan contra `next start`. Lo que queda abierto:
    rama (A.1, lo activa Jordy en GitHub). El despliegue sigue siendo manual (A.2) y
    `railway.json` queda deprecado el 2026-12-01 (A.3).
 
+5. **Salida a producción** (2026-10-09, rama `chore/preparar-produccion`) — se sale en la
+   capa gratuita de Supabase (A.7). En código: cabeceras de seguridad en `next.config.ts` y
+   registro público cerrado (cualquiera con la clave anónima podía crearse una cuenta de
+   paciente). Fuera del código queda la lista de
+   [`17-puesta-en-produccion.md`](17-puesta-en-produccion.md): dominio verificado en Resend
+   (hoy `MAIL_FROM` es el remitente de prueba y no entrega a nadie más), SMTP propio en
+   Supabase, `private.job_config` con la URL y el secreto reales, aplicar la migración nueva
+   con `db push` y respaldos manuales semanales.
+
 La decisión sobre el uso sin JavaScript ya está tomada (C.3): no es requisito.
 
 `openspec validate --all --strict` pasa los 8 changes desde el #44. Los changes que ya no
