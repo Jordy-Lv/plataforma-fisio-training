@@ -57,8 +57,8 @@ export function SessionProgress({
         */
         <p className="text-sm text-muted-foreground">
           {pending === 1
-            ? "Queda 1 ejercicio por marcar —hecho, saltado o modificado— antes de poder cerrar."
-            : `Quedan ${pending} ejercicios por marcar —hechos, saltados o modificados— antes de poder cerrar.`}
+            ? "Marca el ejercicio que falta para poder cerrar."
+            : `Marca los ${pending} ejercicios que faltan para poder cerrar.`}
         </p>
       )}
 

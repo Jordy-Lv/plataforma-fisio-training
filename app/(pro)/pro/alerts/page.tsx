@@ -16,6 +16,8 @@ import { Pagination } from "@/components/ui/Pagination";
 import { sessionReports } from "@/lib/routines/session-queries";
 import { bodyPartLabels, bodyParts } from "@/lib/catalog/body-parts";
 
+export const metadata = { title: "Alertas" };
+
 const titles = {
   pain: "Dolor persistente",
   skipped: "Ejercicio saltado repetidamente",

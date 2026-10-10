@@ -124,7 +124,7 @@ El estado de un listado —búsqueda, filtros, orden, vista y página— vive en
 
 | Componente | Notas |
 |---|---|
-| `ListFilters` | La barra de filtros de un listado: buscador, desplegables y, **fuera** del formulario, las píldoras que quitan cada filtro. Todo filtro nace en «Todos». Sin tarjeta: el buscador (44 px, con lupa y rótulo solo para lectores de pantalla) ocupa una fila y los desplegables se reparten en la siguiente, dos por fila a 375 px; en escritorio, todo en una. Cada desplegable lleva el rótulo **dentro** del control («Estado  Todos ⌄») con `FilterField`, que es también el patrón para un `extra` como el «Mes» de `/attendance`. |
+| `ListFilters` | La barra de filtros de un listado: buscador, desplegables y, **fuera** del formulario, las píldoras que quitan cada filtro. Todo filtro nace en «Todos». Sin tarjeta: a 375 px, el buscador (44 px, con lupa y rótulo solo para lectores de pantalla) y el botón «Filtros» (`FiltersToggle`) en una fila, y los desplegables plegados hasta pulsarlo, dos por fila (regla 8); desde `sm` se ven siempre, y en escritorio todo va en una línea. Cada desplegable lleva el rótulo **dentro** del control («Estado  Todos ⌄») con `FilterField`, que es también el patrón para un `extra` como el «Mes» de `/attendance`. |
 | `FilterForm` | El `<form method="get">` de servidor que hay debajo de `ListFilters` y `CatalogPicker`, con autoenvío: desplegable al instante, texto tras 300 ms. «Aplicar filtros» (44 px) se emite siempre y se oculta al hidratar. |
 | `Chip` | Filtro activo como **enlace** que lo quita. Es también la forma de filtrar por persona: un `<select>` de uuids capturaría el formulario de una suite que busca `value="<uuid>"`. |
 | `Pagination` | Anterior/siguiente con enlaces; desaparece con una sola página. |
@@ -193,6 +193,13 @@ deshace; se elige por cómo se ejecuta la acción:
    directos móviles son para lo que la barra esconde tras «Menú». Se comprueba con
    `isInMobileBar(role, href)` de `components/shell/nav-items.ts` en vez de fijar la
    lista a mano, para que siga valiendo si el menú cambia.
+8. **En el teléfono, lo primero es el contenido, no el filtro.** Un listado o un buscador de
+   catálogo muestra a 375 px solo el buscador y, a su lado, el botón «Filtros» con el
+   número de filtros activos (`FiltersToggle`); los desplegables se abren a demanda y los
+   filtros aplicados siguen a la vista como píldoras. Desde `sm` se ven siempre. Ningún
+   filtro va en una tarjeta propia ni con un campo por fila: el primer resultado tiene que
+   asomar en la primera pantalla. Vale para `ListFilters`, `CatalogPicker` y cualquier
+   filtro nuevo.
 
 ---
 

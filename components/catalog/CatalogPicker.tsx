@@ -4,7 +4,9 @@ import { cn } from "cn";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { cardVariants } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
-import { Field, Input, Select } from "@/components/ui/Field";
+import { Input, Select } from "@/components/ui/Field";
+import { FiltersToggle, FilterField, filterControlClass } from "@/components/ui/ListFilters";
+import { Search } from "lucide-react";
 import { FilterForm } from "@/components/ui/FilterForm";
 import { Pagination } from "@/components/ui/Pagination";
 import { SectionHeader } from "@/components/ui/SectionHeader";
@@ -87,30 +89,40 @@ export function CatalogPicker({
         }
       />
 
+      {/* Sin tarjeta propia: ya va dentro de la sección. En el teléfono, solo
+          el buscador y «Filtros» (docs/10, regla 8). */}
       <FilterForm
         action={action}
         label="Buscar en el catálogo"
-        className={cn(cardVariants({ padding: "sm" }), "sm:p-5")}
+        className="mt-4 grid gap-2"
       >
         {Object.entries(hiddenParams).map(([name, value]) => (
           <input key={name} type="hidden" name={name} value={value} />
         ))}
 
-        <Field label="Buscar por nombre">
-          <Input
-            name="q"
-            type="search"
-            defaultValue={filters.q ?? ""}
-            maxLength={80}
-            autoCapitalize="none"
-            spellCheck={false}
-            placeholder="Sentadilla, plancha, remo…"
+        <div className="flex gap-2">
+          <label className="relative block min-w-0 flex-1">
+            <span className="sr-only">Buscar por nombre</span>
+            <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              name="q"
+              type="search"
+              defaultValue={filters.q ?? ""}
+              maxLength={80}
+              autoCapitalize="none"
+              spellCheck={false}
+              className="min-h-11 pl-9"
+              placeholder="Sentadilla, plancha, remo…"
+            />
+          </label>
+          <FiltersToggle
+            active={[filters.muscle, filters.equipment, filters.environment].filter(Boolean).length}
           />
-        </Field>
+        </div>
 
-        <div className="mt-4 grid gap-4 sm:grid-cols-3">
-          <Field label="Grupo muscular">
-            <Select name="muscle" defaultValue={filters.muscle ?? ""}>
+        <div className="hidden flex-wrap gap-2 group-has-[[data-filters-toggle]:checked]/filters:flex sm:flex">
+          <FilterField label="Músculo">
+            <Select name="muscle" defaultValue={filters.muscle ?? ""} className={filterControlClass}>
               <option value="">Todos</option>
               {muscleGroups.map((value) => (
                 <option key={value} value={value}>
@@ -118,10 +130,10 @@ export function CatalogPicker({
                 </option>
               ))}
             </Select>
-          </Field>
+          </FilterField>
 
-          <Field label="Equipamiento">
-            <Select name="equipment" defaultValue={filters.equipment ?? ""}>
+          <FilterField label="Equipo">
+            <Select name="equipment" defaultValue={filters.equipment ?? ""} className={filterControlClass}>
               <option value="">Todos</option>
               {equipmentOptions.map((value) => (
                 <option key={value} value={value}>
@@ -129,10 +141,10 @@ export function CatalogPicker({
                 </option>
               ))}
             </Select>
-          </Field>
+          </FilterField>
 
-          <Field label="Entorno">
-            <Select name="environment" defaultValue={filters.environment ?? ""}>
+          <FilterField label="Entorno">
+            <Select name="environment" defaultValue={filters.environment ?? ""} className={filterControlClass}>
               <option value="">Todos</option>
               {environments.map((value) => (
                 <option key={value} value={value}>
@@ -140,11 +152,11 @@ export function CatalogPicker({
                 </option>
               ))}
             </Select>
-          </Field>
+          </FilterField>
         </div>
 
         {chips.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2" aria-label="Filtros activos">
+          <div className="flex flex-wrap gap-2" aria-label="Filtros activos">
             {chips.map((chip) => (
               <Chip key={chip.removeLabel} href={chip.href} removeLabel={chip.removeLabel}>
                 {chip.label}
@@ -154,7 +166,7 @@ export function CatalogPicker({
         )}
 
         {clearHref && (
-          <div className="mt-5">
+          <div>
             <ButtonLink variant="ghost" href={clearHref}>
               Quitar filtros
             </ButtonLink>

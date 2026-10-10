@@ -64,6 +64,12 @@ export function TodayRoutineDay({
         )}
       </div>
 
+      {/* El botón va antes de la lista: con cuatro ejercicios quedaba por
+          debajo de la primera pantalla del teléfono. */}
+      {day.routine_items.length > 0 && (
+        <SessionControls dayId={day.id} label={label} className="grid gap-2" />
+      )}
+
       {day.routine_items.length === 0 ? (
         <p className="text-muted-foreground">
           Tu profesional está completando este día. Podrás hacerlo cuando tenga
@@ -93,10 +99,6 @@ export function TodayRoutineDay({
             </li>
           ))}
         </ol>
-      )}
-
-      {day.routine_items.length > 0 && (
-        <SessionControls dayId={day.id} label={label} className="grid gap-2" />
       )}
     </Card>
   );

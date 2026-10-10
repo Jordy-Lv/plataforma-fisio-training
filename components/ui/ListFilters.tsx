@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Search } from "lucide-react";
+import { Search, SlidersHorizontal } from "lucide-react";
 import { cn } from "cn";
 import { FilterForm } from "@/components/ui/FilterForm";
 import { Input, Select } from "@/components/ui/Field";
@@ -27,6 +27,24 @@ export function FilterField({ label, children }: { label: string; children: Reac
   </label>;
 }
 
+/**
+ * El botón «Filtros» del teléfono (`docs/10`, regla 8). Es una casilla sin
+ * `name`: no viaja en la URL ni dispara el autoenvío de `FilterForm`. Va dentro
+ * del `FilterForm`, cuyo `group/filters` abre por CSS lo que lleve
+ * `hidden group-has-[[data-filters-toggle]:checked]/filters:flex sm:flex`, así
+ * que sin JavaScript funciona igual. Desde `sm` no se pinta.
+ */
+export function FiltersToggle({ active }: { active: number }) {
+  return <label className="relative flex min-h-11 shrink-0 cursor-pointer items-center gap-2 rounded-lg border border-input bg-surface px-3 text-sm font-medium has-checked:border-brand has-checked:bg-brand-soft has-checked:text-brand-soft-foreground has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring sm:hidden">
+    <input type="checkbox" data-filters-toggle className="sr-only" />
+    <SlidersHorizontal aria-hidden className="size-4" />
+    Filtros
+    {active > 0 && <span className="grid size-5 place-items-center rounded-full bg-brand text-xs font-semibold text-brand-foreground">
+      {active}<span className="sr-only"> activos</span>
+    </span>}
+  </label>;
+}
+
 /** Lo que se añade a `inputClass` para el control que va dentro de `FilterField`. */
 export const filterControlClass =
   "min-h-0 min-w-0 flex-1 self-stretch truncate border-0 bg-transparent py-0 pl-0 focus-visible:outline-none";
@@ -36,10 +54,14 @@ export const filterControlClass =
  * servidor —así funciona sin JavaScript— y, debajo y **fuera** del formulario,
  * las píldoras que quitan cada filtro.
  *
- * El buscador ocupa una fila y los desplegables se reparten en la siguiente,
- * dos por fila en el teléfono; en escritorio, todo en una. El rótulo del
- * buscador no se ve —el marcador de posición ya dice qué hace— pero sigue
- * siendo su nombre accesible.
+ * **En el teléfono, lo primero es el listado** (`docs/10`, regla 8): se ve el
+ * buscador y, a su lado, un botón «Filtros» con el número de filtros activos;
+ * los desplegables se abren a demanda. El botón es una casilla sin `name` —no
+ * viaja en la URL ni dispara el autoenvío— y lo que abre lo decide el CSS, así
+ * que funciona igual sin JavaScript. Desde `sm` no hay botón: los desplegables
+ * se ven siempre, y en escritorio todo va en una línea. El rótulo del buscador
+ * no se ve —el marcador de posición ya dice qué hace— pero sigue siendo su
+ * nombre accesible.
  *
  * `search` acepta `false` para las pantallas que no buscan por nombre, y
  * `extra` sirve para el control que no encaja en un `<select>` —el mes de
@@ -56,16 +78,22 @@ export function ListFilters({
 }) {
   const searchField = search ?? { label: "Buscar por nombre", placeholder: "Escribe un nombre…" };
   const hasControls = Boolean(extra) || choices.length > 0;
+  const active = choices.filter((choice) =>
+    !choice.required && values[choice.name] !== undefined && values[choice.name] !== null && values[choice.name] !== "").length;
+  const toggle = hasControls && <FiltersToggle active={active} />;
   return <div className="mb-6 grid gap-3">
     <FilterForm action={action} label={label}
       className={cn("grid gap-2", searchField && hasControls && "lg:grid-cols-[minmax(16rem,1fr)_auto] lg:items-start")}>
-      {searchField && <label className="relative block">
-        <span className="sr-only">{searchField.label}</span>
-        <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input type="search" name="q" maxLength={80} className="min-h-11 pl-9"
-          defaultValue={typeof values.q === "string" ? values.q : ""} placeholder={searchField.placeholder} />
-      </label>}
-      {hasControls && <div className="flex flex-wrap gap-2">
+      {(searchField || toggle) && <div className="flex gap-2">
+        {searchField && <label className="relative block min-w-0 flex-1">
+          <span className="sr-only">{searchField.label}</span>
+          <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input type="search" name="q" maxLength={80} className="min-h-11 pl-9"
+            defaultValue={typeof values.q === "string" ? values.q : ""} placeholder={searchField.placeholder} />
+        </label>}
+        {toggle}
+      </div>}
+      {hasControls && <div className="hidden flex-wrap gap-2 group-has-[[data-filters-toggle]:checked]/filters:flex sm:flex">
         {extra}
         {choices.map((choice) => <FilterField key={choice.name} label={choice.label}>
           <Select name={choice.name} className={filterControlClass}

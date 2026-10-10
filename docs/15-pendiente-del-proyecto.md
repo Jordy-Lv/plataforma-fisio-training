@@ -64,6 +64,16 @@ pasan contra `next start`. Lo que queda abierto:
    Supabase, `private.job_config` con la URL y el secreto reales, aplicar la migración nueva
    con `db push` y respaldos manuales semanales.
 
+6. **Integración del 2026-10-09** (rama `release/rediseno-y-produccion`) — entran juntos
+   `compact-memberships-view` (con el alta en modal), `compact-offer-showcase`, el rediseño
+   de Carlos (`refresh-auth-screens`, `refresh-patient-home`, `routine-today-only`,
+   `add-patient-evolution`), la preparación de producción y dos changes nuevos:
+   `add-exercise-video` (vídeo de YouTube embebido en la ficha y la sesión) y
+   `polish-role-flows` (aviso de programación al profesional, «Empezar sesión» visible,
+   filtros plegados en el teléfono como regla 8 de `docs/10`, títulos de pestaña). Las 32
+   suites en verde contra `next start` tras `db:reset`. Queda de todos ellos la pasada con
+   el teléfono real (C.1) y la licencia de `fondo-acceso.webp` (`refresh-auth-screens` 3.1).
+
 La decisión sobre el uso sin JavaScript ya está tomada (C.3): no es requisito.
 
 `openspec validate --all --strict` pasa los 8 changes desde el #44. Los changes que ya no

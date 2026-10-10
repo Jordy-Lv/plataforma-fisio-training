@@ -2,6 +2,8 @@ import { AuthForm } from "@/components/auth/AuthForm";
 import { AuthHeading } from "@/components/auth/AuthHeading";
 import { Notice } from "@/components/ui/Notice";
 
+export const metadata = { title: "Recuperar contraseña" };
+
 export default async function RecoveryPage({
   searchParams,
 }: {

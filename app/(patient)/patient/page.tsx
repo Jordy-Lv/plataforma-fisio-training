@@ -148,7 +148,7 @@ export default async function Page() {
                 >
                   <shortcut.icon aria-hidden="true" className="size-5 flex-none text-brand-bright" />
                   <b className="flex-1 truncate text-sm">{shortcut.title}</b>
-                  <ChevronRight aria-hidden="true" className="size-4 flex-none text-muted-foreground" />
+                  <ChevronRight aria-hidden="true" className="hidden size-4 flex-none text-muted-foreground sm:block" />
                 </Link>
               ))}
             </nav>

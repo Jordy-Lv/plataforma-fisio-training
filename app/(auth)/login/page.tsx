@@ -4,6 +4,8 @@ import { AuthHeading } from "@/components/auth/AuthHeading";
 import { Notice } from "@/components/ui/Notice";
 import { getActiveProfile, rolePaths } from "@/lib/auth/session";
 
+export const metadata = { title: "Iniciar sesión" };
+
 export default async function LoginPage({
   searchParams,
 }: {

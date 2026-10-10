@@ -3,6 +3,8 @@ import { AuthForm } from "@/components/auth/AuthForm";
 import { AuthHeading } from "@/components/auth/AuthHeading";
 import { getActiveProfile } from "@/lib/auth/session";
 
+export const metadata = { title: "Nueva contraseña" };
+
 export default async function PasswordPage() {
   if (!(await getActiveProfile())) redirect("/recuperar?error=session");
   return (

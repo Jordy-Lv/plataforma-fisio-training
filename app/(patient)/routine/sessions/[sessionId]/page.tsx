@@ -15,6 +15,8 @@ import {
   sessionDetails,
 } from "@/lib/routines/session-queries";
 
+export const metadata = { title: "Mi sesión" };
+
 /** Dos minutos: la ventana en la que el paciente sigue mirando la pantalla
  * tras pulsar «Terminar sesión». `closeSession` no redirige —vaciaría el
  * cuerpo del POST que lee la suite—, así que el acuse no puede viajar en la
