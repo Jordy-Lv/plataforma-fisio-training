@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
+import { Search, SlidersHorizontal } from "lucide-react";
+import { cn } from "cn";
 import { FilterForm } from "@/components/ui/FilterForm";
-import { Field, Input, Select } from "@/components/ui/Field";
+import { Input, Select } from "@/components/ui/Field";
 import { Chip } from "@/components/ui/Chip";
 import { ButtonLink } from "@/components/ui/ButtonLink";
-import { cardVariants } from "@/components/ui/Card";
 
 /**
  * `required` es para un `<select>` que nunca está «sin elegir» —el orden de un
@@ -12,13 +13,60 @@ import { cardVariants } from "@/components/ui/Card";
 type Choice = { name: string; label: string; options: Record<string, string>; required?: boolean };
 
 /**
+ * Un filtro con el rótulo **dentro** del control: «Estado  Todos ⌄». Es un
+ * `<label>` con aspecto de campo que envuelve al control, así que el lector de
+ * pantalla anuncia el nombre y todo el recuadro es el objetivo táctil de 44 px.
+ *
+ * A 375 px ocupa medio ancho; desde `sm`, lo que mida su contenido. El control
+ * que va dentro se pinta sin borde propio con `filterControlClass`.
+ */
+export function FilterField({ label, children }: { label: string; children: ReactNode }) {
+  return <label className="flex min-h-11 min-w-0 flex-1 basis-[calc(50%-0.25rem)] items-center gap-2 rounded-lg border border-input bg-surface pl-3 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring sm:flex-none sm:basis-auto">
+    <span className="shrink-0 text-xs text-muted-foreground">{label}</span>
+    {children}
+  </label>;
+}
+
+/**
+ * El botón «Filtros» del teléfono (`docs/10`, regla 8). Es una casilla sin
+ * `name`: no viaja en la URL ni dispara el autoenvío de `FilterForm`. Va dentro
+ * del `FilterForm`, cuyo `group/filters` abre por CSS lo que lleve
+ * `hidden group-has-[[data-filters-toggle]:checked]/filters:flex sm:flex`, así
+ * que sin JavaScript funciona igual. Desde `sm` no se pinta.
+ */
+export function FiltersToggle({ active }: { active: number }) {
+  return <label className="relative flex min-h-11 shrink-0 cursor-pointer items-center gap-2 rounded-lg border border-input bg-surface px-3 text-sm font-medium has-checked:border-brand has-checked:bg-brand-soft has-checked:text-brand-soft-foreground has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring sm:hidden">
+    <input type="checkbox" data-filters-toggle className="sr-only" />
+    <SlidersHorizontal aria-hidden className="size-4" />
+    Filtros
+    {active > 0 && <span className="grid size-5 place-items-center rounded-full bg-brand text-xs font-semibold text-brand-foreground">
+      {active}<span className="sr-only"> activos</span>
+    </span>}
+  </label>;
+}
+
+/** Lo que se añade a `inputClass` para el control que va dentro de `FilterField`. */
+export const filterControlClass =
+  "min-h-0 min-w-0 flex-1 self-stretch truncate border-0 bg-transparent py-0 pl-0 focus-visible:outline-none";
+
+/**
  * La barra de filtros de un listado: un `<form method="get">` renderizado en el
  * servidor —así funciona sin JavaScript— y, debajo y **fuera** del formulario,
  * las píldoras que quitan cada filtro.
  *
+ * **En el teléfono, lo primero es el listado** (`docs/10`, regla 8): se ve el
+ * buscador y, a su lado, un botón «Filtros» con el número de filtros activos;
+ * los desplegables se abren a demanda. El botón es una casilla sin `name` —no
+ * viaja en la URL ni dispara el autoenvío— y lo que abre lo decide el CSS, así
+ * que funciona igual sin JavaScript. Desde `sm` no hay botón: los desplegables
+ * se ven siempre, y en escritorio todo va en una línea. El rótulo del buscador
+ * no se ve —el marcador de posición ya dice qué hace— pero sigue siendo su
+ * nombre accesible.
+ *
  * `search` acepta `false` para las pantallas que no buscan por nombre, y
  * `extra` sirve para el control que no encaja en un `<select>` —el mes de
- * `/attendance`, por ejemplo—.
+ * `/attendance`, por ejemplo—: va en la fila de los desplegables y se pinta
+ * con `FilterField`.
  */
 export function ListFilters({
   action, label, values, choices, chips, search, extra,
@@ -29,18 +77,31 @@ export function ListFilters({
   extra?: ReactNode;
 }) {
   const searchField = search ?? { label: "Buscar por nombre", placeholder: "Escribe un nombre…" };
+  const hasControls = Boolean(extra) || choices.length > 0;
+  const active = choices.filter((choice) =>
+    !choice.required && values[choice.name] !== undefined && values[choice.name] !== null && values[choice.name] !== "").length;
+  const toggle = hasControls && <FiltersToggle active={active} />;
   return <div className="mb-6 grid gap-3">
-    <FilterForm action={action} label={label} className={cardVariants({padding:"sm"})}>
-      {searchField && <Field label={searchField.label}><Input type="search" name="q" maxLength={80}
-        defaultValue={typeof values.q === "string" ? values.q : ""} placeholder={searchField.placeholder} /></Field>}
-      {extra}
-      {choices.length > 0 && <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {choices.map((choice) => <Field key={choice.name} label={choice.label}>
-          <Select name={choice.name} defaultValue={values[choice.name] === true ? "1" : String(values[choice.name] ?? "")}>
+    <FilterForm action={action} label={label}
+      className={cn("grid gap-2", searchField && hasControls && "lg:grid-cols-[minmax(16rem,1fr)_auto] lg:items-start")}>
+      {(searchField || toggle) && <div className="flex gap-2">
+        {searchField && <label className="relative block min-w-0 flex-1">
+          <span className="sr-only">{searchField.label}</span>
+          <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input type="search" name="q" maxLength={80} className="min-h-11 pl-9"
+            defaultValue={typeof values.q === "string" ? values.q : ""} placeholder={searchField.placeholder} />
+        </label>}
+        {toggle}
+      </div>}
+      {hasControls && <div className="hidden flex-wrap gap-2 group-has-[[data-filters-toggle]:checked]/filters:flex sm:flex">
+        {extra}
+        {choices.map((choice) => <FilterField key={choice.name} label={choice.label}>
+          <Select name={choice.name} className={filterControlClass}
+            defaultValue={values[choice.name] === true ? "1" : String(values[choice.name] ?? "")}>
             {!choice.required && <option value="">Todos</option>}
             {Object.entries(choice.options).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
           </Select>
-        </Field>)}
+        </FilterField>)}
       </div>}
     </FilterForm>
     {chips.length > 0 && <div className="flex flex-wrap items-center gap-2" aria-label="Filtros activos">

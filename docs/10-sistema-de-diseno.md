@@ -21,6 +21,7 @@ los expone a Tailwind, que es como llegan a las clases (`bg-surface`, `text-dang
 | Superficie | `--background`, `--surface`, `--muted`, `--foreground`, `--muted-foreground` | fondo de página, tarjetas, texto |
 | Bordes | `--border`, `--border-strong` | divisor decorativo / límite de un control |
 | Marca | `--brand`, `--brand-foreground`, `--brand-soft`, `--brand-soft-foreground` | acciones principales y acentos |
+| Marca luminosa | `--brand-bright`, `--brand-bright-foreground` | el amarillo del logo, solo como relleno con texto oscuro encima (8,4:1); nunca como texto sobre blanco (2,1:1). Hoy solo lo usa el botón de las pantallas de acceso |
 | Estado | `--success`, `--warning`, `--danger`, `--info` + `-foreground` + `-soft` | avisos, badges, resultados |
 | Dolor | `--pain-none` … `--pain-severe` + `-soft` | la escala 0-10, el dato clínico central |
 | Elevación | `--elevation-low`, `--panel-shadow`, `--elevation-high` → `shadow-low`, `shadow-panel`, `shadow-high` | profundidad |
@@ -42,11 +43,23 @@ estado (WCAG 1.4.1).
 **Tipografía:** Figtree, autoalojada con `next/font/google` en `app/layout.tsx` y expuesta
 como `--font-sans`. No hay `font-family` escrito a mano en ningún componente.
 
+**Tipografía de titular (`font-display`):** Russo One, solo para el titular de la portada.
+La carga `app/page.tsx` —no el layout raíz, para que ninguna otra pantalla la descargue— y
+`--font-display` (en `@theme inline`) la referencia; fuera de `/` cae a Figtree. No es una
+tipografía para el resto de la aplicación.
+
+**Tipografía de la marca (`font-wordmark`):** Montserrat fina y espaciada, solo para
+«AMADORTRAINER» en la barra del paciente (`ClientWordmark`). La carga el propio componente y
+`--font-wordmark` la referencia; fuera de él cae a Figtree.
+
 **Modo oscuro:** claro, oscuro y seguir al sistema. Un script en línea en el `<head>`
 (`lib/theme/constants.ts`) aplica la clase antes del primer pintado —es lo que evita el
 destello blanco al abrir la app de noche— y la preferencia persiste en `localStorage`. El
 conmutador es `ThemeToggle`: lo monta el shell, y aparte la portada y las pantallas de
-acceso, que no tienen shell.
+acceso, que no tienen shell. En el teléfono de la portada, del acceso y de la barra del paciente
+va `ThemeSwitch`, un solo botón sol/luna que alterna claro y oscuro, para ahorrar espacio. En
+escritorio y en las pantallas del personal sigue `ThemeToggle`. `test:smoke` acepta cualquiera
+de los dos como señal de hidratación (`docs/11`).
 
 ---
 
@@ -111,8 +124,8 @@ El estado de un listado —búsqueda, filtros, orden, vista y página— vive en
 
 | Componente | Notas |
 |---|---|
-| `ListFilters` | La barra de filtros de un listado: buscador, desplegables y, **fuera** del formulario, las píldoras que quitan cada filtro. Todo filtro nace en «Todos». |
-| `FilterForm` | El `<form method="get">` de servidor que hay debajo de `ListFilters` y `CatalogPicker`, con autoenvío: desplegable al instante, texto tras 300 ms. «Aplicar filtros» se emite siempre y se oculta al hidratar. |
+| `ListFilters` | La barra de filtros de un listado: buscador, desplegables y, **fuera** del formulario, las píldoras que quitan cada filtro. Todo filtro nace en «Todos». Sin tarjeta: a 375 px, el buscador (44 px, con lupa y rótulo solo para lectores de pantalla) y el botón «Filtros» (`FiltersToggle`) en una fila, y los desplegables plegados hasta pulsarlo, dos por fila (regla 8); desde `sm` se ven siempre, y en escritorio todo va en una línea. Cada desplegable lleva el rótulo **dentro** del control («Estado  Todos ⌄») con `FilterField`, que es también el patrón para un `extra` como el «Mes» de `/attendance`. |
+| `FilterForm` | El `<form method="get">` de servidor que hay debajo de `ListFilters` y `CatalogPicker`, con autoenvío: desplegable al instante, texto tras 300 ms. «Aplicar filtros» (44 px) se emite siempre y se oculta al hidratar. |
 | `Chip` | Filtro activo como **enlace** que lo quita. Es también la forma de filtrar por persona: un `<select>` de uuids capturaría el formulario de una suite que busca `value="<uuid>"`. |
 | `Pagination` | Anterior/siguiente con enlaces; desaparece con una sola página. |
 | `PeriodFilter` | Estrecha por año o mes un historial que el servidor ya pintó entero. **No es un `<form>`**: sirve en pantallas cuyo marcador es un uuid. Sin JavaScript se ve todo. |
@@ -180,6 +193,13 @@ deshace; se elige por cómo se ejecuta la acción:
    directos móviles son para lo que la barra esconde tras «Menú». Se comprueba con
    `isInMobileBar(role, href)` de `components/shell/nav-items.ts` en vez de fijar la
    lista a mano, para que siga valiendo si el menú cambia.
+8. **En el teléfono, lo primero es el contenido, no el filtro.** Un listado o un buscador de
+   catálogo muestra a 375 px solo el buscador y, a su lado, el botón «Filtros» con el
+   número de filtros activos (`FiltersToggle`); los desplegables se abren a demanda y los
+   filtros aplicados siguen a la vista como píldoras. Desde `sm` se ven siempre. Ningún
+   filtro va en una tarjeta propia ni con un campo por fila: el primer resultado tiene que
+   asomar en la primera pantalla. Vale para `ListFilters`, `CatalogPicker` y cualquier
+   filtro nuevo.
 
 ---
 

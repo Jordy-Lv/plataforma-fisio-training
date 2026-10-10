@@ -137,3 +137,29 @@ export async function calendarRoutineDay(dayId: string, patientId: string) {
     throw new Error(`No se pudo consultar el día de rutina: ${error.message}`);
   return data;
 }
+
+/**
+ * La próxima sesión programada de una rutina, desde hoy. Con la regla de
+ * `routine-today-only` el paciente solo entrena lo programado para el día, así
+ * que una rutina activa sin nada programado es una rutina que no se puede
+ * hacer: la pantalla del profesional lo avisa con esto.
+ */
+export async function nextScheduledDay(routineId: string, today: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("routine_schedules")
+    .select("scheduled_on, routine_days!inner(title, day_number, routine_id)")
+    .eq("routine_days.routine_id", routineId)
+    .is("cancelled_at", null)
+    .gte("scheduled_on", today)
+    .order("scheduled_on")
+    .limit(1)
+    .maybeSingle();
+  if (error)
+    throw new Error(`No se pudo consultar la programación: ${error.message}`);
+  if (!data) return null;
+  return {
+    date: data.scheduled_on,
+    title: data.routine_days.title || `Día ${data.routine_days.day_number}`,
+  };
+}

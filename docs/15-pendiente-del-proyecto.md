@@ -55,6 +55,25 @@ pasan contra `next start`. Lo que queda abierto:
    rama (A.1, lo activa Jordy en GitHub). El despliegue sigue siendo manual (A.2) y
    `railway.json` queda deprecado el 2026-12-01 (A.3).
 
+5. **Salida a producción** (2026-10-09, rama `chore/preparar-produccion`) — se sale en la
+   capa gratuita de Supabase (A.7). En código: cabeceras de seguridad en `next.config.ts` y
+   registro público cerrado (cualquiera con la clave anónima podía crearse una cuenta de
+   paciente). Fuera del código queda la lista de
+   [`18-puesta-en-produccion.md`](18-puesta-en-produccion.md): dominio verificado en Resend
+   (hoy `MAIL_FROM` es el remitente de prueba y no entrega a nadie más), SMTP propio en
+   Supabase, `private.job_config` con la URL y el secreto reales, aplicar la migración nueva
+   con `db push` y respaldos manuales semanales.
+
+6. **Integración del 2026-10-09** (rama `release/rediseno-y-produccion`) — entran juntos
+   `compact-memberships-view` (con el alta en modal), `compact-offer-showcase`, el rediseño
+   de Carlos (`refresh-auth-screens`, `refresh-patient-home`, `routine-today-only`,
+   `add-patient-evolution`), la preparación de producción y dos changes nuevos:
+   `add-exercise-video` (vídeo de YouTube embebido en la ficha y la sesión) y
+   `polish-role-flows` (aviso de programación al profesional, «Empezar sesión» visible,
+   filtros plegados en el teléfono como regla 8 de `docs/10`, títulos de pestaña). Las 32
+   suites en verde contra `next start` tras `db:reset`. Queda de todos ellos la pasada con
+   el teléfono real (C.1) y la licencia de `fondo-acceso.webp` (`refresh-auth-screens` 3.1).
+
 La decisión sobre el uso sin JavaScript ya está tomada (C.3): no es requisito.
 
 `openspec validate --all --strict` pasa los 8 changes desde el #44. Los changes que ya no

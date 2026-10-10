@@ -17,7 +17,9 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { test } from "node:test";
 
-const root = new URL("..", import.meta.url).pathname;
+import { fileURLToPath } from "node:url";
+
+const root = fileURLToPath(new URL("../", import.meta.url));
 
 // Los únicos dos sitios donde un color literal es correcto: la definición de los
 // tokens y los colores que el navegador necesita antes de cargar el CSS (barra
@@ -41,7 +43,7 @@ function walk(dir) {
 const sources = ["app", "components", "lib"]
   .flatMap((dir) => walk(join(root, dir)))
   .map((file) => ({
-    path: relative(root, file),
+    path: relative(root, file).replaceAll("\\", "/"),
     text: readFileSync(file, "utf8"),
   }))
   .filter(({ path }) => !COLOR_SOURCES.includes(path));

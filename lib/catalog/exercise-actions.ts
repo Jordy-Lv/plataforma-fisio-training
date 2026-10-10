@@ -9,6 +9,8 @@ import {
   contraindicationsSchema,
   createExerciseSchema,
   exerciseFormValues,
+  exerciseVideoFormValues,
+  exerciseVideoSchema,
   mediaExtensions,
   updateExerciseSchema,
   type CatalogState,
@@ -249,5 +251,37 @@ export async function updateContraindications(
       parsed.data.contraindications.length > 0
         ? "Etiquetado clínico guardado. El motor de reglas excluirá este ejercicio para esas zonas."
         : "Etiquetado clínico guardado. Este ejercicio ya no tiene contraindicaciones.",
+  };
+}
+
+/**
+ * Vídeo de YouTube de la ficha. Se guarda aparte, como el etiquetado clínico,
+ * porque también se añade a los ejercicios importados, que solo edita el
+ * administrador y cuya ficha completa obligaría a reenviar la imagen.
+ */
+export async function updateExerciseVideo(
+  _previous: CatalogState,
+  form: FormData,
+): Promise<CatalogState> {
+  const parsed = exerciseVideoSchema.safeParse(exerciseVideoFormValues(form));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  if (!(await requireStaffProfile())) return { error: sinPermiso };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("exercises")
+    .update({ video_url: parsed.data.videoUrl })
+    .eq("id", parsed.data.id)
+    .select("id")
+    .maybeSingle();
+  if (error) return { error: `No se pudo guardar el vídeo: ${error.message}` };
+  if (!data) return { error: sinPermiso };
+
+  revalidatePath("/exercises");
+  revalidatePath(`/exercises/${parsed.data.id}`);
+  return {
+    success: parsed.data.videoUrl
+      ? "Vídeo guardado. El paciente lo verá en su sesión, sin salir de la aplicación."
+      : "Vídeo quitado. La ficha vuelve a mostrar solo la imagen.",
   };
 }

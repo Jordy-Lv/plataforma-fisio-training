@@ -21,6 +21,7 @@ export type ExerciseListItem = Pick<
   | "environments"
   | "difficulty"
   | "is_custom"
+  | "video_url"
 >;
 
 /**
@@ -30,7 +31,7 @@ export type ExerciseListItem = Pick<
  * tienen indicaciones escritas— y ahorra una consulta por cada ficha abierta.
  */
 const columns =
-  "id, name, description, media_url, muscle_groups, equipment, environments, difficulty, is_custom";
+  "id, name, description, media_url, muscle_groups, equipment, environments, difficulty, is_custom, video_url";
 
 
 export async function listExercises(filters: ExerciseFilters, options?: { pageSize?: number }) {
@@ -78,6 +79,7 @@ export type ExerciseDetail = Pick<
   | "contraindications"
   | "is_custom"
   | "created_by"
+  | "video_url"
 >;
 
 /** La ficha completa. Devuelve `null` si no existe o si RLS no lo deja ver. */
@@ -86,7 +88,7 @@ export async function getExercise(id: string): Promise<ExerciseDetail | null> {
   const { data, error } = await supabase
     .from("exercises")
     .select(
-      "id, name, description, media_url, muscle_groups, equipment, environments, difficulty, contraindications, is_custom, created_by",
+      "id, name, description, media_url, muscle_groups, equipment, environments, difficulty, contraindications, is_custom, created_by, video_url",
     )
     .eq("id", id)
     .maybeSingle();

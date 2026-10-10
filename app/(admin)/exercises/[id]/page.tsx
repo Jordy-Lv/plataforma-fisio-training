@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { Workspace } from "@/components/auth/Workspace";
 import { ContraindicationsForm } from "@/components/catalog/ContraindicationsForm";
 import { ExerciseForm } from "@/components/catalog/ExerciseForm";
+import { ExerciseVideo } from "@/components/catalog/ExerciseVideo";
+import { ExerciseVideoForm } from "@/components/catalog/ExerciseVideoForm";
 import { bodyPartLabels } from "@/lib/catalog/body-parts";
 import { requireStaff } from "@/lib/catalog/access";
 import { getExercise } from "@/lib/catalog/queries";
@@ -20,8 +22,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "cn";
 import { cardVariants } from "@/components/ui/Card";
 
-const uuid =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const sectionClass = cn(cardVariants({ padding: "lg" }), "mt-10");
 
@@ -112,27 +113,35 @@ export default async function Page({
       )}
 
       <article className="grid gap-6 md:grid-cols-[minmax(0,20rem)_1fr]">
-        <div
-          className={cn(
-            cardVariants({ padding: "none" }),
-            "aspect-[4/3] overflow-hidden bg-muted",
-          )}
-        >
-          {exercise.media_url ? (
-            // Sin `next/image`: el origen es el bucket de Supabase, cuyo
-            // dominio cambia entre local y producción.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={exercise.media_url}
-              alt={`Ejecución de ${exercise.name}`}
-              className="size-full object-cover"
-            />
-          ) : (
-            <p className="flex size-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
-              Sin imagen todavía
-            </p>
-          )}
-        </div>
+        {exercise.video_url ? (
+          <ExerciseVideo
+            url={exercise.video_url}
+            title={exercise.name}
+            className="self-start"
+          />
+        ) : (
+          <div
+            className={cn(
+              cardVariants({ padding: "none" }),
+              "aspect-[4/3] overflow-hidden bg-muted",
+            )}
+          >
+            {exercise.media_url ? (
+              // Sin `next/image`: el origen es el bucket de Supabase, cuyo
+              // dominio cambia entre local y producción.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={exercise.media_url}
+                alt={`Ejecución de ${exercise.name}`}
+                className="size-full object-cover"
+              />
+            ) : (
+              <p className="flex size-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
+                Sin imagen todavía
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="grid gap-5">
           <Badge variant={exercise.is_custom ? "brand" : "neutral"}>
@@ -214,11 +223,30 @@ export default async function Page({
               <ExerciseForm exercise={exercise} />
             </div>
           </section>
+
+          {/* Va al final: las suites localizan los formularios de esta ficha
+              por su orden (docs/11, «Catálogo»). */}
+          <section className={sectionClass}>
+            <h2 className="text-xl font-semibold">Vídeo de YouTube</h2>
+            <p className="mb-6 mt-2 max-w-2xl leading-7 text-muted-foreground">
+              Pega el enlace de un vídeo que muestre el movimiento. Se ve dentro
+              de la aplicación, aquí y en la sesión del paciente, sin abrir
+              YouTube.
+            </p>
+            <div className="max-w-2xl">
+              <ExerciseVideoForm
+                exerciseId={exercise.id}
+                videoUrl={exercise.video_url}
+              />
+            </div>
+          </section>
         </>
       ) : (
         <EmptyState className="mt-10" title="Esta ficha es de solo lectura">
           Puedes crear y editar tus propios ejercicios, pero este lo
-          {exercise.is_custom ? " creó otra persona del equipo" : " importó la biblioteca"}
+          {exercise.is_custom
+            ? " creó otra persona del equipo"
+            : " importó la biblioteca"}
           . Editar su ficha y su etiquetado clínico es cosa del administrador o
           de quien lo creó. Pídeselo si algo está mal.
         </EmptyState>

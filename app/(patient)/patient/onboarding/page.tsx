@@ -7,6 +7,8 @@ import { OnboardingForm } from "@/components/auth/OnboardingForm";
 import { Card } from "@/components/ui/Card";
 import { cn } from "cn";
 
+export const metadata = { title: "Completa tu registro" };
+
 const steps = ["Objetivo", "Equipamiento", "Condiciones"];
 
 export default async function Page({

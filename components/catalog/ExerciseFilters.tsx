@@ -1,15 +1,8 @@
-import { cn } from "cn";
-import { FilterForm } from "@/components/ui/FilterForm";
-import { Chip } from "@/components/ui/Chip";
-import { ButtonLink } from "@/components/ui/ButtonLink";
-import { cardVariants } from "@/components/ui/Card";
-import { Field, Input, Select } from "@/components/ui/Field";
+import { ListFilters } from "@/components/ui/ListFilters";
 import {
-  exerciseList,
   exerciseOrderLabels,
   exerciseOrders,
   exercisesHref,
-  hasActiveFilters,
   type ExerciseFilters as Filters,
 } from "@/lib/catalog/schemas";
 import {
@@ -21,101 +14,59 @@ import {
   muscleGroups,
 } from "@/lib/catalog/vocabulary";
 
+const options = <T extends string>(values: readonly T[], labels: Record<T, string>) =>
+  Object.fromEntries(values.map((value) => [value, labels[value]]));
+
 /**
  * Formulario `GET` sin JavaScript: la URL es el estado del listado, así se
  * puede compartir un filtro y el botón de retroceso funciona. No incluye
  * `page` a propósito, para que cambiar un filtro vuelva a la primera página.
  *
- * Es un `<form>`, no un `<div>`, así que toma las clases de la tarjeta en vez
- * de envolverse en `<Card>`.
+ * Usa la barra compacta de `ListFilters`, como los demás listados: antes era
+ * una tarjeta con un campo por fila que, a 375 px, llenaba la primera pantalla
+ * entera antes del primer ejercicio.
  */
 export function ExerciseFilters({ filters }: { filters: Filters }) {
+  const chips = [
+    filters.q && {
+      label: filters.q,
+      href: exercisesHref(filters, { q: undefined, page: 1 }),
+      removeLabel: "Quitar búsqueda",
+    },
+    filters.muscle && {
+      label: muscleGroupLabels[filters.muscle],
+      href: exercisesHref(filters, { muscle: undefined, page: 1 }),
+      removeLabel: "Quitar grupo muscular",
+    },
+    filters.equipment && {
+      label: equipmentLabels[filters.equipment],
+      href: exercisesHref(filters, { equipment: undefined, page: 1 }),
+      removeLabel: "Quitar equipamiento",
+    },
+    filters.environment && {
+      label: environmentLabels[filters.environment],
+      href: exercisesHref(filters, { environment: undefined, page: 1 }),
+      removeLabel: "Quitar entorno",
+    },
+  ].filter((chip) => !!chip);
+
   return (
-    <FilterForm
-      label="Filtros del catálogo"
+    <ListFilters
       action="/exercises"
-      className={cn(cardVariants({ padding: "sm" }), "sm:p-5")}
-    >
-      {/* La vista no es un filtro, pero sí estado del listado: sin este campo,
-          cambiar un desplegable devolvería al usuario a la vista de tarjetas.
-          Va oculto y con la vista actual, que el esquema ya acotó. */}
-      <input type="hidden" name="vista" value={filters.vista} />
-
-      <Field label="Buscar por nombre">
-        <Input
-          name="q"
-          type="search"
-          defaultValue={filters.q ?? ""}
-          maxLength={80}
-          autoCapitalize="none"
-          spellCheck={false}
-          placeholder="Sentadilla, plancha, remo…"
-        />
-      </Field>
-
-      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Field label="Grupo muscular">
-          <Select name="muscle" defaultValue={filters.muscle ?? ""}>
-            <option value="">Todos</option>
-            {muscleGroups.map((value) => (
-              <option key={value} value={value}>
-                {muscleGroupLabels[value]}
-              </option>
-            ))}
-          </Select>
-        </Field>
-
-        <Field label="Equipamiento">
-          <Select name="equipment" defaultValue={filters.equipment ?? ""}>
-            <option value="">Todos</option>
-            {equipmentOptions.map((value) => (
-              <option key={value} value={value}>
-                {equipmentLabels[value]}
-              </option>
-            ))}
-          </Select>
-        </Field>
-
-        <Field label="Entorno">
-          <Select name="environment" defaultValue={filters.environment ?? ""}>
-            <option value="">Todos</option>
-            {environments.map((value) => (
-              <option key={value} value={value}>
-                {environmentLabels[value]}
-              </option>
-            ))}
-          </Select>
-        </Field>
-
-        {/* No es un filtro: no restringe resultados, solo cambia su orden.
-            Por eso `exerciseList` lo declara en `notFilters`, igual que `vista`. */}
-        <Field label="Orden">
-          <Select name="orden" defaultValue={filters.orden}>
-            {exerciseOrders.map((value) => (
-              <option key={value} value={value}>
-                {exerciseOrderLabels[value]}
-              </option>
-            ))}
-          </Select>
-        </Field>
-      </div>
-
-      {hasActiveFilters(filters) && <div className="mt-4 flex flex-wrap gap-2" aria-label="Filtros activos">
-        {filters.q && <Chip href={exercisesHref(filters, { q: undefined, page: 1 })} removeLabel="Quitar búsqueda">{filters.q}</Chip>}
-        {filters.muscle && <Chip href={exercisesHref(filters, { muscle: undefined, page: 1 })} removeLabel="Quitar grupo muscular">{muscleGroupLabels[filters.muscle]}</Chip>}
-        {filters.equipment && <Chip href={exercisesHref(filters, { equipment: undefined, page: 1 })} removeLabel="Quitar equipamiento">{equipmentLabels[filters.equipment]}</Chip>}
-        {filters.environment && <Chip href={exercisesHref(filters, { environment: undefined, page: 1 })} removeLabel="Quitar entorno">{environmentLabels[filters.environment]}</Chip>}
-      </div>}
-      <div className="mt-5 flex flex-wrap items-center gap-3">
-        {hasActiveFilters(filters) && (
-          <ButtonLink
-            variant="ghost"
-            href={exercisesHref(exerciseList.empty, { vista: filters.vista, orden: filters.orden })}
-          >
-            Quitar filtros
-          </ButtonLink>
-        )}
-      </div>
-    </FilterForm>
+      label="Filtros del catálogo"
+      values={filters}
+      search={{ label: "Buscar por nombre", placeholder: "Sentadilla, plancha, remo…" }}
+      // La vista no es un filtro, pero sí estado del listado: sin este campo,
+      // cambiar un desplegable devolvería al usuario a la vista de tarjetas.
+      extra={<input type="hidden" name="vista" value={filters.vista} />}
+      choices={[
+        { name: "muscle", label: "Músculo", options: options(muscleGroups, muscleGroupLabels) },
+        { name: "equipment", label: "Equipo", options: options(equipmentOptions, equipmentLabels) },
+        { name: "environment", label: "Entorno", options: options(environments, environmentLabels) },
+        // No restringe resultados, solo cambia su orden: nunca está «sin elegir».
+        { name: "orden", label: "Orden", options: options(exerciseOrders, exerciseOrderLabels), required: true },
+      ]}
+      chips={chips}
+    />
   );
 }

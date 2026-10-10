@@ -11,7 +11,7 @@ import {
   calendarHref,
   todayInBogota,
 } from "@/lib/routines/calendar";
-import { calendarRoutineDay } from "@/lib/routines/calendar-queries";
+import { calendarRoutineDay, patientCalendar } from "@/lib/routines/calendar-queries";
 import {
   calendarQuerySchema,
   startSessionSchema,
@@ -35,6 +35,13 @@ export default async function Page({
   const parsed = calendarQuerySchema.safeParse(await searchParams);
   const { date = today, view = "month" } = parsed.success ? parsed.data : {};
   const items = [...day.routine_items].sort((a, b) => a.position - b.position);
+  // Solo se entrena lo programado para hoy (2026-10-04): mirar el día otra
+  // fecha, o hoy sin programación, deja ver los ejercicios pero no iniciarlo.
+  const isScheduledToday =
+    date === today &&
+    (await patientCalendar(actor.id, today, today, today)).some(
+      (event) => event.dayId === day.id && event.scheduleId,
+    );
   return (
     <Workspace
       title={day.title || `Día ${day.day_number}`}
@@ -94,7 +101,7 @@ export default async function Page({
           ))}
         </ol>
       )}
-      {date === today &&
+      {isScheduledToday &&
       day.routines.status === "active" &&
       items.length > 0 ? (
         <SessionControls
@@ -105,7 +112,7 @@ export default async function Page({
         <p className="mt-5 text-sm text-muted-foreground">
           {day.routines.status !== "active"
             ? "Esta rutina ya no está activa. Puedes consultar sus ejercicios e historial."
-            : "Puedes consultar los ejercicios. El registro se habilita el día del entrenamiento."}
+            : "Puedes consultar los ejercicios. El registro se habilita el día que tu profesional lo programa."}
         </p>
       )}
     </Workspace>

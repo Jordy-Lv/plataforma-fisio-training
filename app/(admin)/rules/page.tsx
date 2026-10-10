@@ -48,7 +48,7 @@ export default async function Page({
     <Workspace
       title="Asignación automática"
       name={profile.fullName}
-      description="Cuando un paciente termina su registro se evalúan estas reglas de arriba abajo y gana la primera que coincide con su perfil. Su plantilla se copia a una rutina propia y se le quitan los ejercicios contraindicados. Si ninguna coincide, no se le asigna nada: queda a la espera de su profesional."
+      description="Al terminar su registro, el paciente recibe la plantilla de la primera regla que coincide con su perfil, sin los ejercicios contraindicados. Si ninguna coincide, espera a su profesional."
       actions={
         <>
           <ButtonLink variant="ghost" href="/rules/simulador">

@@ -6,6 +6,8 @@ import { ButtonLink } from "@/components/ui/ButtonLink";
 import { sessionDetails } from "@/lib/routines/session-queries";
 import { closeSessionSchema } from "@/lib/routines/schemas";
 
+export const metadata = { title: "Informe de sesión" };
+
 export default async function Page({
   params,
 }: {

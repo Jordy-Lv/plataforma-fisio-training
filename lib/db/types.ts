@@ -259,6 +259,7 @@ export type Database = {
           media_url: string | null
           muscle_groups: string[]
           name: string
+          video_url: string | null
         }
         Insert: {
           contraindications?: string[]
@@ -274,6 +275,7 @@ export type Database = {
           media_url?: string | null
           muscle_groups?: string[]
           name: string
+          video_url?: string | null
         }
         Update: {
           contraindications?: string[]
@@ -289,6 +291,7 @@ export type Database = {
           media_url?: string | null
           muscle_groups?: string[]
           name?: string
+          video_url?: string | null
         }
         Relationships: [
           {

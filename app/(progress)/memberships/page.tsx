@@ -3,6 +3,7 @@ import { Workspace } from "@/components/auth/Workspace";
 import { MembershipForm } from "@/components/progress/MembershipForm";
 import { MembershipNoticeDaysForm } from "@/components/progress/MembershipNoticeDaysForm";
 import { MembershipReviewButton } from "@/components/progress/MembershipReviewButton";
+import { NewMembershipDialog } from "@/components/progress/NewMembershipDialog";
 import { requireStaff } from "@/lib/progress/access";
 import {
   listMembershipsWithPatient,
@@ -181,20 +182,38 @@ async function AdminView({ name, filters }: { name?: string | null; filters: Mem
     <Workspace
       title="Membresías"
       name={name}
-      description="El control administrativo de mensualidades: fecha de ingreso, fecha de vencimiento, monto y estado. No procesa pagos."
+      description="Fechas, montos y estado de cada mensualidad. No procesa pagos."
+      actions={
+        plans.length > 0 ? (
+          <NewMembershipDialog patients={patientOptions} plans={planOptions} />
+        ) : undefined
+      }
     >
-      <section className={cn(cardVariants(), "mb-10 grid gap-4")}>
-        <h2 className="text-base font-semibold">Revisión de vencimientos</h2>
-        <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-          Cada día, un proceso automático marca las membresías próximas a vencer
-          y las vencidas, avisa al equipo y envía el correo al paciente. Ahora
-          mismo se avisa con {noticeDays} días de antelación. Puedes lanzar la
-          revisión a mano para la demostración.
-        </p>
-        <div className="grid gap-6 sm:grid-cols-2">
+      {/*
+        Una barra y no una tarjeta: quien entra aquí viene a ver qué vence, y
+        a 375 px la revisión no debe empujar el listado fuera de la pantalla.
+        El ajuste del plazo se pliega; un `<details>` cerrado lo emite igual
+        en el HTML y no altera el orden de los formularios (docs/11).
+      */}
+      <section aria-labelledby="membership-review" className="mb-6 grid gap-1 border-b border-border pb-3">
+        <h2 id="membership-review" className="sr-only">Revisión de vencimientos</h2>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <p className="text-sm leading-6 text-muted-foreground">
+            <span className="font-medium text-foreground">
+              Aviso con {noticeDays} {noticeDays === 1 ? "día" : "días"} de antelación
+            </span>{" "}
+            · Revisión diaria automática
+          </p>
           <MembershipReviewButton />
-          <MembershipNoticeDaysForm current={noticeDays} />
         </div>
+        <details className="text-sm">
+          <summary className="flex min-h-11 cursor-pointer items-center font-medium">
+            Cambiar plazo
+          </summary>
+          <div className="pb-2">
+            <MembershipNoticeDaysForm current={noticeDays} />
+          </div>
+        </details>
       </section>
 
       <ListFilters action="/memberships" label="Filtros de membresías" values={filters}
@@ -211,7 +230,7 @@ async function AdminView({ name, filters }: { name?: string | null; filters: Mem
         </EmptyState>
       ) : memberships.length === 0 ? (
         <EmptyState title="Todavía no hay membresías registradas">
-          Ábrelo con «Registrar una membresía», al final de la pantalla.
+          Ábrelo con «Registrar una membresía», arriba de la pantalla.
           Necesitas un plan y un paciente dado de alta.
         </EmptyState>
       ) : (
@@ -236,33 +255,18 @@ async function AdminView({ name, filters }: { name?: string | null; filters: Mem
         hrefFor={(page) => membershipList.href(filters, { page })}
         label="Páginas de membresías" />
 
-      <section className="mt-12 grid gap-4">
-        {plans.length === 0 ? (
-          <>
-            <h2 className="text-xl font-semibold">Registrar una membresía</h2>
-            <p className="leading-7 text-muted-foreground">
-              Antes de registrar una membresía necesitas al menos un plan.{" "}
-              <ButtonLink variant="ghost" href="/plans">
-                Crea uno aquí
-              </ButtonLink>
-              .
-            </p>
-          </>
-        ) : (
-          /*
-            El alta se abre a demanda: quien entra a esta pantalla viene casi
-            siempre a revisar vencimientos, no a dar de alta. Ninguna suite
-            recorre este formulario por HTTP, y un `<details>` cerrado lo emite
-            igual en el HTML del servidor.
-          */
-          <details className={cardClass}>
-            <summary className="flex min-h-11 cursor-pointer items-center text-xl font-semibold text-brand">
-              Registrar una membresía
-            </summary>
-            <MembershipForm patients={patientOptions} plans={planOptions} />
-          </details>
-        )}
-      </section>
+      {plans.length === 0 && (
+        <section className="mt-12 grid gap-4">
+          <h2 className="text-xl font-semibold">Registrar una membresía</h2>
+          <p className="leading-7 text-muted-foreground">
+            Antes de registrar una membresía necesitas al menos un plan.{" "}
+            <ButtonLink variant="ghost" href="/plans">
+              Crea uno aquí
+            </ButtonLink>
+            .
+          </p>
+        </section>
+      )}
     </Workspace>
   );
 }

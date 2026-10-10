@@ -10,6 +10,8 @@ import {
   muscleGroupLabels,
 } from "@/lib/catalog/vocabulary";
 import type { ExerciseListItem } from "@/lib/catalog/queries";
+import { exercisePreviewUrl } from "@/lib/catalog/youtube";
+import { Play } from "lucide-react";
 
 /** Cuántos grupos musculares caben en la tarjeta sin volverla ilegible en 375 px. */
 const visibleMuscles = 3;
@@ -27,6 +29,7 @@ const visibleMuscles = 3;
 export function ExerciseCard({ exercise }: { exercise: ExerciseListItem }) {
   const muscles = exercise.muscle_groups.slice(0, visibleMuscles);
   const restantes = exercise.muscle_groups.length - muscles.length;
+  const preview = exercisePreviewUrl(exercise);
 
   return (
     <article
@@ -35,14 +38,20 @@ export function ExerciseCard({ exercise }: { exercise: ExerciseListItem }) {
         "flex w-full flex-col overflow-hidden",
       )}
     >
-      <div className="aspect-[4/3] bg-muted">
-        {exercise.media_url ? (
+      <div className="relative aspect-[4/3] bg-muted">
+        {exercise.video_url && (
+          <span className="absolute bottom-2 left-2 z-10 flex items-center gap-1 rounded-full bg-brand px-2 py-0.5 text-xs font-semibold text-brand-foreground">
+            <Play aria-hidden className="size-3 fill-current" />
+            Vídeo
+          </span>
+        )}
+        {preview ? (
           // Sin `next/image`: el origen de las imágenes es el bucket de
           // Supabase, cuyo dominio cambia entre local y producción, y no hay
           // por qué fijarlo en `next.config.ts` para un catálogo estático.
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={exercise.media_url}
+            src={preview}
             alt={`Ejecución de ${exercise.name}`}
             loading="lazy"
             className="size-full object-cover"

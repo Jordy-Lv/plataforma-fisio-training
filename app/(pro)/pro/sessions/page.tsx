@@ -14,6 +14,8 @@ import { Pagination } from "@/components/ui/Pagination";
 import { sessionList } from "@/lib/routines/session-list";
 import { patientSessions, sessionReports } from "@/lib/routines/session-queries";
 
+export const metadata = { title: "Sesiones" };
+
 const statusLabels = {
   in_progress: "En curso",
   completed: "Completadas",

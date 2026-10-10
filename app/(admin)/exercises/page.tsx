@@ -59,7 +59,7 @@ export default async function Page({
     >
       <ExerciseFilters filters={filters} />
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground" aria-live="polite">
           {total === 1
             ? "1 ejercicio encontrado"

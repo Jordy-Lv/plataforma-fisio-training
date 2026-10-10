@@ -26,7 +26,8 @@ import {
   assignmentPatient,
   patientRoutineSummaries,
 } from "@/lib/routines/assignment-queries";
-import { calendarDateLabel, calendarHref } from "@/lib/routines/calendar";
+import { calendarDateLabel, calendarHref, todayInBogota } from "@/lib/routines/calendar";
+import { nextScheduledDay } from "@/lib/routines/calendar-queries";
 import { calendarQuerySchema, templateFiltersSchema } from "@/lib/routines/schemas";
 import { activeConditions, editableRoutines } from "@/lib/routines/item-queries";
 import { Workspace } from "@/components/auth/Workspace";
@@ -43,6 +44,8 @@ import { PatientTabs } from "@/components/patients/PatientTabs";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Notice } from "@/components/ui/Notice";
+
+export const metadata = { title: "Rutina del paciente" };
 
 const kindLabels: Record<TemplateKind, string> = {
   training: "Entrenamiento",
@@ -74,6 +77,10 @@ const shortDaysOf = (days: { day_number: number; routine_items: unknown[] }[]) =
  * el primero con `name="patientId"` es el de confirmar, antes de cualquier
  * formulario de ejercicio.
  */
+function firstName(fullName: string | null) {
+  return fullName?.trim().split(/\s+/)[0] || "El paciente";
+}
+
 export default async function Page({
   params,
   searchParams,
@@ -124,6 +131,9 @@ export default async function Page({
   const step: 1 | 2 | 3 = draft ? 2 : active && !filters.paso ? 3 : 1;
   const shown = step === 2 ? draft : step === 3 ? active : undefined;
   const otherActive = summaries.find((r) => r.kind === otherKind && r.status === "active");
+  const today = todayInBogota();
+  const nextSession =
+    step === 3 && active ? await nextScheduledDay(active.id, today) : null;
   const previous = summaries.filter((r) => r.kind === kind && r.status === "completed");
 
   const calendarQuery = calendarQuerySchema.safeParse({
@@ -347,6 +357,30 @@ export default async function Page({
         )}
 
         <AssignmentSteps step={step} />
+
+        {/* Con la rutina activa, lo siguiente es programarla: el paciente solo
+            entrena lo programado para hoy (routine-today-only). */}
+        {step === 3 && active && (
+          <Notice
+            tone={nextSession ? "info" : "warning"}
+            title={nextSession ? "Rutina programada" : "Falta programar sus días"}
+          >
+            <p>
+              {nextSession
+                ? `Próxima sesión: ${nextSession.date === today ? "hoy" : calendarDateLabel(nextSession.date)} · ${nextSession.title}.`
+                : `${firstName(patient.full_name)} no puede entrenar hasta que programes sus días: la aplicación solo le deja hacer lo programado para hoy.`}
+            </p>
+            {!nextSession && (
+              <ButtonLink
+                href={`/pro/routines/${patientId}/calendar`}
+                prefetch={false}
+                className="mt-3"
+              >
+                Programar en el calendario
+              </ButtonLink>
+            )}
+          </Notice>
+        )}
 
         {otherActive && (
           // Frases en una sola cadena: con varias expresiones JSX, React parte

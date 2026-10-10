@@ -12,6 +12,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ListFilters } from "@/components/ui/ListFilters";
 import { Pagination } from "@/components/ui/Pagination";
 
+export const metadata = { title: "Rutinas de pacientes" };
+
 const stateLabels = { active: "Activos", inactive: "Inactivos" };
 const routineLabels = { with: "Con rutina activa", without: "Sin rutina activa" };
 
@@ -60,7 +62,7 @@ export default async function Page({
     <Workspace
       title="Rutinas de pacientes"
       name={actor.fullName}
-      description="Consulta las rutinas y asigna una propuesta a partir del perfil de cada paciente."
+      description="Elige la plantilla de cada paciente, ajústala y programa sus días en el calendario."
     >
       <ListFilters action="/pro/routines" label="Filtros de pacientes" values={filters}
         choices={choices} chips={chips}

@@ -1,7 +1,10 @@
 import { redirect } from "next/navigation";
 import { AuthForm } from "@/components/auth/AuthForm";
+import { AuthHeading } from "@/components/auth/AuthHeading";
 import { Notice } from "@/components/ui/Notice";
 import { getActiveProfile, rolePaths } from "@/lib/auth/session";
+
+export const metadata = { title: "Iniciar sesión" };
 
 export default async function LoginPage({
   searchParams,
@@ -13,10 +16,9 @@ export default async function LoginPage({
   const { updated, error } = await searchParams;
   return (
     <>
-      <h1 className="text-3xl font-semibold tracking-tight">Qué bueno verte</h1>
-      <p className="mb-6 mt-3 leading-7 text-muted-foreground">
+      <AuthHeading eyebrow="Qué bueno verte" title="Inicia sesión">
         Entra con el correo que registraste con tu equipo.
-      </p>
+      </AuthHeading>
       {updated === "1" && (
         <Notice tone="success" className="mb-6">
           Tu contraseña se actualizó. Ya puedes iniciar sesión.
@@ -28,9 +30,10 @@ export default async function LoginPage({
         </Notice>
       )}
       <AuthForm mode="login" />
-      <p className="mt-8 border-t border-border pt-6 text-sm leading-6 text-muted-foreground">
-        ¿Aún no tienes acceso? Pídele a tu profesional que registre tus datos.
-      </p>
+      <div className="mt-5 rounded-lg bg-muted px-4 py-3 text-center sm:mt-7 sm:py-4 text-sm leading-6 text-muted-foreground">
+        <p className="font-semibold text-foreground">¿Aún no tienes acceso?</p>
+        <p>Pídele a tu profesional que registre tus datos.</p>
+      </div>
     </>
   );
 }
