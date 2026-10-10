@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { publicUrl } from "@/lib/supabase/public-url";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
@@ -26,19 +27,19 @@ export async function GET(request: NextRequest) {
           );
         }
         return NextResponse.redirect(
-          new URL("/login?error=inactive", request.url),
+          publicUrl("/login?error=inactive", request),
           {
             headers: { "Cache-Control": "private, no-store" },
           },
         );
       }
       return NextResponse.redirect(
-        new URL("/actualizar-contrasena", request.url),
+        publicUrl("/actualizar-contrasena", request),
         { headers: { "Cache-Control": "no-store" } },
       );
     }
   }
-  return NextResponse.redirect(new URL("/recuperar?error=link", request.url), {
+  return NextResponse.redirect(publicUrl("/recuperar?error=link", request), {
     headers: { "Cache-Control": "no-store" },
   });
 }

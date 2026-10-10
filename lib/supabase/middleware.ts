@@ -1,4 +1,5 @@
 import type { Database } from "@/lib/db/types";
+import { publicUrl } from "@/lib/supabase/public-url";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseConfig } from "@/lib/supabase/config";
@@ -51,7 +52,7 @@ export async function updateSession(request: NextRequest) {
           { status: 503, headers: { "Cache-Control": "private, no-store" } },
         );
       }
-      const destination = new URL("/login?error=inactive", request.url);
+      const destination = publicUrl("/login?error=inactive", request);
       const denied = NextResponse.redirect(
         destination,
         request.method === "GET" ? 307 : 303,
@@ -81,7 +82,7 @@ export async function updateSession(request: NextRequest) {
         );
       if (details?.onboarding_step !== 3) {
         const onboarding = NextResponse.redirect(
-          new URL("/patient/onboarding", request.url),
+          publicUrl("/patient/onboarding", request),
           request.method === "GET" ? 307 : 303,
         );
         response.cookies
